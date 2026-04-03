@@ -31,6 +31,7 @@ It is intentionally biased toward a practical personal-use MVP, with enough stru
 - Add routing, layout shell, API client boundary, Zustand store setup, MUI theme, and Tailwind integration.
 - Implement the first search page with postcode and keyword inputs, loading state, empty state, and results list placeholders.
 - Add basic linting, testing, and build scripts for the frontend.
+- Use the detailed source of truth in `docs/frontend-designs/` for structure, coding style, state, styling, and testing conventions.
 
 ### Phase 2: Backend Skeleton
 - Create `services/api` as a .NET 10 solution.
@@ -102,6 +103,7 @@ services/
 - Frontend and backend designs are clear enough to guide scaffolding.
 - Repo automation supports disciplined future issue work.
 - The next issue can focus on implementation instead of re-deciding architecture.
+- Frontend architecture, coding style, and delivery guidance are detailed enough to scaffold `apps/web` without re-arguing structure.
 
 ## Notes For Future Codex Work
 - Read this file first for sequencing context.

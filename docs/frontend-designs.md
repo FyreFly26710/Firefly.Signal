@@ -5,6 +5,15 @@
 - Keep the first client simple: React 18, TypeScript, Vite, client-side rendering only.
 - Build UI patterns that can inform later Android and iOS expansion without pretending to solve mobile-native architecture today.
 
+## Detailed Reference Docs
+Use the files in `docs/frontend-designs/` as the detailed frontend source of truth for implementation style:
+- `overview.md`
+- `coding-style.md`
+- `solution-structure.md`
+- `state-routing-and-api.md`
+- `styling-and-design-system.md`
+- `testing-and-quality.md`
+
 ## Core Stack
 - React 18
 - TypeScript
@@ -146,3 +155,10 @@ Use Tailwind for:
 ## Current Recommendation
 Start with one feature slice, one page, one route, and one API client boundary.
 That will keep the first frontend issue sequence fast and understandable while leaving room to grow cleanly.
+
+Current repo frontend direction:
+- feature-based structure inside `apps/web/src`
+- route entries stay thin and compose feature-owned UI
+- Zustand is reserved for cross-route or session-level state
+- MUI provides accessible primitives and Tailwind handles layout, spacing, and token-driven styling
+- frontend code should stay portable enough that future Android and iOS work can reuse contracts, state models, and UX decisions even if UI implementation changes

@@ -22,7 +22,7 @@ This repository is a monorepo with product, frontend, backend, and automation wo
 - `docs/`
   - planning, product, frontend, and backend design documents
 - `.codex/skills/`
-  - repository-specific Codex skills for planning, backend architecture, and delivery work
+  - repository-specific Codex skills for planning, frontend work, backend work, and delivery work
 - `.github/`
   - workflows and future GitHub automation
 
@@ -106,6 +106,10 @@ Future direction:
 - Prefer feature-oriented folders once the app exists.
 - Reuse MUI primitives intentionally and use Tailwind for composition, spacing, and tokens rather than styling chaos.
 - Keep accessibility, loading states, empty states, and error states in scope from the start.
+- Keep route entry files thin and move feature behavior into feature-owned folders.
+- Prefer local component or feature-hook state before introducing Zustand.
+- Keep frontend API access behind small typed client modules.
+- Preserve UX and state definitions that future Android and iOS clients can conceptually reuse even if UI code differs.
 
 ## Backend Expectations
 - Follow Clean Architecture boundaries where they clarify responsibilities.
@@ -137,6 +141,7 @@ When Codex works in this repo:
 ## Documentation Rules
 - `docs/product-requirements-document.md` is the product source of truth.
 - `docs/frontend-designs.md` describes frontend architecture, UX patterns, and delivery direction.
+- `docs/frontend-designs/` contains the detailed frontend coding style and architecture source of truth for this repo.
 - `docs/backend-designs.md` describes service boundaries, integration patterns, and operational design.
 - `docs/backend-designs/` contains the detailed backend coding style and infrastructure source of truth for this repo.
 - `docs/plans.md` tracks phased delivery and sequencing decisions.

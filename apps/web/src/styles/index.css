@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Segoe UI", "Helvetica Neue", sans-serif;
+  --color-firefly-forest: #14532d;
+  --color-firefly-ink: #0f172a;
+  --color-firefly-mist: #f4f7f5;
+  --color-firefly-gold: #f59e0b;
+}
+
+:root {
+  color: var(--color-firefly-ink);
+  background: var(--color-firefly-mist);
+  font-family: var(--font-sans);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
