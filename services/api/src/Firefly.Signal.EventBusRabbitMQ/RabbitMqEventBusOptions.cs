@@ -1,0 +1,10 @@
+namespace Firefly.Signal.EventBusRabbitMQ;
+
+public sealed class RabbitMqEventBusOptions
+{
+    public string Host { get; init; } = "localhost";
+    public int Port { get; init; } = 5672;
+    public string VirtualHost { get; init; } = "/";
+    public string Username { get; init; } = "guest";
+    public string Password { get; init; } = "guest";
+}

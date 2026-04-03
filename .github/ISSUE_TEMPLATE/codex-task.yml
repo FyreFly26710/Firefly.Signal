@@ -1,0 +1,50 @@
+name: Codex Task
+description: Create a focused implementation issue for Codex-driven delivery.
+title: "[Task]: "
+labels:
+  - task
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the change that is needed.
+      placeholder: Add a concise description of the task.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Or Goal
+      description: Explain the reason for the task.
+      placeholder: Why does this change matter?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Call out the expected files, areas, or constraints if known.
+      placeholder: Keep this task focused and reviewable.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Define what must be true when the task is complete.
+      placeholder: |
+        - Criterion 1
+        - Criterion 2
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Describe how the change should be checked.
+      placeholder: Tests, manual checks, or review notes.
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out Of Scope
+      description: Note anything that should not be included in this issue.
+      placeholder: Keep unrelated work out of the branch and PR.

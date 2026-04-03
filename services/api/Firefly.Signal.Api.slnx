@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Firefly.Signal.Ai.Api/Firefly.Signal.Ai.Api.csproj" />
+    <Project Path="src/Firefly.Signal.EventBus/Firefly.Signal.EventBus.csproj" />
+    <Project Path="src/Firefly.Signal.EventBusRabbitMQ/Firefly.Signal.EventBusRabbitMQ.csproj" />
+    <Project Path="src/Firefly.Signal.Gateway.Api/Firefly.Signal.Gateway.Api.csproj" />
+    <Project Path="src/Firefly.Signal.Identity.Api/Firefly.Signal.Identity.Api.csproj" />
+    <Project Path="src/Firefly.Signal.IntegrationEventLogEF/Firefly.Signal.IntegrationEventLogEF.csproj" />
+    <Project Path="src/Firefly.Signal.JobSearch.Api/Firefly.Signal.JobSearch.Api.csproj" />
+    <Project Path="src/Firefly.Signal.SharedKernel/Firefly.Signal.SharedKernel.csproj" />
+    <Project Path="src/Firefly.Signal.ServiceDefaults/Firefly.Signal.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Firefly.Signal.Identity.FunctionalTests/Firefly.Signal.Identity.FunctionalTests.csproj" />
+    <Project Path="tests/Firefly.Signal.JobSearch.FunctionalTests/Firefly.Signal.JobSearch.FunctionalTests.csproj" />
+    <Project Path="tests/Firefly.Signal.JobSearch.UnitTests/Firefly.Signal.JobSearch.UnitTests.csproj" />
+  </Folder>
+</Solution>
