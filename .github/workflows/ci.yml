@@ -52,7 +52,10 @@ jobs:
 
       - name: Restore
         run: |
-          target=$(find . -name '*.sln' | head -n 1)
+          target=$(find . -name '*.slnx' | head -n 1)
+          if [ -z "$target" ]; then
+            target=$(find . -name '*.sln' | head -n 1)
+          fi
           if [ -z "$target" ]; then
             target=$(find . -name '*.csproj' | head -n 1)
           fi
@@ -61,7 +64,10 @@ jobs:
 
       - name: Build
         run: |
-          target=$(find . -name '*.sln' | head -n 1)
+          target=$(find . -name '*.slnx' | head -n 1)
+          if [ -z "$target" ]; then
+            target=$(find . -name '*.sln' | head -n 1)
+          fi
           if [ -z "$target" ]; then
             target=$(find . -name '*.csproj' | head -n 1)
           fi
@@ -70,7 +76,10 @@ jobs:
 
       - name: Test
         run: |
-          target=$(find . -name '*.sln' | head -n 1)
+          target=$(find . -name '*.slnx' | head -n 1)
+          if [ -z "$target" ]; then
+            target=$(find . -name '*.sln' | head -n 1)
+          fi
           if [ -z "$target" ]; then
             target=$(find . -name '*Tests.csproj' | head -n 1)
           fi

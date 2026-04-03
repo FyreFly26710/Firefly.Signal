@@ -1,0 +1,43 @@
+name: Repo Hygiene
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required planning files exist
+        run: |
+          test -f AGENTS.md
+          test -f docs/plans.md
+          test -f docs/backend-designs.md
+          test -f docs/frontend-designs.md
+          test -d docs/backend-designs
+          test -d docs/frontend-designs
+          test -d infra
+          test -f infra/README.md
+
+      - name: Verify expected top-level folders exist
+        run: |
+          test -d apps
+          test -d docs
+          test -d services
+          test -d infra
+
+      - name: Verify repository skills exist
+        run: |
+          test -f .codex/skills/firefly-planning/SKILL.md
+          test -f .codex/skills/firefly-frontend-architecture/SKILL.md
+          test -f .codex/skills/firefly-frontend-delivery/SKILL.md
+          test -f .codex/skills/firefly-backend-architecture/SKILL.md
+          test -f .codex/skills/firefly-backend-delivery/SKILL.md
+          test -f .codex/skills/firefly-infra-architecture/SKILL.md
+          test -f .codex/skills/firefly-infra-delivery/SKILL.md
+          test -f .codex/skills/firefly-delivery/SKILL.md

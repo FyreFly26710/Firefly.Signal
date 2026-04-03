@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  pgweb:
+    image: sosedoff/pgweb:0.16.2
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+    depends_on:
+      - postgres
+
+  redis:
+    image: redis:8
+    restart: unless-stopped
+
+  redisinsight:
+    image: redis/redisinsight:2.70
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    depends_on:
+      - postgres
+
+  identity-api:
+    image: ${DOCKERHUB_NAMESPACE}/firefly-signal-identity-api:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__FireflySignalDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY}
+    depends_on:
+      - postgres
+
+  job-search-api:
+    image: ${DOCKERHUB_NAMESPACE}/firefly-signal-job-search-api:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__FireflySignalDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_DEFAULT_USER}
+      RabbitMq__Password: ${RABBITMQ_DEFAULT_PASS}
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  ai-api:
+    image: ${DOCKERHUB_NAMESPACE}/firefly-signal-ai-api:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_DEFAULT_USER}
+      RabbitMq__Password: ${RABBITMQ_DEFAULT_PASS}
+    depends_on:
+      - rabbitmq
+
+  gateway-api:
+    image: ${DOCKERHUB_NAMESPACE}/firefly-signal-gateway-api:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+      Downstream__IdentityApiBaseUrl: http://identity-api:8080
+      Downstream__JobSearchApiBaseUrl: http://job-search-api:8080
+      Downstream__AiApiBaseUrl: http://ai-api:8080
+    depends_on:
+      - identity-api
+      - job-search-api
+      - ai-api
+
+volumes:
+  postgres-data:

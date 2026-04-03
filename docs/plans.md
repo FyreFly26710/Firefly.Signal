@@ -21,6 +21,7 @@ It is intentionally biased toward a practical personal-use MVP, with enough stru
 ### Phase 0: Planning And Repo Foundation
 - Finalize product, frontend, backend, and delivery documents.
 - Add detailed extracted backend reference docs under `docs/backend-designs/`.
+- Add deployment and runtime docs under `infra/`.
 - Establish repo guardrails in `AGENTS.md`.
 - Add Codex repository skills for planning and implementation workflow.
 - Add root repo hygiene files such as `.gitignore`, `.editorconfig`, and GitHub workflows.
@@ -32,6 +33,7 @@ It is intentionally biased toward a practical personal-use MVP, with enough stru
 - Implement the first search page with postcode and keyword inputs, loading state, empty state, and results list placeholders.
 - Add basic linting, testing, and build scripts for the frontend.
 - Use the detailed source of truth in `docs/frontend-designs/` for structure, coding style, state, styling, and testing conventions.
+- Prepare Cloudflare Pages deployment files and docs in `infra/`.
 
 ### Phase 2: Backend Skeleton
 - Create `services/api` as a .NET 10 solution.
@@ -40,6 +42,7 @@ It is intentionally biased toward a practical personal-use MVP, with enough stru
 - Add `Directory.Build.props`, `Directory.Build.targets`, and `Directory.Packages.props`.
 - Add shared local Docker development for PostgreSQL, pgweb, RabbitMQ, Redis, and RedisInsight.
 - Establish auth boundary, Snowflake-based long IDs, EF Core migrations and seeding, event bus wiring, configuration loading, health checks, logging, and testing strategy.
+- Keep production Dockerfiles and Mac mini deployment assets under `infra/`, separate from local dev Compose.
 
 ### Phase 3: MVP Job Search Flow
 - Implement public source integration for job discovery.

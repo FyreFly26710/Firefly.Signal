@@ -103,13 +103,14 @@ When running APIs locally outside Docker:
 
 ## API Dockerfiles
 
-Each API should own its own Dockerfile, located beside its project file.
+Production backend Dockerfiles should live under `infra/docker/`.
+Do not keep production Dockerfiles inside the API project folders.
 
 Examples:
-- `services/api/src/Firefly.Signal.Ai.Api/Dockerfile`
-- `services/api/src/Firefly.Signal.Gateway.Api/Dockerfile`
-- `services/api/src/Firefly.Signal.Identity.Api/Dockerfile`
-- `services/api/src/Firefly.Signal.JobSearch.Api/Dockerfile`
+- `infra/docker/Firefly.Signal.Ai.Api.Dockerfile`
+- `infra/docker/Firefly.Signal.Gateway.Api.Dockerfile`
+- `infra/docker/Firefly.Signal.Identity.Api.Dockerfile`
+- `infra/docker/Firefly.Signal.JobSearch.Api.Dockerfile`
 
 Recommended Dockerfile template:
 ```dockerfile
@@ -118,12 +119,13 @@ WORKDIR /src
 
 COPY . .
 RUN dotnet restore services/api/src/Firefly.Signal.JobSearch.Api/Firefly.Signal.JobSearch.Api.csproj
-RUN dotnet publish services/api/src/Firefly.Signal.JobSearch.Api/Firefly.Signal.JobSearch.Api.csproj -c Release -o /app/publish
+RUN dotnet publish services/api/src/Firefly.Signal.JobSearch.Api/Firefly.Signal.JobSearch.Api.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app/publish .
 EXPOSE 8080
+USER $APP_UID
 ENTRYPOINT ["dotnet", "Firefly.Signal.JobSearch.Api.dll"]
 ```
 
@@ -134,12 +136,12 @@ Use exact SDK/runtime tags that match the repo's chosen .NET 10 build policy whe
 Recommended day-to-day flow:
 1. start infrastructure via Compose
 2. run APIs with `dotnet run`
-3. use Dockerfiles when testing containerized behavior or deployment parity
+3. use the production Dockerfiles under `infra/` only when testing containerized behavior or release packaging
 
 This keeps normal coding fast without losing Docker alignment.
 
 ## Recommended Rule Set
 - Compose owns shared local infrastructure.
-- Dockerfiles own per-API runtime packaging.
+- Production Dockerfiles live in `infra/`.
 - APIs should not require special orchestration frameworks to run locally.
 - Keep frontend containers out of the first backend compose file.
