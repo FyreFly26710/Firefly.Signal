@@ -10,7 +10,6 @@ on:
 jobs:
   frontend:
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('apps/web/package.json') != '' }}
     defaults:
       run:
         working-directory: apps/web
@@ -42,7 +41,6 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('services/api/**/*.sln', 'services/api/**/*.csproj') != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
