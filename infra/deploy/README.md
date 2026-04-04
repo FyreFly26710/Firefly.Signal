@@ -56,7 +56,6 @@ The frontend is handled by `.github/workflows/deploy-frontend-pages.yml`, not by
 - SSH access available from GitHub Actions
 - Cloudflare Tunnel configured for the gateway hostname
 - Cloudflare Access SSH configured for the deployment hostname
-- Cloudflare Access service token available for GitHub Actions
 
 Recommended hostnames for the current Firefly Signal setup:
 - backend API: `api-signal.firefly-ai.co.uk`

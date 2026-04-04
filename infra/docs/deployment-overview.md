@@ -54,4 +54,4 @@ This document defines the intended deployment model for Firefly Signal.
 ## Current Recommendation
 - keep the frontend and backend release workflows separate
 - build and push one image per backend API
-- keep the production host update step simple: pull, up, remove orphans
+- keep the production host update step simple: rewrite `.env`, pull, up, remove orphans

@@ -37,10 +37,9 @@ jobs:
         id: deploy
         env:
           DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_SSH_USERNAME: ${{ secrets.DEPLOY_SSH_USERNAME }}
           DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
           DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}
           JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
@@ -50,7 +49,7 @@ jobs:
           RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
           DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
         run: |
-          if [ -n "$DEPLOY_SSH_HOST" ] && [ -n "$DEPLOY_SSH_USERNAME" ] && [ -n "$DEPLOY_SSH_PRIVATE_KEY" ] && [ -n "$CF_ACCESS_CLIENT_ID" ] && [ -n "$CF_ACCESS_CLIENT_SECRET" ] && [ -n "$DEPLOY_REMOTE_PATH" ] && [ -n "$JWT_SIGNING_KEY" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ] && [ -n "$RABBITMQ_DEFAULT_USER" ] && [ -n "$RABBITMQ_DEFAULT_PASS" ] && [ -n "$DOCKERHUB_NAMESPACE" ]; then
+          if [ -n "$DEPLOY_SSH_HOST" ] && [ -n "$DEPLOY_SSH_PORT" ] && [ -n "$DEPLOY_SSH_USERNAME" ] && [ -n "$DEPLOY_SSH_PRIVATE_KEY" ] && [ -n "$DEPLOY_REMOTE_PATH" ] && [ -n "$JWT_SIGNING_KEY" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ] && [ -n "$RABBITMQ_DEFAULT_USER" ] && [ -n "$RABBITMQ_DEFAULT_PASS" ] && [ -n "$DOCKERHUB_NAMESPACE" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -76,6 +75,7 @@ jobs:
           - service: ai-api
             image: firefly-signal-ai-api
             dockerfile: infra/docker/Firefly.Signal.Ai.Api.Dockerfile
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -108,9 +108,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
       DEPLOY_SSH_USERNAME: ${{ secrets.DEPLOY_SSH_USERNAME }}
-      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
       DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}
       JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
@@ -119,6 +118,7 @@ jobs:
       RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
       RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
       DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -129,31 +129,19 @@ jobs:
           echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Install cloudflared
-        run: |
-          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o cloudflared.deb
-          sudo dpkg -i cloudflared.deb
-
       - name: Configure SSH
         run: |
           cat << EOF >> ~/.ssh/config
           Host firefly-mac-mini
             HostName ${DEPLOY_SSH_HOST}
             User ${DEPLOY_SSH_USERNAME}
-            ProxyCommand /usr/bin/cloudflared access ssh --hostname %h
+            Port ${DEPLOY_SSH_PORT}
           EOF
-
-      - name: Configure Cloudflare Access service token
-        run: |
-          {
-            echo "CF_ACCESS_CLIENT_ID=${CF_ACCESS_CLIENT_ID}"
-            echo "CF_ACCESS_CLIENT_SECRET=${CF_ACCESS_CLIENT_SECRET}"
-          } >> "$GITHUB_ENV"
 
       - name: Upload compose and deploy
         run: |
           ssh -o StrictHostKeyChecking=no firefly-mac-mini "mkdir -p ${DEPLOY_REMOTE_PATH}"
-          scp -o StrictHostKeyChecking=no infra/deploy/docker-compose.production.yml firefly-mac-mini:${DEPLOY_REMOTE_PATH}/docker-compose.production.yml
+          scp -P ${DEPLOY_SSH_PORT} -o StrictHostKeyChecking=no infra/deploy/docker-compose.production.yml firefly-mac-mini:${DEPLOY_REMOTE_PATH}/docker-compose.production.yml
           ssh -o StrictHostKeyChecking=no firefly-mac-mini << EOF
             cat > ${DEPLOY_REMOTE_PATH}/.env << ENVFILE
             POSTGRES_USER=${POSTGRES_USER}
