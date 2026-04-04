@@ -42,6 +42,7 @@ This order reduces risk:
 
 ## Suggested Read Order
 
-1. `templates-and-management.md`
-2. `manual-codex-flow.md`
-3. `openclaw-future-state.md`
+1. `naming-conventions.md`
+2. `templates-and-management.md`
+3. `manual-codex-flow.md`
+4. `openclaw-future-state.md`

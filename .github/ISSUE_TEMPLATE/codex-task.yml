@@ -1,9 +1,15 @@
 name: Codex Task
 description: Create a focused implementation issue for Codex-driven delivery.
-title: "[Task]: "
+title: ""
 labels:
   - task
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Issue title convention:
+        - Use a short descriptive phrase
+        - Do not prefix the issue title with feat, fix, docs, or similar change types
   - type: textarea
     id: summary
     attributes:

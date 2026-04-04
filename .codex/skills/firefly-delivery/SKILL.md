@@ -15,6 +15,7 @@ When implementing:
 - do not broaden scope into unrelated platform work
 - follow existing repo patterns before introducing new abstractions
 - keep the codebase understandable for a single maintainer
+- use a branch named `issue-<number>-<descriptive-title>` when the work comes from a GitHub issue
 
 For frontend tasks:
 - preserve the intended stack: React 18, TypeScript, Vite, Zustand, MUI, Tailwind
@@ -28,6 +29,8 @@ For backend tasks:
 
 Before finishing:
 - run the relevant checks that exist
+- rebase the branch onto the latest target branch before opening a PR when that fits the workflow
 - summarize assumptions
 - note any docs that should be updated with the change
 - keep PR summaries readable for a human reviewer scanning quickly
+- use a PR title in the form `<type>: <description> (#<issue-number>)`

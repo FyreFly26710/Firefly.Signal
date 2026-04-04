@@ -133,14 +133,19 @@ The expected delivery loop for future GitHub issues is:
 2. Create a focused branch for the issue.
 3. Implement the smallest change that satisfies the issue.
 4. Run the relevant tests and checks.
-5. Summarize assumptions, risks, and validation.
-6. Open a PR for review and merge by the repository owner.
+5. Rebase the issue branch onto the latest target branch before opening the PR.
+6. Summarize assumptions, risks, and validation.
+7. Open a PR for review and squash merge by the repository owner.
 
 When Codex works in this repo:
 - Read `docs/plans.md` and the relevant design docs before larger changes.
 - Check whether the task affects product scope, frontend design, or backend design, and update docs if needed.
 - Avoid broad speculative scaffolding unless the task explicitly asks for it.
 - Keep PRs reviewable by one person.
+- Use branch names in the form `issue-<number>-<descriptive-title>`.
+- Keep GitHub issue titles short and descriptive, without type prefixes.
+- Use PR titles in the form `<type>: <description> (#<issue-number>)`, for example `feat: add postcode search form (#12)`.
+- Prefer conventional PR types such as `feat`, `fix`, `docs`, `refactor`, `test`, `build`, and `chore`.
 
 ## Documentation Rules
 - `docs/product-requirements-document.md` is the product source of truth.

@@ -2,6 +2,9 @@
 
 This document defines how GitHub issues and pull requests should be structured for Codex-assisted delivery.
 
+Naming conventions for issues, branches, and PR titles are defined in:
+- `naming-conventions.md`
+
 ## Issue Template Direction
 
 Use a dedicated issue template for implementation work intended for Codex.
@@ -17,6 +20,10 @@ The current fields are a good starting point:
 - `Acceptance Criteria`
 - `Validation`
 - `Out Of Scope`
+
+Issue titles should follow the naming guidance in `naming-conventions.md`:
+- short descriptive phrase
+- no `feat` or `fix` prefix in the issue title
 
 ## Issue Writing Guidance
 
@@ -85,14 +92,18 @@ This is a good fit for Codex-created PRs because it keeps the reviewer focused o
 - what was checked
 - where the reviewer should look carefully
 
+PR titles should follow the naming guidance in `naming-conventions.md`:
+- `<type>: <description> (#<issue-number>)`
+
 ## PR Management Guidance
 
 For Codex-created PRs:
 - prefer draft PRs until checks and self-review are complete
+- rebase the issue branch onto the latest target branch before opening the PR
 - link the PR back to the issue
 - keep one issue per PR
 - record assumptions instead of hiding them
-- leave merge approval to the repository owner
+- leave final review and squash merge to the repository owner
 
 ## Initial Setup Recommendation
 

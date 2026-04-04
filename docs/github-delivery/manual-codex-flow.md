@@ -36,6 +36,7 @@ Only `agent-only` issues should be used for the first autonomous trial.
    - creates a focused branch
    - implements only the requested scope
    - runs relevant checks
+   - rebases onto the latest target branch before PR creation
    - prepares a reviewable pull request
 5. Review the branch and PR output yourself before merge.
 
@@ -45,7 +46,9 @@ The exact trigger command can evolve, but it should always preserve the same con
 - point Codex at one issue only
 - require it to read `AGENTS.md` and the relevant docs first
 - keep scope limited to the issue
+- require branch naming and PR title formatting to match repo conventions
 - require validation before finishing
+- require a rebase before PR creation
 - require a short PR-quality summary of assumptions and risks
 
 The eventual OpenClaw command should call the same underlying workflow.
@@ -58,6 +61,8 @@ When you build the manual command, the prompt should tell Codex to:
 - implement the smallest change that satisfies the issue
 - add or update tests when appropriate
 - run relevant checks
+- rebase onto the latest target branch before opening the PR
+- use the repo PR title convention
 - prepare the change for human review
 - stop and report clearly if blocked
 

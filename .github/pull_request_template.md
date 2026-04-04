@@ -1,3 +1,14 @@
+<!--
+PR title convention:
+<type>: <description> (#<issue-number>)
+Example: feat: add postcode search page shell (#12)
+
+Before opening the PR:
+- rebase the issue branch onto the latest target branch
+- keep the PR scoped to one issue
+- leave final merge as a squash merge by the repository owner
+-->
+
 ## Summary
 - What changed?
 
