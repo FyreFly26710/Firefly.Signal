@@ -7,7 +7,7 @@ This guide is for setting up the backend tunnel on the Mac mini.
 Expose the Firefly Signal backend gateway running on the Mac mini through Cloudflare Tunnel without opening inbound ports on the home network.
 
 The expected target is:
-- local backend gateway on the Mac mini, usually `http://localhost:8080`
+- local backend gateway on the Mac mini, for this setup `http://localhost:21000`
 - public hostname managed in Cloudflare
 - Cloudflare Tunnel forwarding traffic to the local gateway container or process
 
@@ -57,16 +57,18 @@ Keep the tunnel ID and generated credentials file path.
 
 ## 4. Create DNS Routing
 
-Create the public hostname that should route to the tunnel:
+Create the public hostnames that should route to the tunnel:
 
 ```bash
-cloudflared tunnel route dns firefly-signal api.your-domain.com
+cloudflared tunnel route dns firefly-signal api.signal.firefly-ai.co.uk
 ```
 
-Recommended first target:
-- `api.your-domain.com` -> Firefly Signal gateway
+Recommended targets:
+- `api.signal.firefly-ai.co.uk` -> Firefly Signal gateway
 
-You can add more hostnames later if needed, but keep the first production path simple.
+Notes:
+- `api.signal.firefly-ai.co.uk` is the backend API hostname for this project
+- these commands create the DNS routes in Cloudflare for the tunnel; you do not need to pre-create separate DNS records first
 
 ## 5. Create The Tunnel Config File
 
@@ -77,8 +79,8 @@ tunnel: <TUNNEL_ID>
 credentials-file: /Users/<your-user>/.cloudflared/<TUNNEL_ID>.json
 
 ingress:
-  - hostname: api.your-domain.com
-    service: http://localhost:8080
+  - hostname: api.signal.firefly-ai.co.uk
+    service: http://localhost:21000
   - service: http_status:404
 ```
 
