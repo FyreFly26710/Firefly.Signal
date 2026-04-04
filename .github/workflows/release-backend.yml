@@ -131,30 +131,39 @@ jobs:
 
       - name: Configure SSH
         run: |
-          cat << EOF >> ~/.ssh/config
+          cat << EOF > ~/.ssh/config
           Host firefly-mac-mini
             HostName ${DEPLOY_SSH_HOST}
             User ${DEPLOY_SSH_USERNAME}
             Port ${DEPLOY_SSH_PORT}
           EOF
 
-      - name: Upload compose and deploy
+      - name: Generate deployment env file
+        run: |
+          cat << EOF > .deploy.env
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          POSTGRES_DB=${POSTGRES_DB}
+          RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+          RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+          JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
+          DOCKERHUB_NAMESPACE=${DOCKERHUB_NAMESPACE}
+          IMAGE_TAG=${GITHUB_SHA}
+          EOF
+
+      - name: Upload deployment files
         run: |
           ssh -o StrictHostKeyChecking=no firefly-mac-mini "mkdir -p ${DEPLOY_REMOTE_PATH}"
           scp -P ${DEPLOY_SSH_PORT} -o StrictHostKeyChecking=no infra/deploy/docker-compose.production.yml firefly-mac-mini:${DEPLOY_REMOTE_PATH}/docker-compose.production.yml
-          ssh -o StrictHostKeyChecking=no firefly-mac-mini << EOF
-            cat > ${DEPLOY_REMOTE_PATH}/.env << ENVFILE
-            POSTGRES_USER=${POSTGRES_USER}
-            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-            POSTGRES_DB=${POSTGRES_DB}
-            RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-            RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-            JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
-            DOCKERHUB_NAMESPACE=${DOCKERHUB_NAMESPACE}
-            IMAGE_TAG=${GITHUB_SHA}
-            ENVFILE
+          scp -P ${DEPLOY_SSH_PORT} -o StrictHostKeyChecking=no .deploy.env firefly-mac-mini:${DEPLOY_REMOTE_PATH}/.env
+
+      - name: Deploy on server
+        run: |
+          ssh -o StrictHostKeyChecking=no firefly-mac-mini "
+            set -eux
             export PATH=/usr/local/bin:/opt/homebrew/bin:\$PATH
             cd ${DEPLOY_REMOTE_PATH}
             docker compose -f docker-compose.production.yml --env-file .env pull
             docker compose -f docker-compose.production.yml --env-file .env up -d --remove-orphans
-          EOF
+            docker compose -f docker-compose.production.yml --env-file .env ps
+          "
