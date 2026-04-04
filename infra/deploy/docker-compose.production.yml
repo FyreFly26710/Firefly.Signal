@@ -8,6 +8,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   pgweb:
     image: sosedoff/pgweb:0.16.2
@@ -34,7 +39,13 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
   identity-api:
     image: ${DOCKERHUB_NAMESPACE}/firefly-signal-identity-api:${IMAGE_TAG}
@@ -45,7 +56,8 @@ services:
       ConnectionStrings__FireflySignalDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Jwt__SigningKey: ${JWT_SIGNING_KEY}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   job-search-api:
     image: ${DOCKERHUB_NAMESPACE}/firefly-signal-job-search-api:${IMAGE_TAG}
@@ -58,8 +70,10 @@ services:
       RabbitMq__Username: ${RABBITMQ_DEFAULT_USER}
       RabbitMq__Password: ${RABBITMQ_DEFAULT_PASS}
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   ai-api:
     image: ${DOCKERHUB_NAMESPACE}/firefly-signal-ai-api:${IMAGE_TAG}
@@ -71,7 +85,8 @@ services:
       RabbitMq__Username: ${RABBITMQ_DEFAULT_USER}
       RabbitMq__Password: ${RABBITMQ_DEFAULT_PASS}
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
 
   gateway-api:
     image: ${DOCKERHUB_NAMESPACE}/firefly-signal-gateway-api:${IMAGE_TAG}
