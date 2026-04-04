@@ -34,3 +34,4 @@ Before finishing:
 - note any docs that should be updated with the change
 - keep PR summaries readable for a human reviewer scanning quickly
 - use a PR title in the form `<type>: <description> (#<issue-number>)`
+- add `Closes #<issue-number>` to the PR body

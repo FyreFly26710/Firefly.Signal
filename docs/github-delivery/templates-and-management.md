@@ -95,6 +95,9 @@ This is a good fit for Codex-created PRs because it keeps the reviewer focused o
 PR titles should follow the naming guidance in `naming-conventions.md`:
 - `<type>: <description> (#<issue-number>)`
 
+PR bodies should include:
+- `Closes #<issue-number>`
+
 ## PR Management Guidance
 
 For Codex-created PRs:

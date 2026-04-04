@@ -70,6 +70,16 @@ Rules:
 - include the originating issue number at the end
 - keep the PR tied to one issue
 
+PR bodies must include:
+
+`Closes #<issue-number>`
+
+Example:
+
+`Closes #12`
+
+The PR title makes the issue reference easy to scan, but the PR body is what GitHub uses reliably for issue linking and auto-close behavior.
+
 ## Merge Strategy
 
 The expected merge strategy is:

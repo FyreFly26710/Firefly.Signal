@@ -47,6 +47,7 @@ The exact trigger command can evolve, but it should always preserve the same con
 - require it to read `AGENTS.md` and the relevant docs first
 - keep scope limited to the issue
 - require branch naming and PR title formatting to match repo conventions
+- require the PR body to include `Closes #<issue-number>`
 - require validation before finishing
 - require a rebase before PR creation
 - require a short PR-quality summary of assumptions and risks
@@ -63,6 +64,7 @@ When you build the manual command, the prompt should tell Codex to:
 - run relevant checks
 - rebase onto the latest target branch before opening the PR
 - use the repo PR title convention
+- add `Closes #<issue-number>` to the PR body
 - prepare the change for human review
 - stop and report clearly if blocked
 

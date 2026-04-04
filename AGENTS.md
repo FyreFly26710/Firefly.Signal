@@ -145,6 +145,7 @@ When Codex works in this repo:
 - Use branch names in the form `issue-<number>-<descriptive-title>`.
 - Keep GitHub issue titles short and descriptive, without type prefixes.
 - Use PR titles in the form `<type>: <description> (#<issue-number>)`, for example `feat: add postcode search form (#12)`.
+- Add `Closes #<issue-number>` to the PR body so GitHub links and closes the issue correctly.
 - Prefer conventional PR types such as `feat`, `fix`, `docs`, `refactor`, `test`, `build`, and `chore`.
 
 ## Documentation Rules
