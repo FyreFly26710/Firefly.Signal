@@ -33,9 +33,10 @@ The frontend is handled by `.github/workflows/deploy-frontend-pages.yml`, not by
 
 ### Backend Deploy
 - `DEPLOY_SSH_HOST`
-- `DEPLOY_SSH_PORT`
 - `DEPLOY_SSH_USERNAME`
 - `DEPLOY_SSH_PRIVATE_KEY`
+- `CF_ACCESS_CLIENT_ID`
+- `CF_ACCESS_CLIENT_SECRET`
 - `DEPLOY_REMOTE_PATH`
 - `JWT_SIGNING_KEY`
 - `POSTGRES_USER`
@@ -54,12 +55,12 @@ The frontend is handled by `.github/workflows/deploy-frontend-pages.yml`, not by
 - a deployment directory matching `DEPLOY_REMOTE_PATH`
 - SSH access available from GitHub Actions
 - Cloudflare Tunnel configured for the gateway hostname
-- direct SSH access available on the host and router-forwarded port
-- deploy host reachable from GitHub Actions with standard `ssh` and `scp`
+- Cloudflare Access SSH configured for the deployment hostname
+- Cloudflare Access service token available for GitHub Actions
 
 Recommended hostnames for the current Firefly Signal setup:
-- backend API: `api.signal.firefly-ai.co.uk`
-- deploy SSH: `ssh.firefly-ai.co.uk` or another direct SSH hostname
+- backend API: `api-signal.firefly-ai.co.uk`
+- deploy SSH: `ssh.firefly-ai.co.uk`
 
 ## Compose Contract
 `docker-compose.production.yml` expects these runtime values:

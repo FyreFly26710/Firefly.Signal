@@ -60,14 +60,17 @@ Keep the tunnel ID and generated credentials file path.
 Create the public hostnames that should route to the tunnel:
 
 ```bash
-cloudflared tunnel route dns firefly-signal api.signal.firefly-ai.co.uk
+cloudflared tunnel route dns firefly-signal api-signal.firefly-ai.co.uk
+cloudflared tunnel route dns firefly-signal ssh.firefly-ai.co.uk
 ```
 
 Recommended targets:
-- `api.signal.firefly-ai.co.uk` -> Firefly Signal gateway
+- `api-signal.firefly-ai.co.uk` -> Firefly Signal gateway
+- `ssh.firefly-ai.co.uk` -> SSH access for GitHub Actions through Cloudflare Access
 
 Notes:
-- `api.signal.firefly-ai.co.uk` is the backend API hostname for this project
+- `api-signal.firefly-ai.co.uk` is the backend API hostname for this project
+- `ssh.firefly-ai.co.uk` is the SSH hostname for deployment through Cloudflare Access
 - these commands create the DNS routes in Cloudflare for the tunnel; you do not need to pre-create separate DNS records first
 
 ## 5. Create The Tunnel Config File
@@ -79,8 +82,10 @@ tunnel: <TUNNEL_ID>
 credentials-file: /Users/<your-user>/.cloudflared/<TUNNEL_ID>.json
 
 ingress:
-  - hostname: api.signal.firefly-ai.co.uk
+  - hostname: api-signal.firefly-ai.co.uk
     service: http://localhost:21000
+  - hostname: ssh.firefly-ai.co.uk
+    service: ssh://localhost:22
   - service: http_status:404
 ```
 
@@ -124,6 +129,7 @@ After installation, confirm:
 ## Recommended Firefly Signal Rule Set
 
 - tunnel only the gateway, not each internal API separately
+- if you deploy over tunnel, expose SSH separately on `ssh.firefly-ai.co.uk`
 - keep internal API traffic on the local Docker network
 - keep the public DNS entry stable even if backend containers are redeployed
 - treat the tunnel config as host-specific operational configuration, not a repository secret file
