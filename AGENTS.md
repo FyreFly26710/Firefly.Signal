@@ -22,9 +22,9 @@ This repository is a monorepo with product, frontend, backend, and automation wo
 - `docs/`
   - planning, product, frontend, and backend design documents
 - `infra/`
-  - deployment docs, production Dockerfiles, Cloudflare Pages notes, and Mac mini deployment assets
+  - production Dockerfiles and runtime deployment assets
 - `.codex/skills/`
-  - repository-specific Codex skills for planning, frontend work, backend work, infrastructure work, and delivery work
+  - repository-specific Codex skills for planning, frontend work, backend work, and delivery work
 - `.github/`
   - workflows and future GitHub automation
 
@@ -149,7 +149,7 @@ When Codex works in this repo:
 - `docs/backend-designs.md` describes service boundaries, integration patterns, and operational design.
 - `docs/backend-designs/` contains the detailed backend coding style and infrastructure source of truth for this repo.
 - `docs/plans.md` tracks phased delivery and sequencing decisions.
-- `infra/` contains deployment docs, production Dockerfiles, and runtime deployment assets.
+- `infra/` contains production Dockerfiles and runtime deployment assets.
 - If implementation diverges from these docs, update the docs in the same change when reasonable.
 
 ## Out of Scope for Early Work

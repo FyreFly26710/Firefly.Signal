@@ -38,6 +38,4 @@ jobs:
           test -f .codex/skills/firefly-frontend-delivery/SKILL.md
           test -f .codex/skills/firefly-backend-architecture/SKILL.md
           test -f .codex/skills/firefly-backend-delivery/SKILL.md
-          test -f .codex/skills/firefly-infra-architecture/SKILL.md
-          test -f .codex/skills/firefly-infra-delivery/SKILL.md
           test -f .codex/skills/firefly-delivery/SKILL.md

@@ -8,7 +8,6 @@ on:
       - dev
     paths:
       - "apps/web/**"
-      - "infra/cloudflare/pages/**"
       - ".github/workflows/deploy-frontend-pages.yml"
   workflow_dispatch:
 

@@ -21,7 +21,7 @@ It is intentionally biased toward a practical personal-use MVP, with enough stru
 ### Phase 0: Planning And Repo Foundation
 - Finalize product, frontend, backend, and delivery documents.
 - Add detailed extracted backend reference docs under `docs/backend-designs/`.
-- Add deployment and runtime docs under `infra/`.
+- Add deployment assets under `infra/`.
 - Establish repo guardrails in `AGENTS.md`.
 - Add Codex repository skills for planning and implementation workflow.
 - Add root repo hygiene files such as `.gitignore`, `.editorconfig`, and GitHub workflows.
@@ -33,7 +33,7 @@ It is intentionally biased toward a practical personal-use MVP, with enough stru
 - Implement the first search page with postcode and keyword inputs, loading state, empty state, and results list placeholders.
 - Add basic linting, testing, and build scripts for the frontend.
 - Use the detailed source of truth in `docs/frontend-designs/` for structure, coding style, state, styling, and testing conventions.
-- Prepare Cloudflare Pages deployment files and docs in `infra/`.
+- Prepare the Cloudflare Pages deployment workflow and app configuration.
 
 ### Phase 2: Backend Skeleton
 - Create `services/api` as a .NET 10 solution.
