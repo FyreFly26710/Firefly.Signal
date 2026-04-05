@@ -48,8 +48,9 @@ jobs:
           RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
           RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
           DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
+          CORS_ALLOWED_ORIGIN: ${{ secrets.CORS_ALLOWED_ORIGIN }}
         run: |
-          if [ -n "$DEPLOY_SSH_HOST" ] && [ -n "$DEPLOY_SSH_PORT" ] && [ -n "$DEPLOY_SSH_USERNAME" ] && [ -n "$DEPLOY_SSH_PRIVATE_KEY" ] && [ -n "$DEPLOY_REMOTE_PATH" ] && [ -n "$JWT_SIGNING_KEY" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ] && [ -n "$RABBITMQ_DEFAULT_USER" ] && [ -n "$RABBITMQ_DEFAULT_PASS" ] && [ -n "$DOCKERHUB_NAMESPACE" ]; then
+          if [ -n "$DEPLOY_SSH_HOST" ] && [ -n "$DEPLOY_SSH_PORT" ] && [ -n "$DEPLOY_SSH_USERNAME" ] && [ -n "$DEPLOY_SSH_PRIVATE_KEY" ] && [ -n "$DEPLOY_REMOTE_PATH" ] && [ -n "$JWT_SIGNING_KEY" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ] && [ -n "$RABBITMQ_DEFAULT_USER" ] && [ -n "$RABBITMQ_DEFAULT_PASS" ] && [ -n "$DOCKERHUB_NAMESPACE" ] && [ -n "$CORS_ALLOWED_ORIGIN" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -118,6 +119,7 @@ jobs:
       RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
       RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
       DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
+      CORS_ALLOWED_ORIGIN: ${{ secrets.CORS_ALLOWED_ORIGIN }}
 
     steps:
       - name: Checkout
@@ -148,6 +150,7 @@ jobs:
           RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
           JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
           DOCKERHUB_NAMESPACE=${DOCKERHUB_NAMESPACE}
+          CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN}
           IMAGE_TAG=${GITHUB_SHA}
           EOF
 
