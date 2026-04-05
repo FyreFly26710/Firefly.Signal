@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { SearchForm } from "@/features/search/components/SearchForm";
 import { SearchResults } from "@/features/search/components/SearchResults";
-import { useMockJobSearch } from "@/features/search/hooks/useMockJobSearch";
+import { useJobSearch } from "@/features/search/hooks/useJobSearch";
 import { useSessionStore } from "@/store/session.store";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -19,7 +19,7 @@ export function WorkspaceExperience() {
   const signOut = useSessionStore((state) => state.signOut);
   const [lastSubmittedPostcode, setLastSubmittedPostcode] = useState("SW1A");
   const [lastSubmittedKeyword, setLastSubmittedKeyword] = useState(".NET");
-  const { status, data, errorMessage, runSearch } = useMockJobSearch();
+  const { status, data, errorMessage, runSearch } = useJobSearch();
 
   async function handleSearch(postcode: string, keyword: string) {
     setLastSubmittedPostcode(postcode);
@@ -63,8 +63,8 @@ export function WorkspaceExperience() {
               Welcome back, {user?.displayName ?? "operator"}.
             </h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              This workspace is the UI-first version of the protected app flow. The search pane,
-              status panels, and signed-in shell are ready before we swap in live auth and API calls.
+              The protected route now uses the real JWT login flow and talks to the gateway-backed
+              job search API. This shell keeps the signed-in experience calm while the backend does the work.
             </p>
           </div>
 
@@ -115,12 +115,12 @@ export function WorkspaceExperience() {
           <WorkspacePanel
             eyebrow="Current focus"
             title="Keep the first protected workflow small."
-            body="Land sign-in, route protection, and a stable search surface first. The next pass can replace the mock action with the real identity and gateway calls."
+            body="Sign-in, route protection, and search now run against the real backend. The next pass can deepen account-aware UX without changing the main flow."
           />
           <WorkspacePanel
             eyebrow="Try these"
-            title="Useful mock searches"
-            body="Use `SW1A + .NET` for a strong result, `M1 + analyst` for another hit, or include `error` in the keyword to exercise the error state."
+            title="Useful first searches"
+            body="Use `SW1A + .NET` to hit the seeded backend jobs quickly, then try other postcodes and keywords to see the protected empty and success states."
           />
           <WorkspacePanel
             eyebrow="Why this layout"

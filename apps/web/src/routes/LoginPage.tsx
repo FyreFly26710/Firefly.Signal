@@ -5,8 +5,8 @@ export function LoginPage() {
   return (
     <AppShell
       eyebrow="Protected MVP"
-      title="Create the signed-in feel before the live integration arrives."
-      subtitle="This pass focuses on the web UI only: login, route protection, and the first authenticated workspace shape. Backend wiring comes after the flow feels right."
+      title="Use the live sign-in flow to open the protected MVP workspace."
+      subtitle="The screen stays deliberately simple, but it now authenticates against the real identity API and prepares the web app for protected gateway-backed search."
     >
       <LoginExperience />
     </AppShell>

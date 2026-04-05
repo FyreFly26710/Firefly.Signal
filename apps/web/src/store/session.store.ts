@@ -1,4 +1,13 @@
 import { create } from "zustand";
+import { getCurrentUser, login } from "@/features/auth/api/auth.api";
+import {
+  clearStoredSession,
+  readAccessToken,
+  readStoredUser,
+  writeAccessToken,
+  writeStoredUser
+} from "@/lib/auth/session-storage";
+import { ApiError } from "@/lib/http/api-error";
 
 export type SessionUser = {
   userAccount: string;
@@ -17,57 +26,73 @@ type SessionStore = {
   isAuthenticated: boolean;
   signIn: (input: SignInInput) => Promise<SessionUser>;
   signOut: () => void;
+  hydrate: () => Promise<void>;
   reset: () => void;
 };
 
-const mockUsers: Record<string, { password: string; user: SessionUser }> = {
-  admin: {
-    password: "Admin123!",
-    user: {
-      userAccount: "admin",
-      displayName: "Firefly Admin",
-      role: "admin",
-      email: "admin@firefly.local"
-    }
-  },
-  analyst: {
-    password: "Analyst123!",
-    user: {
-      userAccount: "analyst",
-      displayName: "Sample Analyst",
-      role: "user",
-      email: "analyst@firefly.local"
-    }
-  }
-};
-
-const wait = (durationMs: number) => new Promise((resolve) => window.setTimeout(resolve, durationMs));
+const storedUser = readStoredUser();
+const storedToken = readAccessToken();
 
 export const useSessionStore = create<SessionStore>((set) => ({
-  user: null,
-  isAuthenticated: false,
+  user: storedUser,
+  isAuthenticated: Boolean(storedUser && storedToken),
   async signIn({ userAccount, password }) {
-    await wait(350);
+    try {
+      const result = await login(userAccount, password);
 
-    const record = mockUsers[userAccount.trim().toLowerCase()];
-    if (record?.password !== password) {
-      throw new Error("Those credentials do not match the current MVP mock sign-in.");
+      writeAccessToken(result.accessToken);
+      writeStoredUser(result.user);
+
+      set({
+        user: result.user,
+        isAuthenticated: true
+      });
+
+      return result.user;
+    } catch (error) {
+      clearStoredSession();
+      set({
+        user: null,
+        isAuthenticated: false
+      });
+
+      if (error instanceof ApiError && error.status === 401) {
+        throw new Error("Those credentials were rejected by the identity API.");
+      }
+
+      throw error;
     }
-
-    set({
-      user: record.user,
-      isAuthenticated: true
-    });
-
-    return record.user;
   },
   signOut() {
+    clearStoredSession();
     set({
       user: null,
       isAuthenticated: false
     });
   },
+  async hydrate() {
+    if (!readAccessToken()) {
+      return;
+    }
+
+    try {
+      const user = await getCurrentUser();
+      writeStoredUser(user);
+
+      set({
+        user,
+        isAuthenticated: true
+      });
+    } catch {
+      clearStoredSession();
+      set({
+        user: null,
+        isAuthenticated: false
+      });
+    }
+  },
   reset() {
+    clearStoredSession();
     set({
       user: null,
       isAuthenticated: false

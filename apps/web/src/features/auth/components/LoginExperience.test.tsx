@@ -1,18 +1,28 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginExperience } from "@/features/auth/components/LoginExperience";
 import { renderWithProviders } from "@/test/render";
 import { useSessionStore } from "@/store/session.store";
 
 describe("LoginExperience", () => {
-  afterEach(() => {
-    useSessionStore.getState().reset();
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
   });
 
-  it("shows an error for invalid mock credentials", async () => {
+  afterEach(() => {
+    useSessionStore.getState().reset();
+    vi.unstubAllGlobals();
+  });
+
+  it("shows an error for rejected credentials", async () => {
     const user = userEvent.setup();
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(null, {
+        status: 401
+      })
+    );
 
     renderWithProviders(
       <MemoryRouter>
@@ -26,11 +36,33 @@ describe("LoginExperience", () => {
     await user.type(screen.getByLabelText(/password/i), "bad-password");
     await user.click(screen.getByRole("button", { name: /continue to app/i }));
 
-    expect(await screen.findByText(/do not match the current mvp mock sign-in/i)).toBeInTheDocument();
+    expect(await screen.findByText(/rejected by the identity api/i)).toBeInTheDocument();
   });
 
-  it("navigates into the app for valid mock credentials", async () => {
+  it("navigates into the app for valid credentials", async () => {
     const user = userEvent.setup();
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          accessToken: "test-token",
+          tokenType: "Bearer",
+          expiresAtUtc: "2026-04-05T20:00:00Z",
+          user: {
+            userId: 1,
+            userAccount: "admin",
+            displayName: "Firefly Admin",
+            email: "admin@firefly.local",
+            role: "admin"
+          }
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      )
+    );
 
     renderWithProviders(
       <MemoryRouter initialEntries={["/login"]}>

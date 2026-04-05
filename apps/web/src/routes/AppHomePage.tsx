@@ -6,7 +6,7 @@ export function AppHomePage() {
     <AppShell
       eyebrow="Workspace"
       title="Protected search, clear status, and a calmer place to continue."
-      subtitle="The current app shell is intentionally API-free. It gives us the signed-in interaction model, page rhythm, and search states before we connect the real backend."
+      subtitle="The signed-in shell now runs on the real auth and search APIs through the gateway while preserving the same focused page rhythm."
     >
       <WorkspaceExperience />
     </AppShell>

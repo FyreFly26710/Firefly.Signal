@@ -86,11 +86,11 @@ export function LoginExperience() {
             Firefly Signal
           </p>
           <h1 className="mt-3 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-            Shape the protected app flow before the backend contract takes over.
+            Sign in through the real identity flow and continue into the protected app.
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-            This first screen is intentionally local-only. It lets us refine the login and
-            authenticated workspace experience without blocking on live auth integration.
+            The screen shape stays the same, but this pass uses the live backend login route and
+            real JWT-backed access to the protected search experience.
           </p>
         </div>
 
@@ -105,7 +105,7 @@ export function LoginExperience() {
           />
           <HighlightCard
             title="Mock confidence"
-            body="Use seeded demo access now, then replace the auth action with the real identity API next."
+            body="Use the seeded backend accounts now, then continue into the protected gateway-backed flow."
           />
         </div>
       </section>
@@ -120,14 +120,14 @@ export function LoginExperience() {
           </p>
           <h2 className="mt-2 text-3xl font-bold text-slate-950">Open the MVP workspace.</h2>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Use one of the current seeded users to preview the protected app flow.
+            Use one of the seeded backend users to request a real JWT and enter the protected app.
           </p>
         </div>
 
         <div className="mt-5 rounded-3xl border border-emerald-100 bg-emerald-50/80 p-4 text-sm text-emerald-950">
-          <p className="font-semibold">Mock credentials</p>
-          <p className="mt-2">`admin` / `Admin123!`</p>
-          <p>`analyst` / `Analyst123!`</p>
+          <p className="font-semibold">Seeded backend credentials</p>
+          <p className="mt-2"><code>admin</code> / <code>Admin123!</code></p>
+          <p><code>analyst</code> / <code>Analyst123!</code></p>
         </div>
 
         <form
@@ -142,7 +142,7 @@ export function LoginExperience() {
             value={userAccount}
             onChange={(event) => setUserAccount(event.target.value)}
             error={Boolean(userAccountError)}
-            helperText={userAccountError ?? "Use a seeded local account for this pass."}
+            helperText={userAccountError ?? "This now calls the live identity API login route."}
             autoComplete="username"
             fullWidth
           />
@@ -154,7 +154,7 @@ export function LoginExperience() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             error={Boolean(passwordError)}
-            helperText={passwordError ?? "This screen stays local-only until API wiring lands."}
+            helperText={passwordError ?? "The returned access token is stored for protected requests."}
             autoComplete="current-password"
             fullWidth
           />
