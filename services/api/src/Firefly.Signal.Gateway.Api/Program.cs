@@ -67,6 +67,7 @@ app.Run();
 
 static void MapProxyRoute(WebApplication app, string pattern, DownstreamService service)
 {
+    app.MapMethods(pattern, [HttpMethods.Options], () => Results.NoContent());
     app.MapMethods(pattern, GatewayProxyClient.AllowedMethods, (HttpContext context, GatewayProxyClient client)
         => client.ForwardAsync(context, service));
 }
@@ -136,8 +137,7 @@ internal sealed class GatewayProxyClient(HttpClient httpClient, IConfiguration c
         HttpMethods.Put,
         HttpMethods.Patch,
         HttpMethods.Delete,
-        HttpMethods.Head,
-        HttpMethods.Options
+        HttpMethods.Head
     ];
 
     public async Task ForwardAsync(HttpContext context, DownstreamService service)
