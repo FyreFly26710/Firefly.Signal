@@ -18,6 +18,12 @@ builder.Services.AddProblemDetails();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddDbContext<IdentityDbContext>(options =>
 {
+    if (builder.Environment.IsEnvironment("Testing"))
+    {
+        options.UseInMemoryDatabase(builder.Configuration["Testing:DatabaseName"] ?? "firefly-signal-identity-testing");
+        return;
+    }
+
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("FireflySignalDb"),
         npgsql => npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, IdentityDbContext.SchemaName));
