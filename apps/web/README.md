@@ -15,6 +15,7 @@ This app is the web-first frontend for Firefly Signal.
 3. Run the web app from `apps/web` with `npm install` and `npm run dev`.
 
 The frontend talks to the gateway by default through `VITE_API_BASE_URL`, which is set in `.env.example`.
+Production builds should inject `VITE_API_BASE_URL` during CI rather than storing the production value in tracked frontend files.
 
 ## Build
 - `npm run lint`
@@ -25,3 +26,6 @@ The frontend talks to the gateway by default through `VITE_API_BASE_URL`, which 
 
 The intended production target is Cloudflare Pages.
 Deployment workflows and production deployment docs live under `infra/`.
+This repo currently builds the frontend in GitHub Actions before deploying static assets to Cloudflare Pages, so `VITE_API_BASE_URL` must be provided as a GitHub Actions secret or variable during the GitHub Actions build, not only inside the Pages dashboard.
+
+Development appsettings files under `services/api/src/**/appsettings.Development.json` are intentionally local-only and untracked. For gateway CORS, keep a local `services/api/src/Firefly.Signal.Gateway.Api/appsettings.Development.json` based on `appsettings.Development.example.json`.

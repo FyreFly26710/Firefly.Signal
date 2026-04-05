@@ -16,31 +16,10 @@ public static class AuthEndpoints
     {
         var group = endpoints.MapGroup("/api/auth");
 
-        group.MapPost("/register", RegisterAsync);
         group.MapPost("/login", LoginAsync);
         group.MapGet("/me", GetCurrentUserAsync).RequireAuthorization();
 
         return endpoints;
-    }
-
-    private static async Task<IResult> RegisterAsync(
-        RegisterUserRequest request,
-        IdentityDbContext dbContext,
-        IPasswordHasher<UserAccount> passwordHasher,
-        CancellationToken cancellationToken)
-    {
-        if (await dbContext.Users.AnyAsync(x => x.UserAccountName == request.UserAccount, cancellationToken))
-        {
-            return Results.Conflict(new ProblemDetails { Title = "User account already exists." });
-        }
-
-        var user = UserAccount.Create(request.UserAccount, string.Empty, request.Email, request.DisplayName, Roles.User);
-        user.ChangePassword(passwordHasher.HashPassword(user, request.Password));
-
-        dbContext.Users.Add(user);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/api/users/{user.Id}", ToResponse(user));
     }
 
     private static async Task<IResult> LoginAsync(

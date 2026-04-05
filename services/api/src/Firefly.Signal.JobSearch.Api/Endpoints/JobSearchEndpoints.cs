@@ -9,7 +9,7 @@ public static class JobSearchEndpoints
 {
     public static IEndpointRouteBuilder MapJobSearchEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/job-search");
+        var group = endpoints.MapGroup("/api/job-search").RequireAuthorization();
 
         group.MapGet("/demo", DemoAsync);
         group.MapGet("/", ListAsync);

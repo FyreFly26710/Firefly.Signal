@@ -1,10 +1,25 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { SearchPage } from "@/routes/SearchPage";
+import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
+import { SessionRedirect } from "@/features/auth/components/SessionRedirect";
+import { AppHomePage } from "@/routes/AppHomePage";
+import { LoginPage } from "@/routes/LoginPage";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <SearchPage />
+    element: <SessionRedirect />
+  },
+  {
+    path: "/login",
+    element: <LoginPage />
+  },
+  {
+    path: "/app",
+    element: (
+      <ProtectedRoute>
+        <AppHomePage />
+      </ProtectedRoute>
+    )
   }
 ]);
 
