@@ -56,7 +56,7 @@ else
 {
     builder.AddRabbitMqEventBus("job-search-api");
 }
-if (builder.Environment.IsDevelopment())
+if (!builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddMigration<JobSearchDbContext, JobSearchDbContextSeed>();
 }

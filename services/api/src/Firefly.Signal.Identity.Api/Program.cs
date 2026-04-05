@@ -46,7 +46,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
-if (builder.Environment.IsDevelopment())
+if (!builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddMigration<IdentityDbContext, IdentityDbContextSeed>();
 }

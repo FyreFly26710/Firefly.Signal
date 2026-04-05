@@ -12,13 +12,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        var allowedOrigins = builder.Configuration.GetSection(CorsOptions.SectionName).Get<string[]>() ??
-            [
-                "http://localhost:5173",
-                "http://127.0.0.1:5173",
-                "http://localhost:4173",
-                "http://127.0.0.1:4173"
-            ];
+        var configuredOrigins = builder.Configuration.GetSection(CorsOptions.SectionName).Get<string[]>();
+        var allowedOrigins = configuredOrigins is { Length: > 0 }
+            ? configuredOrigins
+            : builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing")
+                ? LocalCorsOrigins.All
+                : [];
+
+        if (allowedOrigins.Length == 0)
+        {
+            return;
+        }
 
         policy
             .WithOrigins(allowedOrigins)
@@ -99,6 +103,17 @@ internal sealed class DownstreamOptions
 internal sealed class CorsOptions
 {
     public const string SectionName = "Cors:AllowedOrigins";
+}
+
+internal static class LocalCorsOrigins
+{
+    public static readonly string[] All =
+    [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173"
+    ];
 }
 
 internal sealed class GatewayDemoClient(HttpClient httpClient, IConfiguration configuration)
