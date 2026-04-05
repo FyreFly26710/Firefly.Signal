@@ -9,14 +9,14 @@ The first goal is to prove that a small, focused issue can be created in GitHub,
 
 ### Stage 1: Manual Codex Execution
 - You create the issue yourself in GitHub.
-- You decide whether the issue is small enough for agent-only delivery or whether it needs collaboration.
-- For agent-only issues, you manually run a command on the Mac server to let Codex pull the issue context and begin work.
+- You use the issue as the source of truth and work with Codex in `co-op` mode.
+- You manually run a command on the Mac server to let Codex pull the issue context and begin work.
 - Codex creates a focused branch, implements the change, runs the relevant checks, and prepares a PR.
 - You perform the final human review before merge.
 
 ### Stage 2: OpenClaw-Assisted Triggering
 - You still create and triage the issue yourself.
-- When you decide the issue is ready for agent-only delivery, you notify OpenClaw.
+- When the co-op workflow is stable, you can notify OpenClaw to start the same issue-driven flow.
 - OpenClaw runs the agreed command on the Mac server to start the Codex workflow.
 - Codex still keeps the issue scoped to one reviewable PR.
 
@@ -28,7 +28,7 @@ The first goal is to prove that a small, focused issue can be created in GitHub,
 ## Recommended Operating Model
 
 - Keep issue creation human-led.
-- Keep the decision between `agent-only` and `co-op` human-led.
+- Keep the current workflow `co-op`.
 - Keep Codex branches focused on one issue.
 - Keep pull requests in draft until Codex has finished implementation and validation.
 - Keep merge approval human-led.
@@ -39,6 +39,8 @@ This order reduces risk:
 - the issue format becomes stable before automation is added
 - the Codex prompt and branch workflow can be tested without also debugging webhooks
 - OpenClaw can be added later as an orchestration layer instead of being a hard dependency on day one
+
+`agent-only` can remain a future option, but it is not part of the active operating model yet.
 
 ## Suggested Read Order
 

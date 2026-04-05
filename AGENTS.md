@@ -24,7 +24,7 @@ This repository is a monorepo with product, frontend, backend, and automation wo
 - `infra/`
   - production Dockerfiles and runtime deployment assets
 - `.codex/skills/`
-  - repository-specific Codex skills for planning, frontend work, backend work, and delivery work
+  - repository-specific Codex skills for planning, GitHub issue delivery, frontend work, backend work, and delivery work
 - `.github/`
   - workflows and future GitHub automation
 
@@ -138,6 +138,13 @@ The expected delivery loop for future GitHub issues is:
 7. Open a PR for review and squash merge by the repository owner.
 
 When Codex works in this repo:
+- Treat the GitHub issue as the source of truth for the requested change when the task comes from GitHub.
+- Expect implementation issues to use the `task` issue template with `Goal`, `Scope`, `Acceptance Criteria`, `Constraints`, and optional `Context`.
+- Stop and surface ambiguity when the issue goal, scope, or constraints are not clear enough to implement safely.
+- Use `firefly-github-delivery` as the orchestration skill for issue-driven work.
+- Use `firefly-planning` when the issue needs refinement, decomposition, or sequencing before coding.
+- Use `firefly-frontend-delivery` or `firefly-backend-delivery` for area-specific implementation guidance once the touched area is clear.
+- Reserve `firefly-delivery` for direct coding tasks that are not primarily driven by a GitHub issue.
 - Read `docs/plans.md` and the relevant design docs before larger changes.
 - Check whether the task affects product scope, frontend design, or backend design, and update docs if needed.
 - Avoid broad speculative scaffolding unless the task explicitly asks for it.
@@ -147,6 +154,12 @@ When Codex works in this repo:
 - Use PR titles in the form `<type>: <description> (#<issue-number>)`, for example `feat: add postcode search form (#12)`.
 - Add `Closes #<issue-number>` to the PR body so GitHub links and closes the issue correctly.
 - Prefer conventional PR types such as `feat`, `fix`, `docs`, `refactor`, `test`, `build`, and `chore`.
+
+Issue mode guidance:
+- Treat all current issue work as `co-op`.
+- `co-op` means you and Codex work the issue together, with the GitHub issue providing the shared source of truth.
+- Do not use `agent-only` in the current workflow.
+- `agent-only` is a future delivery mode to revisit only after the co-op workflow is stable and proven.
 
 ## Documentation Rules
 - `docs/product-requirements-document.md` is the product source of truth.

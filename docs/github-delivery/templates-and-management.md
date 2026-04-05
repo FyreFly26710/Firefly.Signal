@@ -10,16 +10,15 @@ Naming conventions for issues, branches, and PR titles are defined in:
 Use a dedicated issue template for implementation work intended for Codex.
 
 Current repository file:
-- `.github/ISSUE_TEMPLATE/codex-task.yml`
+- `.github/ISSUE_TEMPLATE/task.yml`
 
 The issue template should keep each task reviewable and unambiguous.
-The current fields are a good starting point:
-- `Summary`
-- `Problem Or Goal`
+The current fields should stay intentionally simple:
+- `Goal`
 - `Scope`
 - `Acceptance Criteria`
-- `Validation`
-- `Out Of Scope`
+- `Constraints`
+- `Context` (optional)
 
 Issue titles should follow the naming guidance in `naming-conventions.md`:
 - short descriptive phrase
@@ -30,7 +29,7 @@ Issue titles should follow the naming guidance in `naming-conventions.md`:
 Each Codex issue should:
 - describe one concrete outcome
 - define what done looks like
-- call out validation expectations
+- call out what is in scope and out of scope through scope and constraints
 - exclude unrelated cleanup
 
 Good issues are:
@@ -50,27 +49,25 @@ Use a small, stable label set so the workflow stays easy to manage.
 Recommended labels:
 - `task`
 - `codex`
-- `agent-only`
 - `co-op`
 - `blocked`
 - `ready-for-review`
 
 Recommended meaning:
 - `codex`: issue is suitable for Codex-assisted delivery
-- `agent-only`: safe for Codex to implement alone
-- `co-op`: requires you and Codex to collaborate instead of full agent autonomy
+- `co-op`: issue will be worked collaboratively by you and Codex
 - `blocked`: Codex or the maintainer found an unresolved dependency
 - `ready-for-review`: implementation is complete and awaiting your final review
 
 You do not need all of these on day one.
-For the first manual test, `task`, `codex`, and `agent-only` are enough.
+For the current manual flow, `task`, `codex`, and `co-op` are enough.
 
 ## Suggested Issue Lifecycle
 
-1. Create the issue with the Codex task template.
-2. Decide whether it is `agent-only` or `co-op`.
+1. Create the issue with the `task` template.
+2. Treat it as `co-op`.
 3. Add `codex` only when you want Codex involved.
-4. Run the manual Codex command on the Mac server for `agent-only` issues during the trial phase.
+4. Run the manual Codex command on the Mac server for `co-op` issues during the trial phase.
 5. Move the resulting PR into review.
 6. Use `ready-for-review` when Codex has finished and the final decision is yours.
 
@@ -112,7 +109,7 @@ For Codex-created PRs:
 
 Before introducing OpenClaw, keep the management model simple:
 - create issues manually
-- choose issue mode manually
+- keep the current workflow `co-op`
 - trigger Codex manually
 - review PRs manually
 

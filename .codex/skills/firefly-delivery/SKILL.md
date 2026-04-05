@@ -1,6 +1,6 @@
 ---
 name: firefly-delivery
-description: Deliver implementation work in the Firefly Signal repository. Use when Codex is handling a concrete GitHub issue or coding task in this repo and needs to create focused changes, validate them, and prepare reviewable pull request output.
+description: Deliver direct implementation work in the Firefly Signal repository. Use when Codex is handling a coding task in this repo that is not primarily driven by a GitHub issue workflow.
 ---
 
 # Firefly Delivery
@@ -10,12 +10,14 @@ Start by reading:
 - `docs/plans.md`
 - the relevant design document for the touched area
 
+Use this skill for direct repo work that does not start from a GitHub issue.
+For GitHub issue-driven work, use `firefly-github-delivery` as the orchestration skill instead.
+
 When implementing:
-- keep changes focused on the issue at hand
+- keep changes focused on the requested task
 - do not broaden scope into unrelated platform work
 - follow existing repo patterns before introducing new abstractions
 - keep the codebase understandable for a single maintainer
-- use a branch named `issue-<number>-<descriptive-title>` when the work comes from a GitHub issue
 
 For frontend tasks:
 - preserve the intended stack: React 18, TypeScript, Vite, Zustand, MUI, Tailwind
@@ -29,9 +31,6 @@ For backend tasks:
 
 Before finishing:
 - run the relevant checks that exist
-- rebase the branch onto the latest target branch before opening a PR when that fits the workflow
 - summarize assumptions
 - note any docs that should be updated with the change
-- keep PR summaries readable for a human reviewer scanning quickly
-- use a PR title in the form `<type>: <description> (#<issue-number>)`
-- add `Closes #<issue-number>` to the PR body
+- keep summaries readable for a human reviewer scanning quickly

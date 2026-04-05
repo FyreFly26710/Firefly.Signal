@@ -12,24 +12,22 @@ Before running the flow:
 - the repository is cloned on the Mac server
 - `codex` is installed and authenticated on the Mac server
 - Git is configured so branches can be created and pushed
-- the issue is small, focused, and written with the Codex task template
+- the issue is small, focused, and written with the `task` issue template
 
-## Human Decision Point
+## Current Working Mode
 
-After creating an issue, decide which mode it belongs to:
-
-- `agent-only`
-  Use this when the issue is narrow, low-risk, and has clear acceptance criteria.
+After creating an issue, treat it as `co-op`.
 
 - `co-op`
-  Use this when the issue needs active design discussion, hidden context, or tradeoff decisions during implementation.
+  Use this when you and Codex are working the issue together, using the issue as the source of truth during implementation.
 
-Only `agent-only` issues should be used for the first autonomous trial.
+`agent-only` is not part of the current workflow.
+It can be revisited later after the co-op flow is stable.
 
 ## Recommended Manual Flow
 
-1. Create a GitHub issue using the Codex task template.
-2. Label it as `codex` and `agent-only` if you want Codex to handle it alone.
+1. Create a GitHub issue using the `task` template.
+2. Label it as `codex` and `co-op` if you want Codex involved in the issue-driven workflow.
 3. On the Mac server, start from a clean checkout of the repository.
 4. Run a Codex command that:
    - reads the issue details
@@ -44,6 +42,7 @@ Only `agent-only` issues should be used for the first autonomous trial.
 
 The exact trigger command can evolve, but it should always preserve the same contract:
 - point Codex at one issue only
+- require it to treat the issue as the source of truth
 - require it to read `AGENTS.md` and the relevant docs first
 - keep scope limited to the issue
 - require branch naming and PR title formatting to match repo conventions
@@ -58,6 +57,7 @@ The eventual OpenClaw command should call the same underlying workflow.
 
 When you build the manual command, the prompt should tell Codex to:
 - fetch and summarize the target issue
+- restate the issue goal, scope, acceptance criteria, constraints, and context
 - create a branch named for the issue
 - implement the smallest change that satisfies the issue
 - add or update tests when appropriate
@@ -88,6 +88,6 @@ Do not introduce these until the manual path is proven:
 ## Next Step After The Manual Trial
 
 Once the manual command works reliably, OpenClaw can be added as a thin orchestrator:
-- you still decide which issues are `agent-only`
 - OpenClaw runs the same command on the Mac server
 - the human review gate remains unchanged
+- any future `agent-only` mode should be considered separately from the current co-op flow

@@ -1,0 +1,51 @@
+name: Task
+description: Create a focused implementation issue.
+title: ""
+labels:
+  - task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issue title convention:
+        - Use a short descriptive phrase
+        - Do not prefix the issue title with feat, fix, docs, or similar change types
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: Describe the requested outcome in one clear sentence.
+      placeholder: Add a concise statement of what needs to be done.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Call out the allowed files, modules, or areas to modify.
+      placeholder: Keep this task focused and reviewable.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Define what must be true when the task is complete.
+      placeholder: |
+        - [ ] Condition 1
+        - [ ] Condition 2
+        - [ ] Condition 3
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: State what must not be done and any important technical or product boundaries.
+      placeholder: Note boundaries, exclusions, or technical limitations.
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Optional background, related files, links, examples, or references.
+      placeholder: Add any useful supporting context.

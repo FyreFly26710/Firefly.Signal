@@ -14,8 +14,8 @@ That means:
 ## Expected Future Flow
 
 1. You create the issue in GitHub.
-2. You decide whether the issue is `agent-only` or `co-op`.
-3. For `agent-only`, you notify OpenClaw.
+2. You keep the active workflow `co-op`.
+3. When you want OpenClaw involved, you notify OpenClaw to start the same co-op issue flow.
 4. OpenClaw runs the Mac server command that starts the Codex issue workflow.
 5. Codex implements the issue and creates a PR.
 6. You perform the final review and merge decision.
@@ -24,7 +24,9 @@ That means:
 
 OpenClaw should not:
 - auto-pick all issues by default
-- bypass your decision about `agent-only` versus `co-op`
+- bypass your control over when the co-op workflow is started
+
+`agent-only` can be explored later, but it is not part of the current operating model.
 - merge without explicit human approval
 - broaden scope beyond the issue
 
