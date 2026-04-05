@@ -1,9 +1,11 @@
 <!--
 PR title convention:
-<type>: <description> (#<issue-number>)
-Example: feat: add postcode search page shell (#12)
+<type>(<scope>): <description> (#<issue-number>)
+Example: fix(auth): handle null token validation (#12)
 
 Before opening the PR:
+- treat the source issue number as the canonical work item ID
+- do not use the PR number as a substitute for the issue number
 - rebase the issue branch onto the latest target branch
 - keep the PR scoped to one issue
 - include "Closes #<issue-number>" in the PR body

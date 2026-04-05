@@ -15,6 +15,8 @@ Read these before acting:
 
 Use this skill as the entry point for GitHub issue-driven work.
 The GitHub issue is the source of truth for the requested change.
+Prefer the connected GitHub app/tools first for issue, PR, and metadata access.
+Use local `gh` commands as a helper or fallback when terminal GitHub workflow is useful and `gh` is installed and authenticated.
 
 ## Orchestration Rules
 
@@ -31,11 +33,13 @@ The GitHub issue is the source of truth for the requested change.
 
 - GitHub issue titles should be short, descriptive, and focused on the outcome.
 - Do not prefix issue titles with `feat`, `fix`, or other change types.
+- Treat the source GitHub issue number as the canonical work item ID.
+- Never use the pull request number as a substitute for the issue number in commit messages, PR titles, PR bodies, or summaries.
 - Branch names must be `issue-<number>-<descriptive-title>`.
 - Convert the descriptive title to lowercase kebab-case.
-- PR titles must be `<type>: <description> (#<issue-number>)`.
+- PR titles must be `<type>(<scope>): <description> (#<issue-number>)`.
 - PR bodies must include `Closes #<issue-number>`.
-- Prefer conventional PR types: `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `chore`.
+- Prefer PR types: `feat`, `fix`, `refactor`, `test`, `chore`, `agent`.
 
 ## Delivery Rules
 
@@ -49,9 +53,11 @@ The GitHub issue is the source of truth for the requested change.
 ## Branch And PR Preparation
 
 Before opening the PR:
+- confirm the source issue number is still the canonical work item ID for the branch
 - confirm the branch name matches the issue number and title
-- confirm the PR title uses the required type and issue number
+- confirm the PR title uses the required `type(scope): description (#issue)` format
 - confirm the PR body includes `Closes #<issue-number>`
+- confirm commit messages do not use the PR number in place of the issue number
 - summarize validation, assumptions, and risks clearly for human review
 
 Keep the user involved throughout the work.

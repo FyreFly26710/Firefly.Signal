@@ -48,27 +48,31 @@ Rules:
 
 PR titles must use this format:
 
-`<type>: <description> (#<issue-number>)`
+`<type>(<scope>): <description> (#<issue-number>)`
 
 Examples:
-- `feat: add postcode search page shell (#12)`
-- `fix: correct search result empty state copy (#27)`
-- `docs: add frontend environment variable notes (#34)`
+- `fix(auth): handle null token validation (#12)`
+- `refactor(gateway): simplify routing configuration (#8)`
+- `test(job-search): add demo endpoint tests (#15)`
+- `chore(ci): update docker compose health checks (#3)`
+- `agent(github-delivery): update github delivery skills (#10)`
 
 Recommended PR types:
 - `feat`
 - `fix`
-- `docs`
 - `refactor`
 - `test`
-- `build`
 - `chore`
+- `agent`
 
 Rules:
 - use a lowercase type prefix
+- use a short lowercase scope that names the main area being changed
 - keep the description concise and readable
 - include the originating issue number at the end
 - keep the PR tied to one issue
+- treat the source issue number as the canonical work item ID
+- do not use the pull request number as a substitute for the issue number
 
 PR bodies must include:
 
@@ -79,6 +83,16 @@ Example:
 `Closes #12`
 
 The PR title makes the issue reference easy to scan, but the PR body is what GitHub uses reliably for issue linking and auto-close behavior.
+
+## Commit Messages
+
+Commit messages should stay descriptive and should not use the pull request number as a substitute for the issue number.
+
+Good examples:
+- `docs: add development planning docs`
+- `fix: handle null token validation`
+
+If an issue number is included in a commit message, it should be the source issue number, not the PR number.
 
 ## Merge Strategy
 

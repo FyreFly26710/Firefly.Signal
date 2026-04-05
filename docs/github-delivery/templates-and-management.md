@@ -90,7 +90,7 @@ This is a good fit for Codex-created PRs because it keeps the reviewer focused o
 - where the reviewer should look carefully
 
 PR titles should follow the naming guidance in `naming-conventions.md`:
-- `<type>: <description> (#<issue-number>)`
+- `<type>(<scope>): <description> (#<issue-number>)`
 
 PR bodies should include:
 - `Closes #<issue-number>`
@@ -102,6 +102,8 @@ For Codex-created PRs:
 - rebase the issue branch onto the latest target branch before opening the PR
 - link the PR back to the issue
 - keep one issue per PR
+- treat the source issue number as the canonical work item ID
+- do not use the PR number as a substitute for the issue number in commit messages, PR titles, PR bodies, or summaries
 - record assumptions instead of hiding them
 - leave final review and squash merge to the repository owner
 

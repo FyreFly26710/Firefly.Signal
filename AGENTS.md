@@ -149,11 +149,13 @@ When Codex works in this repo:
 - Check whether the task affects product scope, frontend design, or backend design, and update docs if needed.
 - Avoid broad speculative scaffolding unless the task explicitly asks for it.
 - Keep PRs reviewable by one person.
+- Treat the source GitHub issue number as the canonical work item ID throughout the workflow.
+- Do not use the pull request number as a substitute for the issue number in commit messages, PR titles, PR bodies, or status summaries.
 - Use branch names in the form `issue-<number>-<descriptive-title>`.
 - Keep GitHub issue titles short and descriptive, without type prefixes.
-- Use PR titles in the form `<type>: <description> (#<issue-number>)`, for example `feat: add postcode search form (#12)`.
+- Use PR titles in the form `<type>(<scope>): <description> (#<issue-number>)`, for example `fix(auth): handle null token validation (#12)`.
 - Add `Closes #<issue-number>` to the PR body so GitHub links and closes the issue correctly.
-- Prefer conventional PR types such as `feat`, `fix`, `docs`, `refactor`, `test`, `build`, and `chore`.
+- Prefer PR types from this list: `feat`, `fix`, `refactor`, `test`, `chore`, `agent`.
 
 Issue mode guidance:
 - Treat all current issue work as `co-op`.
