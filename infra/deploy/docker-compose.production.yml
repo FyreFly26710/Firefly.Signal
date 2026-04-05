@@ -96,6 +96,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: 8080
+      Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN}
       Downstream__IdentityApiBaseUrl: http://identity-api:8080
       Downstream__JobSearchApiBaseUrl: http://job-search-api:8080
       Downstream__AiApiBaseUrl: http://ai-api:8080
