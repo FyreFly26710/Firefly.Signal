@@ -110,6 +110,7 @@ services/
 
 ## Notes For Future Codex Work
 - Read this file first for sequencing context.
+- Then read `docs/development/overview.md` for the practical coding roadmap and backlog from the current repo baseline.
 - Confirm whether a task belongs to foundation, frontend, backend, or product.
 - Keep issue branches focused on one phase outcome where possible.
 - Record deviations from these assumptions in the PR summary and, when durable, in the relevant design doc.
