@@ -8,12 +8,31 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddFireflyServiceDefaults();
 builder.AddDefaultOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        var allowedOrigins = builder.Configuration.GetSection(CorsOptions.SectionName).Get<string[]>() ??
+            [
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:4173",
+                "http://127.0.0.1:4173"
+            ];
+
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.Configure<DownstreamOptions>(builder.Configuration.GetSection(DownstreamOptions.SectionName));
 builder.Services.AddHttpClient<GatewayDemoClient>();
 builder.Services.AddHttpClient<GatewayProxyClient>();
 
 var app = builder.Build();
 
+app.UseCors("Frontend");
 app.MapDefaultEndpoints();
 
 app.MapGet("/", () => Results.Ok(new
@@ -74,6 +93,11 @@ internal sealed class DownstreamOptions
             DownstreamService.Ai => AiApiBaseUrl,
             _ => throw new ArgumentOutOfRangeException(nameof(service), service, "Unknown downstream service.")
         };
+}
+
+internal sealed class CorsOptions
+{
+    public const string SectionName = "Cors:AllowedOrigins";
 }
 
 internal sealed class GatewayDemoClient(HttpClient httpClient, IConfiguration configuration)
