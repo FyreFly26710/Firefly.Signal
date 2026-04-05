@@ -31,6 +31,7 @@ vite.config.ts.timestamp-*
 bin/
 obj/
 TestResults/
+*.sln
 
 # Docker
 *.pid
