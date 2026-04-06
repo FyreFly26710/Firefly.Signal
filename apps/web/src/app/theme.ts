@@ -4,10 +4,12 @@ import { createTheme } from "@mui/material/styles";
 declare module "@mui/material/styles" {
   interface Palette {
     brand: Palette["primary"];
+    accent: Palette["primary"];
   }
 
   interface PaletteOptions {
     brand?: PaletteOptions["primary"];
+    accent?: PaletteOptions["primary"];
   }
 }
 
@@ -16,37 +18,46 @@ export const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#0f766e"
+      main: "#1a1614"
     },
     secondary: {
-      main: "#f59e0b"
+      main: "#fef3c7",
+      contrastText: "#78350f"
     },
     brand: {
-      main: "#14532d",
-      light: "#4d7c0f",
-      dark: "#052e16",
-      contrastText: "#f8fafc"
+      main: "#d97706",
+      light: "#f59e0b",
+      dark: "#b45309",
+      contrastText: "#ffffff"
+    },
+    accent: {
+      main: "#d97706",
+      light: "#f59e0b",
+      dark: "#b45309",
+      contrastText: "#ffffff"
     },
     background: {
-      default: "#f4f7f5",
+      default: "#faf9f7",
       paper: "#ffffff"
     }
   },
   shape: {
-    borderRadius: 16
+    borderRadius: 8
   },
   typography: {
-    fontFamily: '"Segoe UI", "Helvetica Neue", sans-serif',
+    fontFamily: '"Inter", system-ui, sans-serif',
     h1: {
+      fontFamily: '"Crimson Pro", Georgia, serif',
       fontSize: "clamp(2.5rem, 5vw, 4rem)",
-      fontWeight: 700,
-      lineHeight: 1
+      fontWeight: 600,
+      lineHeight: 1.1
     },
     h2: {
-      fontWeight: 700
+      fontFamily: '"Crimson Pro", Georgia, serif',
+      fontWeight: 600
     },
     button: {
-      fontWeight: 700,
+      fontWeight: 500,
       textTransform: "none"
     }
   },
