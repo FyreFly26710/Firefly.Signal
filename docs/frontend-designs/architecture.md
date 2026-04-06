@@ -200,6 +200,15 @@ Move a component into `src/components/` only when all of these are true:
 
 Do not build a broad internal component library before real repetition proves the need.
 
+Readability rule for larger components:
+
+- if a component grows large enough to feel hard to scan, roughly more than 70 lines is a useful warning sign
+- and it can be clearly split into smaller presentational sections
+- split it into subcomponents for readability even if those subcomponents are not reused elsewhere
+- keep those subcomponents in the same file by default when they are private to that one component
+
+Prefer one exported component per file, with same-file private subcomponents when that keeps the structure readable without creating file sprawl.
+
 ## 10. Hook Creation Rules
 
 Create a custom hook when it improves clarity by grouping reusable behavior or feature orchestration.
