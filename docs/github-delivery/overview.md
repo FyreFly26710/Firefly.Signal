@@ -10,10 +10,12 @@ The first goal is to prove that a small, focused issue can be created in GitHub,
 ### Stage 1: Manual Codex Execution
 - You create the issue yourself in GitHub.
 - You use the issue as the source of truth and work with Codex in `co-op` mode.
-- You manually run a command on the Mac server to let Codex pull the issue context and begin work.
+- You manually run a command on the Mac server to let Codex pull the issue context and begin refinement.
 - Codex updates the issue timeline with visible status comments such as `in progress`, `blocked`, and `ready for review` while the work moves through the manual flow.
 - Codex also keeps the matching workflow labels in sync so the issue list reflects the same state.
-- Codex creates a focused branch, implements the change, runs the relevant checks, and prepares a PR.
+- Codex reads the relevant docs, reviews the issue, proposes a refined `Goal`, `Scope`, and `Acceptance Criteria`, and waits for your confirmation before coding.
+- After you align on the task shape, Codex updates the issue body so the refined issue remains the source of truth.
+- Codex then creates or continues the focused branch, implements the change, runs the relevant checks, and prepares a PR.
 - You perform the final human review before merge.
 
 ### Stage 2: OpenClaw-Assisted Triggering
@@ -31,6 +33,7 @@ The first goal is to prove that a small, focused issue can be created in GitHub,
 
 - Keep issue creation human-led.
 - Keep the current workflow `co-op`.
+- Keep issue refinement collaborative before implementation starts.
 - Keep Codex branches focused on one issue.
 - Keep pull requests in draft until Codex has finished implementation and validation.
 - Keep merge approval human-led.

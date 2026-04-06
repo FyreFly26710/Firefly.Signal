@@ -1,5 +1,5 @@
 name: Task
-description: Create a focused implementation issue.
+description: Create a rough implementation issue.
 title: "[Task] "
 labels:
   - task
@@ -12,40 +12,45 @@ body:
         - Do not prefix the issue title with feat, fix, docs, or similar change types
 
         Codex workflow note:
-        - When Codex picks up this issue in `co-op` mode, it should post issue status comments such as `in progress`, `blocked`, and `ready for review`
-        - It should also keep the workflow labels in sync, including `in-progress`, `blocked`, and `ready-for-review`
+        - Start with a plain-language request, then refine the issue together with Codex
+        - When Codex picks up this issue in `co-op` mode, it should read the issue and relevant docs, propose refinements, and wait for confirmation before coding
+        - Once refinement is agreed, the issue body should hold the final source of truth
+        - Codex should still post issue status comments such as `in progress`, `blocked`, and `ready for review`
+        - Codex should also keep the workflow labels in sync, including `in-progress`, `blocked`, and `ready-for-review`
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the request in broad plain language.
+      placeholder: Explain what you want Codex to help with.
+    validations:
+      required: true
   - type: textarea
     id: goal
     attributes:
       label: Goal
-      description: Describe the requested outcome in one clear sentence.
-      placeholder: Add a concise statement of what needs to be done.
-    validations:
-      required: true
+      description: Optional. Add a concise outcome if you already know it, or leave it for refinement with Codex.
+      placeholder: Add a one-sentence outcome if it is already clear.
   - type: textarea
     id: scope
     attributes:
       label: Scope
-      description: Call out the allowed files, modules, or areas to modify.
-      placeholder: Keep this task focused and reviewable.
-    validations:
-      required: true
+      description: Optional. Call out the allowed files, modules, or areas to modify.
+      placeholder: Keep this task focused and reviewable if you already know the boundaries.
   - type: textarea
     id: acceptance
     attributes:
       label: Acceptance Criteria
-      description: Define what must be true when the task is complete.
+      description: Optional. Define what must be true when the task is complete.
       placeholder: |
         - [ ] Condition 1
         - [ ] Condition 2
         - [ ] Condition 3
-    validations:
-      required: true
   - type: textarea
     id: constraints
     attributes:
       label: Constraints
-      description: State what must not be done and any important technical or product boundaries.
+      description: Optional. State what must not be done and any important technical or product boundaries.
       placeholder: Note boundaries, exclusions, or technical limitations.
   - type: textarea
     id: context

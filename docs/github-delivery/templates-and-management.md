@@ -14,9 +14,10 @@ Current repository file:
 
 The issue template should keep each task reviewable and unambiguous.
 The current fields should stay intentionally simple:
-- `Goal`
-- `Scope`
-- `Acceptance Criteria`
+- `Description`
+- `Goal` (optional at creation time)
+- `Scope` (optional at creation time)
+- `Acceptance Criteria` (optional at creation time)
 - `Constraints`
 - `Context` (optional)
 
@@ -27,7 +28,7 @@ Issue titles should follow the naming guidance in `naming-conventions.md`:
 ## Issue Writing Guidance
 
 Each Codex issue should:
-- describe one concrete outcome
+- describe one concrete request in plain language
 - define what done looks like
 - call out what is in scope and out of scope through scope and constraints
 - exclude unrelated cleanup
@@ -35,7 +36,7 @@ Each Codex issue should:
 Good issues are:
 - small enough for one branch and one PR
 - explicit about constraints
-- written so a coding agent does not have to infer product intent from scratch
+- easy to refine collaboratively before coding starts
 
 Avoid issues that:
 - mix frontend, backend, infra, and product changes without a clear single goal
@@ -69,6 +70,13 @@ Recommended status comments:
 - `blocked` when Codex cannot continue without clarification or an external dependency
 - `ready for review` when implementation and validation are complete
 
+Refinement guidance:
+- the issue can start as only a title plus `Description`
+- `Goal`, `Scope`, and `Acceptance Criteria` may be left blank by the human author
+- when Codex picks up the issue, it should read the relevant docs and propose refinements before coding
+- comments are the right place for the refinement conversation
+- once refinement is agreed, Codex should update the issue body so the final task definition lives in one place
+
 Recommended label behavior:
 - keep `codex` and `co-op` on active Codex issues
 - add `in-progress` when Codex starts active work
@@ -82,10 +90,12 @@ Recommended label behavior:
 2. Treat it as `co-op`.
 3. Add `codex` only when you want Codex involved.
 4. When Codex starts the issue, it adds an `in progress` status comment to the issue and applies `codex`, `co-op`, and `in-progress`.
-5. Run the manual Codex command on the Mac server for `co-op` issues during the trial phase.
-6. If Codex gets stuck, it adds a `blocked` status comment to the issue and swaps the status label to `blocked`.
-7. Move the resulting PR into review.
-8. When Codex finishes, it adds a `ready for review` status comment to the issue and swaps the status label to `ready-for-review`.
+5. Codex reads the relevant docs, reviews the issue, and proposes any missing or unclear `Goal`, `Scope`, and `Acceptance Criteria` back to you before coding.
+6. Once you agree on the refinement, Codex updates the issue body so it remains the source of truth.
+7. Run or continue the implementation work on the focused branch during the trial phase.
+8. If Codex gets stuck, it adds a `blocked` status comment to the issue and swaps the status label to `blocked`.
+9. Move the resulting PR into review.
+10. When Codex finishes, it adds a `ready for review` status comment to the issue and swaps the status label to `ready-for-review`.
 
 ## Pull Request Template Direction
 

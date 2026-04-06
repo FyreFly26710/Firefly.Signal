@@ -21,10 +21,14 @@ Use local `gh` commands as a helper or fallback when terminal GitHub workflow is
 ## Orchestration Rules
 
 - Start by reading the issue carefully and restating its goal, scope, acceptance criteria, constraints, and useful context.
+- Start by reading the relevant repo docs for the touched area before proposing implementation.
 - Treat ambiguity in the issue as a blocker to clarify, not an invitation to invent scope.
-- Read the relevant repo docs for the touched area before editing.
 - Before substantive implementation work begins, update the source GitHub issue with a short status comment that says Codex has picked it up in `co-op` mode, names the working branch, and marks the issue status as `in progress`.
 - Before substantive implementation work begins, ensure the source issue carries the workflow labels `codex` and `co-op`, add the `in-progress` label, and remove `blocked` or `ready-for-review` if they are present from an older state.
+- When a developer asks Codex to pick up an issue, do not begin coding in the same turn.
+- First return to the developer with a refinement summary that narrows the issue into concrete `Goal`, `Scope`, and `Acceptance Criteria`.
+- Use issue comments for the refinement discussion when GitHub updates are part of the workflow.
+- Once the developer agrees on the refinement, update the issue body so the issue remains the source of truth.
 - Use `firefly-planning` when the issue needs refinement, sequencing, or issue breakdown before implementation.
 - Use `firefly-frontend-delivery` for frontend implementation work.
 - Use `firefly-backend-delivery` for backend implementation work.
@@ -66,6 +70,8 @@ Use local `gh` commands as a helper or fallback when terminal GitHub workflow is
 ## Delivery Rules
 
 - Create or switch to a branch named `issue-<number>-<descriptive-title>` before making issue-specific changes when branch work is part of the task.
+- Treat issue pickup as a refinement step first, not an implementation trigger.
+- Do not start implementation until the developer has confirmed the refined issue shape.
 - Implement the smallest change that satisfies the issue.
 - Add or update tests when appropriate for the touched behavior.
 - Run the relevant checks that exist.
