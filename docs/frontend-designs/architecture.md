@@ -318,6 +318,30 @@ Use these file-name conventions:
 - types: `x.types.ts`
 - tests: `*.test.ts` or `*.test.tsx`
 
+## 15. Testing Architecture Rules
+
+Testing should follow the same ownership model as production code.
+
+Use these defaults:
+
+- `Page` files
+  usually do not need dedicated tests because they should stay thin
+- `View` files
+  are the highest-priority UI test target because they own orchestration, async state, and screen composition
+- feature hooks
+  should be tested when they own async lifecycle, derived state, or request coordination
+- feature mappers and validation helpers
+  should be unit tested when they affect displayed content or user decisions
+- shared components
+  should be tested only when they contain meaningful branching, accessibility behavior, or interaction logic
+- Zustand stores
+  should be tested when they hold important shared behavior such as auth, session hydration, or persistence rules
+- `lib/` helpers
+  should be tested when they provide shared technical behavior with cross-feature impact
+
+Do not require tests for every file.
+The goal is to protect user-critical behavior, regression-prone logic, and shared technical boundaries without creating low-signal test sprawl.
+
 Naming rules:
 
 - prefer feature-oriented names over generic utility names
@@ -325,7 +349,7 @@ Naming rules:
 - keep component APIs value-oriented and explicit
 - avoid giant options bags and generic `data` props when a specific prop shape is clearer
 
-## 15. Styling And Design System Rules
+## 16. Styling And Design System Rules
 
 The styling architecture remains:
 
@@ -341,17 +365,6 @@ Styling rules:
 - preserve accessibility, contrast, and focus states
 
 Shared styled components should follow the same promotion rule as shared UI components: promote only after real repetition.
-
-## 16. Testing Architecture Rules
-
-The current UI tests have been intentionally removed and will be reintroduced later.
-
-When frontend tests return, they should follow the architecture rather than fight it:
-
-- test view orchestration where behavior matters
-- test shared utilities and feature mappers where useful
-- avoid forcing low-level presentational components to carry most of the testing burden
-- avoid snapshot-heavy suites that provide low signal for a single-maintainer workflow
 
 ## 17. Mobile Portability Rule
 
