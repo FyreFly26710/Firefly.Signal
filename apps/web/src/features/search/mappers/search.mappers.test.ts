@@ -26,11 +26,11 @@ describe("mapSearchResponse", () => {
 
     expect(result.totalCount).toBe(1);
     expect(result.jobs[0]).toMatchObject({
-      id: 1,
+      id: "1",
       title: ".NET Developer",
-      company: "North Star Tech",
-      locationLabel: "London · Remote",
-      sourceLabel: "sample-feed"
+      employer: "North Star Tech",
+      location: "London · Remote",
+      source: "sample-feed"
     });
   });
 });

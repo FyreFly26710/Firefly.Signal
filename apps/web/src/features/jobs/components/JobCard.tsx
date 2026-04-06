@@ -5,10 +5,10 @@ import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
 import { IconButton } from "@mui/material";
 import { Link } from "react-router-dom";
-import type { MockJob } from "@/features/jobs/types/job.types";
+import type { JobCardModel } from "@/features/jobs/types/job.types";
 
 type JobCardProps = {
-  job: MockJob;
+  job: JobCardModel;
 };
 
 const freshnessStyles = {
@@ -24,8 +24,8 @@ const freshnessLabels = {
 } as const;
 
 export function JobCard({ job }: JobCardProps) {
-  const freshnessLabel = freshnessLabels[job.freshness];
-  const freshnessClassName = freshnessStyles[job.freshness];
+  const freshnessLabel = job.freshness ? freshnessLabels[job.freshness] : "";
+  const freshnessClassName = job.freshness ? freshnessStyles[job.freshness] : "";
 
   return (
     <article className="group border-b border-divider bg-card transition-colors hover:bg-card-hover">

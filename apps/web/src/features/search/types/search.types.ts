@@ -1,5 +1,12 @@
+import type { JobCardModel } from "@/features/jobs/types/job.types";
+
+export type SearchCriteria = {
+  postcode: string;
+  keyword: string;
+};
+
 export type JobCardDto = {
-  id: number;
+  id: string | number;
   title: string;
   company: string;
   locationName: string;
@@ -19,23 +26,11 @@ export type SearchJobsResponseDto = {
   jobs: JobCardDto[];
 };
 
-export type JobCardViewModel = {
-  id: number;
-  title: string;
-  company: string;
-  locationLabel: string;
-  summary: string;
-  url: string;
-  sourceLabel: string;
-  isRemote: boolean;
-  postedLabel: string;
-};
-
 export type SearchViewModel = {
   postcode: string;
   keyword: string;
   totalCount: number;
-  jobs: JobCardViewModel[];
+  jobs: JobCardModel[];
 };
 
 export type SearchStatus = "idle" | "loading" | "success" | "empty" | "error";

@@ -12,6 +12,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { JobCard } from "@/features/jobs/components/JobCard";
 import { mockJobs } from "@/features/jobs/data/mockJobs";
 import { SearchInput } from "@/features/search/components/SearchInput";
+import { createSearchPath } from "@/features/search/lib/search-query";
 
 const savedSearches = [
   { id: 1, query: "Product Designer in EC2A", count: 24, freshCount: 3 },
@@ -35,7 +36,7 @@ export function WorkspaceExperience() {
       return;
     }
 
-    void navigate(`/search?keyword=${encodeURIComponent(keyword.trim())}`);
+    void navigate(createSearchPath({ keyword, postcode: "" }));
   }
 
   return (
@@ -94,7 +95,7 @@ export function WorkspaceExperience() {
                     type="button"
                     className="w-full rounded-md bg-muted p-3 text-left transition-colors hover:bg-accent-secondary"
                     onClick={() => {
-                      void navigate(`/search?keyword=${encodeURIComponent(search.query)}`);
+                      void navigate(createSearchPath({ keyword: search.query, postcode: "" }));
                     }}
                   >
                     <div className="flex items-start justify-between gap-2">
