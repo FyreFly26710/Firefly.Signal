@@ -1,4 +1,6 @@
-import type { JobCardDto, JobCardViewModel, SearchJobsResponseDto, SearchViewModel } from "@/features/search/types/search.types";
+import type { JobCardDto, SearchJobsResponseDto } from "@/api/job-search/job-search.types";
+import type { JobCardModel } from "@/features/jobs/types/job.types";
+import type { SearchViewModel } from "@/features/search/types/search.types";
 
 export function mapSearchResponse(response: SearchJobsResponseDto): SearchViewModel {
   return {
@@ -9,17 +11,16 @@ export function mapSearchResponse(response: SearchJobsResponseDto): SearchViewMo
   };
 }
 
-function mapJobCard(job: JobCardDto): JobCardViewModel {
+function mapJobCard(job: JobCardDto): JobCardModel {
   return {
-    id: job.id,
+    id: String(job.id),
     title: job.title,
-    company: job.company,
-    locationLabel: job.isRemote ? `${job.locationName} · Remote` : job.locationName,
+    employer: job.company,
+    location: job.isRemote ? `${job.locationName} · Remote` : job.locationName,
     summary: job.summary,
     url: job.url,
-    sourceLabel: job.sourceName,
-    isRemote: job.isRemote,
-    postedLabel: formatPostedDate(job.postedAtUtc)
+    source: job.sourceName,
+    postedDate: formatPostedDate(job.postedAtUtc)
   };
 }
 

@@ -7,6 +7,7 @@
 
 ## Detailed Reference Docs
 Use the files in `docs/frontend-designs/` as the detailed frontend source of truth for implementation style:
+- `architecture.md`
 - `overview.md`
 - `coding-style.md`
 - `solution-structure.md`
@@ -28,6 +29,8 @@ Use the files in `docs/frontend-designs/` as the detailed frontend source of tru
 - Keep state localized unless it is shared across routes or sessions.
 - Use MUI for accessible primitives and Tailwind for composition, spacing, and token-driven styling.
 - Avoid over-abstracting UI before repeated patterns emerge.
+- Prefer `Page -> View -> dumb components` for screen structure.
+- Do not let one feature reference another feature directly; promote to shared only by deliberate decision.
 
 ## Initial App Scope
 The first frontend slice should support:
@@ -59,6 +62,7 @@ The first iteration can begin with a single route if that reduces noise.
 apps/web/
   src/
     app/
+    api/
     components/
     features/
       search/
@@ -68,11 +72,14 @@ apps/web/
     styles/
 ```
 
+The concrete architectural operating rules for those folders live in `docs/frontend-designs/architecture.md`.
+
 Recommended meaning:
 - `app/` for providers, app shell, theme, and router setup
+- `api/` for shared backend request functions and DTO contracts
 - `components/` for broadly reusable presentational pieces
-- `features/` for feature-owned UI, state, and API interactions
-- `lib/` for API clients and utilities
+- `features/` for feature-owned views, components, hooks, mappers, and local types
+- `lib/` for technical utilities such as HTTP primitives and async-state helpers
 - `routes/` for route entry components
 - `store/` for global Zustand stores only
 - `styles/` for Tailwind entrypoints and theme-level CSS
@@ -87,10 +94,10 @@ Avoid putting every form field into global state by default.
 Prefer component state for isolated form handling.
 
 ## API Integration Guidance
-- Keep API access behind a small client layer in `lib/`.
+- Keep shared backend request functions and DTOs under `src/api/`.
+- Keep feature-specific models, mappers, and hooks under the consuming feature by default.
 - Normalize backend responses only where the UI truly benefits.
 - Keep request status handling explicit.
-- Add typed request and response models close to the consuming feature.
 
 ## Design System Direction
 ### MUI
@@ -133,9 +140,8 @@ Use Tailwind for:
 - Ensure loading and error states are screen-reader friendly.
 
 ## Testing Guidance
-- Unit-test utility functions and feature logic where worthwhile.
-- Add component tests for key user flows such as search submission and state transitions.
-- Add a small number of end-to-end tests once the first real flow exists.
+- The current UI test files have been intentionally removed and will be reintroduced later.
+- When tests return, prioritize view-level behavior, shared utilities, and important feature logic over low-signal component snapshots.
 
 ## Phased Frontend Implementation
 ### Phase 1
@@ -157,6 +163,13 @@ Start with one feature slice, one page, one route, and one API client boundary.
 That will keep the first frontend issue sequence fast and understandable while leaving room to grow cleanly.
 
 Current repo frontend direction:
+- `docs/frontend-designs/architecture.md` is the concrete architecture contract for future frontend work
+- `routes/` should stay as thin `Page` files that hand off to feature `View`s
+- `View`s are the smart orchestration layer
+- low-level components should stay dumb and may compose other dumb components
+- `src/api/` owns shared backend request functions and DTOs
+- features should not reference another feature directly for components, hooks, models, mappers, or types
+- promotion into `src/components/`, `src/api/`, or `src/lib/` should happen only by explicit decision
 - feature-based structure inside `apps/web/src`
 - route entries stay thin and compose feature-owned UI
 - Zustand is reserved for cross-route or session-level state

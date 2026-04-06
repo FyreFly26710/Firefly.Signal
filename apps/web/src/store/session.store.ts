@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { getCurrentUser, login } from "@/features/auth/api/auth.api";
+import { getCurrentUser, login } from "@/api/auth/auth.api";
+import type {
+  AuthenticatedUserResponseDto,
+  LoginResponseDto
+} from "@/api/auth/auth.types";
 import {
   clearStoredSession,
   readAccessToken,
@@ -33,12 +37,28 @@ type SessionStore = {
 const storedUser = readStoredUser();
 const storedToken = readAccessToken();
 
+function mapSessionUser(response: AuthenticatedUserResponseDto): SessionUser {
+  return {
+    userAccount: response.userAccount,
+    displayName: response.displayName ?? response.userAccount,
+    role: response.role === "admin" ? "admin" : "user",
+    email: response.email ?? ""
+  };
+}
+
+function mapLoginResult(response: LoginResponseDto): { accessToken: string; user: SessionUser } {
+  return {
+    accessToken: response.accessToken,
+    user: mapSessionUser(response.user)
+  };
+}
+
 export const useSessionStore = create<SessionStore>((set) => ({
   user: storedUser,
   isAuthenticated: Boolean(storedUser && storedToken),
   async signIn({ userAccount, password }) {
     try {
-      const result = await login(userAccount, password);
+      const result = mapLoginResult(await login(userAccount, password));
 
       writeAccessToken(result.accessToken);
       writeStoredUser(result.user);
@@ -76,7 +96,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
     }
 
     try {
-      const user = await getCurrentUser();
+      const user = mapSessionUser(await getCurrentUser());
       writeStoredUser(user);
 
       set({

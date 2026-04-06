@@ -9,6 +9,7 @@ Read these files before making frontend architecture recommendations:
 - `AGENTS.md`
 - `docs/plans.md`
 - `docs/frontend-designs.md`
+- `docs/frontend-designs/architecture.md`
 - `docs/frontend-designs/overview.md`
 - `docs/frontend-designs/solution-structure.md`
 - `docs/frontend-designs/state-routing-and-api.md`

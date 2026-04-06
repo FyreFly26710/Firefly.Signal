@@ -2,35 +2,70 @@ import { describe, expect, it } from "vitest";
 import { mapSearchResponse } from "@/features/search/mappers/search.mappers";
 
 describe("mapSearchResponse", () => {
-  it("maps backend job results into frontend display models", () => {
+  it("maps API jobs into the UI model", () => {
     const result = mapSearchResponse({
-      postcode: "SW1A",
-      keyword: ".NET",
+      postcode: "EC2A",
+      keyword: "designer",
       pageIndex: 0,
       pageSize: 20,
       totalCount: 1,
       jobs: [
         {
-          id: 1,
-          title: ".NET Developer",
-          company: "North Star Tech",
+          id: 42,
+          title: "Senior Product Designer",
+          company: "Firefly Labs",
           locationName: "London",
-          summary: "Build internal APIs.",
-          url: "https://example.com/job",
-          sourceName: "sample-feed",
+          summary: "Lead product design across the platform.",
+          url: "https://example.com/jobs/42",
+          sourceName: "Reed",
           isRemote: true,
-          postedAtUtc: "2026-04-03T12:00:00Z"
+          postedAtUtc: "2025-01-02T09:00:00.000Z"
         }
       ]
     });
 
-    expect(result.totalCount).toBe(1);
-    expect(result.jobs[0]).toMatchObject({
-      id: 1,
-      title: ".NET Developer",
-      company: "North Star Tech",
-      locationLabel: "London · Remote",
-      sourceLabel: "sample-feed"
+    expect(result).toEqual({
+      postcode: "EC2A",
+      keyword: "designer",
+      totalCount: 1,
+      jobs: [
+        {
+          id: "42",
+          title: "Senior Product Designer",
+          employer: "Firefly Labs",
+          location: "London · Remote",
+          summary: "Lead product design across the platform.",
+          url: "https://example.com/jobs/42",
+          source: "Reed",
+          postedDate: "2 Jan 2025"
+        }
+      ]
     });
+  });
+
+  it("falls back when the posted date is invalid", () => {
+    const result = mapSearchResponse({
+      postcode: "M1",
+      keyword: "engineer",
+      pageIndex: 0,
+      pageSize: 20,
+      totalCount: 1,
+      jobs: [
+        {
+          id: "abc",
+          title: "Platform Engineer",
+          company: "Signal",
+          locationName: "Manchester",
+          summary: "Build internal tooling.",
+          url: "https://example.com/jobs/abc",
+          sourceName: "LinkedIn",
+          isRemote: false,
+          postedAtUtc: "not-a-date"
+        }
+      ]
+    });
+
+    expect(result.jobs[0]?.postedDate).toBe("Date unavailable");
+    expect(result.jobs[0]?.location).toBe("Manchester");
   });
 });

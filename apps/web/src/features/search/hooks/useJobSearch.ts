@@ -1,48 +1,38 @@
-import { useState } from "react";
-import type { SearchStatus, SearchViewModel } from "@/features/search/types/search.types";
-import { searchJobs } from "@/features/search/api/search.api";
-import { ApiError } from "@/lib/http/api-error";
+import { searchJobs } from "@/api/job-search/job-search.api";
+import { useCallback, useEffect } from "react";
+import type { SearchCriteria, SearchStatus, SearchViewModel } from "@/features/search/types/search.types";
+import { mapSearchResponse } from "@/features/search/mappers/search.mappers";
+import { createAsyncState, type AsyncState } from "@/lib/async/async-state";
+import { useAsyncTask } from "@/lib/async/useAsyncTask";
 
-type SearchState = {
-  status: SearchStatus;
-  data: SearchViewModel | null;
-  errorMessage: string | null;
-};
+type SearchState = AsyncState<SearchViewModel, SearchStatus>;
 
-const initialState: SearchState = {
-  status: "idle",
-  data: null,
-  errorMessage: null
-};
+export const initialSearchState: SearchState = createAsyncState("idle");
 
-export function useJobSearch() {
-  const [state, setState] = useState<SearchState>(initialState);
+export function useJobSearch({ postcode, keyword }: SearchCriteria) {
+  const runSearch = useCallback(
+    async (nextPostcode: string, nextKeyword: string) =>
+      mapSearchResponse(await searchJobs(nextPostcode, nextKeyword)),
+    []
+  );
+  const { status, data, errorMessage, execute } = useAsyncTask(runSearch);
+  const hasCriteria = Boolean(postcode || keyword);
 
-  async function runSearch(postcode: string, keyword: string) {
-    setState((current) => ({
-      ...current,
-      status: "loading",
-      errorMessage: null
-    }));
-
-    try {
-      const data = await searchJobs(postcode, keyword);
-      setState({
-        status: data.jobs.length === 0 ? "empty" : "success",
-        data,
-        errorMessage: null
-      });
-    } catch (error) {
-      setState({
-        status: "error",
-        data: null,
-        errorMessage: error instanceof ApiError ? error.message : "Something went wrong while searching."
-      });
+  useEffect(() => {
+    if (!hasCriteria) {
+      return;
     }
+
+    void execute(postcode, keyword);
+  }, [execute, hasCriteria, postcode, keyword]);
+
+  if (!hasCriteria) {
+    return initialSearchState;
   }
 
   return {
-    ...state,
-    runSearch
-  };
+    status: status === "success" && data?.jobs.length === 0 ? "empty" : status,
+    data,
+    errorMessage
+  } satisfies SearchState;
 }
