@@ -130,16 +130,17 @@ Future direction:
 ## AI Coding Workflow
 The expected delivery loop for future GitHub issues is:
 1. Review the issue and relevant docs before editing code.
-2. Create a focused branch for the issue.
-3. Implement the smallest change that satisfies the issue.
-4. Run the relevant tests and checks.
-5. Rebase the issue branch onto the latest target branch before opening the PR.
-6. Summarize assumptions, risks, and validation.
-7. Open a PR for review and squash merge by the repository owner.
+2. Refine the issue with the developer before implementation starts.
+3. Create or continue a focused branch for the issue.
+4. Implement the smallest change that satisfies the refined issue.
+5. Run the relevant tests and checks.
+6. Rebase the issue branch onto the latest target branch before opening the PR.
+7. Summarize assumptions, risks, and validation.
+8. Open a PR for review and squash merge by the repository owner.
 
 When Codex works in this repo:
 - Treat the GitHub issue as the source of truth for the requested change when the task comes from GitHub.
-- Expect implementation issues to use the `task` issue template with `Goal`, `Scope`, `Acceptance Criteria`, `Constraints`, and optional `Context`.
+- Expect implementation issues to use the `task` issue template with required `Description` plus optional `Goal`, `Scope`, `Acceptance Criteria`, `Constraints`, and `Context`.
 - Stop and surface ambiguity when the issue goal, scope, or constraints are not clear enough to implement safely.
 - Update the source GitHub issue with visible status comments during issue-driven work:
   - mark it `in progress` when work starts
@@ -151,6 +152,10 @@ When Codex works in this repo:
   - swap to `ready-for-review` when the work is complete
 - Keep `in-progress`, `blocked`, and `ready-for-review` mutually exclusive so the current issue state is obvious from the issue list.
 - Treat issue comments as the required status signal in the current manual workflow, with labels kept in sync as a filterable mirror of that state.
+- When a developer asks Codex to pick up an issue, do not jump straight into coding.
+- Read the relevant docs first, then return with a refinement summary that proposes `Goal`, `Scope`, and `Acceptance Criteria`.
+- Use comments for the refinement conversation when that helps collaboration.
+- Once the refinement is agreed, update the issue body so the final task definition remains in one canonical place.
 - Use `firefly-github-delivery` as the orchestration skill for issue-driven work.
 - Use `firefly-planning` when the issue needs refinement, decomposition, or sequencing before coding.
 - Use `firefly-frontend-delivery` or `firefly-backend-delivery` for area-specific implementation guidance once the touched area is clear.
