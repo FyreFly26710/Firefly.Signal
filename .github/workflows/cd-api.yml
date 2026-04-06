@@ -1,4 +1,4 @@
-name: Release Backend
+name: CD API
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
       - "services/api/**"
       - "infra/docker/**"
       - "infra/deploy/**"
-      - ".github/workflows/release-backend.yml"
+      - ".github/workflows/cd-api.yml"
   workflow_dispatch:
 
 jobs:
