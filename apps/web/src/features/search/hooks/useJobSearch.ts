@@ -17,27 +17,7 @@ export function useJobSearch({ postcode, keyword }: SearchCriteria) {
       return;
     }
 
-    let isCancelled = false;
-
-    async function loadSearchResults() {
-      try {
-        await execute(postcode, keyword);
-
-        if (isCancelled) {
-          return;
-        }
-      } catch {
-        if (isCancelled) {
-          return;
-        }
-      }
-    }
-
-    void loadSearchResults();
-
-    return () => {
-      isCancelled = true;
-    };
+    void execute(postcode, keyword);
   }, [execute, hasCriteria, postcode, keyword]);
 
   if (!hasCriteria) {
