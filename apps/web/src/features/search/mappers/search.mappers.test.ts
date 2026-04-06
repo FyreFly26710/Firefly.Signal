@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { SearchJobsResponseDto } from "@/api/job-search/job-search.types";
 import { mapSearchResponse } from "@/features/search/mappers/search.mappers";
 
 describe("mapSearchResponse", () => {
   it("maps backend job results into frontend display models", () => {
-    const result = mapSearchResponse({
+    const response: SearchJobsResponseDto = {
       postcode: "SW1A",
       keyword: ".NET",
       pageIndex: 0,
@@ -22,7 +23,9 @@ describe("mapSearchResponse", () => {
           postedAtUtc: "2026-04-03T12:00:00Z"
         }
       ]
-    });
+    };
+
+    const result = mapSearchResponse(response);
 
     expect(result.totalCount).toBe(1);
     expect(result.jobs[0]).toMatchObject({

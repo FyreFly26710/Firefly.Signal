@@ -1,6 +1,7 @@
+import { searchJobs } from "@/api/job-search/job-search.api";
 import { useEffect } from "react";
 import type { SearchCriteria, SearchStatus, SearchViewModel } from "@/features/search/types/search.types";
-import { searchJobs } from "@/features/search/api/search.api";
+import { mapSearchResponse } from "@/features/search/mappers/search.mappers";
 import { createAsyncState, type AsyncState } from "@/lib/async/async-state";
 import { useAsyncTask } from "@/lib/async/useAsyncTask";
 
@@ -9,7 +10,10 @@ type SearchState = AsyncState<SearchViewModel, SearchStatus>;
 export const initialSearchState: SearchState = createAsyncState("idle");
 
 export function useJobSearch({ postcode, keyword }: SearchCriteria) {
-  const { status, data, errorMessage, execute } = useAsyncTask(searchJobs);
+  const { status, data, errorMessage, execute } = useAsyncTask(
+    async (nextPostcode: string, nextKeyword: string) =>
+      mapSearchResponse(await searchJobs(nextPostcode, nextKeyword))
+  );
   const hasCriteria = Boolean(postcode || keyword);
 
   useEffect(() => {

@@ -1,5 +1,6 @@
+import type { JobCardDto, SearchJobsResponseDto } from "@/api/job-search/job-search.types";
 import type { JobCardModel } from "@/features/jobs/types/job.types";
-import type { JobCardDto, SearchJobsResponseDto, SearchViewModel } from "@/features/search/types/search.types";
+import type { SearchViewModel } from "@/features/search/types/search.types";
 
 export function mapSearchResponse(response: SearchJobsResponseDto): SearchViewModel {
   return {
