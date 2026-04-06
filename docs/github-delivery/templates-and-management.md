@@ -50,34 +50,42 @@ Recommended labels:
 - `task`
 - `codex`
 - `co-op`
+- `in-progress`
 - `blocked`
 - `ready-for-review`
 
 Recommended meaning:
 - `codex`: issue is suitable for Codex-assisted delivery
 - `co-op`: issue will be worked collaboratively by you and Codex
+- `in-progress`: Codex is actively working the issue
 - `blocked`: Codex or the maintainer found an unresolved dependency
 - `ready-for-review`: implementation is complete and awaiting your final review
 
-Labels are helpful, but they are not enough on their own because they do not explain why the state changed.
-For the current manual flow, Codex should always post issue status comments as the required visible status signal.
-When the label set exists, labels can mirror the same state for quicker filtering.
+Labels and status comments should work together.
+For the current manual flow, Codex should always post issue status comments as the required visible status signal and keep labels aligned so the issue list also reflects the current state.
 
 Recommended status comments:
 - `in progress` when Codex picks up the issue and starts active work
 - `blocked` when Codex cannot continue without clarification or an external dependency
 - `ready for review` when implementation and validation are complete
 
+Recommended label behavior:
+- keep `codex` and `co-op` on active Codex issues
+- add `in-progress` when Codex starts active work
+- replace `in-progress` with `blocked` if progress stops
+- replace `in-progress` or `blocked` with `ready-for-review` when implementation is complete
+- keep `in-progress`, `blocked`, and `ready-for-review` mutually exclusive
+
 ## Suggested Issue Lifecycle
 
 1. Create the issue with the `task` template.
 2. Treat it as `co-op`.
 3. Add `codex` only when you want Codex involved.
-4. When Codex starts the issue, it adds an `in progress` status comment to the issue.
+4. When Codex starts the issue, it adds an `in progress` status comment to the issue and applies `codex`, `co-op`, and `in-progress`.
 5. Run the manual Codex command on the Mac server for `co-op` issues during the trial phase.
-6. If Codex gets stuck, it adds a `blocked` status comment to the issue.
+6. If Codex gets stuck, it adds a `blocked` status comment to the issue and swaps the status label to `blocked`.
 7. Move the resulting PR into review.
-8. When Codex finishes, it adds a `ready for review` status comment to the issue and, when available, applies or keeps the `ready-for-review` label for your queue.
+8. When Codex finishes, it adds a `ready for review` status comment to the issue and swaps the status label to `ready-for-review`.
 
 ## Pull Request Template Direction
 

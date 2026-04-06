@@ -12,6 +12,7 @@ The first goal is to prove that a small, focused issue can be created in GitHub,
 - You use the issue as the source of truth and work with Codex in `co-op` mode.
 - You manually run a command on the Mac server to let Codex pull the issue context and begin work.
 - Codex updates the issue timeline with visible status comments such as `in progress`, `blocked`, and `ready for review` while the work moves through the manual flow.
+- Codex also keeps the matching workflow labels in sync so the issue list reflects the same state.
 - Codex creates a focused branch, implements the change, runs the relevant checks, and prepares a PR.
 - You perform the final human review before merge.
 

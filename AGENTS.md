@@ -145,7 +145,12 @@ When Codex works in this repo:
   - mark it `in progress` when work starts
   - mark it `blocked` if progress stops on an unresolved dependency or clarification
   - mark it `ready for review` when implementation and validation are complete
-- Treat issue comments as the required status signal in the current manual workflow, and mirror labels only when the repository label set supports them.
+- Keep the source GitHub issue labels aligned with the same state:
+  - ensure `codex`, `co-op`, and `in-progress` are present when active work starts
+  - swap to `blocked` if the issue becomes blocked
+  - swap to `ready-for-review` when the work is complete
+- Keep `in-progress`, `blocked`, and `ready-for-review` mutually exclusive so the current issue state is obvious from the issue list.
+- Treat issue comments as the required status signal in the current manual workflow, with labels kept in sync as a filterable mirror of that state.
 - Use `firefly-github-delivery` as the orchestration skill for issue-driven work.
 - Use `firefly-planning` when the issue needs refinement, decomposition, or sequencing before coding.
 - Use `firefly-frontend-delivery` or `firefly-backend-delivery` for area-specific implementation guidance once the touched area is clear.
