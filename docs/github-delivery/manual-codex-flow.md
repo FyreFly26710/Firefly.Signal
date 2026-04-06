@@ -31,10 +31,13 @@ It can be revisited later after the co-op flow is stable.
 3. On the Mac server, start from a clean checkout of the repository.
 4. Run a Codex command that:
    - reads the issue details
+   - posts an issue status update when work begins
    - creates a focused branch
    - implements only the requested scope
    - runs relevant checks
+   - posts a blocked status comment if the work cannot continue
    - rebases onto the latest target branch before PR creation
+   - posts a ready-for-review status comment when the work is complete
    - prepares a reviewable pull request
 5. Review the branch and PR output yourself before merge.
 
@@ -44,6 +47,7 @@ The exact trigger command can evolve, but it should always preserve the same con
 - point Codex at one issue only
 - require it to treat the issue as the source of truth
 - require it to read `AGENTS.md` and the relevant docs first
+- require it to post visible issue status comments as work progresses
 - keep scope limited to the issue
 - require branch naming and PR title formatting to match repo conventions
 - require the PR body to include `Closes #<issue-number>`
@@ -59,10 +63,13 @@ When you build the manual command, the prompt should tell Codex to:
 - fetch and summarize the target issue
 - restate the issue goal, scope, acceptance criteria, constraints, and context
 - create a branch named for the issue
+- mark the issue `in progress` with a short status comment when work starts
 - implement the smallest change that satisfies the issue
 - add or update tests when appropriate
 - run relevant checks
+- mark the issue `blocked` with a short status comment if work cannot continue
 - rebase onto the latest target branch before opening the PR
+- mark the issue `ready for review` with a short status comment when implementation and validation are complete
 - use the repo PR title convention
 - add `Closes #<issue-number>` to the PR body
 - prepare the change for human review

@@ -59,17 +59,25 @@ Recommended meaning:
 - `blocked`: Codex or the maintainer found an unresolved dependency
 - `ready-for-review`: implementation is complete and awaiting your final review
 
-You do not need all of these on day one.
-For the current manual flow, `task`, `codex`, and `co-op` are enough.
+Labels are helpful, but they are not enough on their own because they do not explain why the state changed.
+For the current manual flow, Codex should always post issue status comments as the required visible status signal.
+When the label set exists, labels can mirror the same state for quicker filtering.
+
+Recommended status comments:
+- `in progress` when Codex picks up the issue and starts active work
+- `blocked` when Codex cannot continue without clarification or an external dependency
+- `ready for review` when implementation and validation are complete
 
 ## Suggested Issue Lifecycle
 
 1. Create the issue with the `task` template.
 2. Treat it as `co-op`.
 3. Add `codex` only when you want Codex involved.
-4. Run the manual Codex command on the Mac server for `co-op` issues during the trial phase.
-5. Move the resulting PR into review.
-6. Use `ready-for-review` when Codex has finished and the final decision is yours.
+4. When Codex starts the issue, it adds an `in progress` status comment to the issue.
+5. Run the manual Codex command on the Mac server for `co-op` issues during the trial phase.
+6. If Codex gets stuck, it adds a `blocked` status comment to the issue.
+7. Move the resulting PR into review.
+8. When Codex finishes, it adds a `ready for review` status comment to the issue and, when available, applies or keeps the `ready-for-review` label for your queue.
 
 ## Pull Request Template Direction
 

@@ -10,6 +10,9 @@ body:
         Issue title convention:
         - Use a short descriptive phrase
         - Do not prefix the issue title with feat, fix, docs, or similar change types
+
+        Codex workflow note:
+        - When Codex picks up this issue in `co-op` mode, it should post issue status comments such as `in progress`, `blocked`, and `ready for review`
   - type: textarea
     id: goal
     attributes:
