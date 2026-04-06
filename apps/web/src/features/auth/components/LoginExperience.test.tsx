@@ -2,11 +2,11 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LoginExperience } from "@/features/auth/components/LoginExperience";
+import { LoginView } from "@/features/auth/views/LoginView";
 import { renderWithProviders } from "@/test/render";
 import { useSessionStore } from "@/store/session.store";
 
-describe("LoginExperience", () => {
+describe("LoginView", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
   });
@@ -26,7 +26,7 @@ describe("LoginExperience", () => {
 
     renderWithProviders(
       <MemoryRouter>
-        <LoginExperience />
+        <LoginView />
       </MemoryRouter>
     );
 
@@ -67,7 +67,7 @@ describe("LoginExperience", () => {
     renderWithProviders(
       <MemoryRouter initialEntries={["/login"]}>
         <Routes>
-          <Route path="/login" element={<LoginExperience />} />
+          <Route path="/login" element={<LoginView />} />
           <Route path="/app" element={<div>Workspace route</div>} />
         </Routes>
       </MemoryRouter>

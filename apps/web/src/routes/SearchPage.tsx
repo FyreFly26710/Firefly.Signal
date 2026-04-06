@@ -1,5 +1,5 @@
-import { SearchLandingExperience } from "@/features/search/components/SearchLandingExperience";
+import { SearchLandingView } from "@/features/search/views/SearchLandingView";
 
 export function SearchPage() {
-  return <SearchLandingExperience />;
+  return <SearchLandingView />;
 }

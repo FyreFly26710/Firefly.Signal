@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
-import { JobDetailExperience } from "@/features/jobs/components/JobDetailExperience";
+import { JobDetailView } from "@/features/jobs/views/JobDetailView";
 
 export function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
-  return <JobDetailExperience jobId={jobId} />;
+  return <JobDetailView jobId={jobId} />;
 }

@@ -1,5 +1,5 @@
-import { WorkspaceExperience } from "@/features/workspace/components/WorkspaceExperience";
+import { WorkspaceView } from "@/features/workspace/views/WorkspaceView";
 
 export function AppHomePage() {
-  return <WorkspaceExperience />;
+  return <WorkspaceView />;
 }

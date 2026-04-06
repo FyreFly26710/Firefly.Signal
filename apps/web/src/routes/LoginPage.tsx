@@ -1,5 +1,5 @@
-import { LoginExperience } from "@/features/auth/components/LoginExperience";
+import { LoginView } from "@/features/auth/views/LoginView";
 
 export function LoginPage() {
-  return <LoginExperience />;
+  return <LoginView />;
 }

@@ -3,14 +3,14 @@ import { AppHeader } from "@/components/AppHeader";
 import { SearchFiltersPanel } from "@/features/search/components/SearchFiltersPanel";
 import { SearchResults } from "@/features/search/components/SearchResults";
 import { SearchResultsToolbar } from "@/features/search/components/SearchResultsToolbar";
+import { useJobSearch } from "@/features/search/hooks/useJobSearch";
 import {
   createSearchParams,
   hasSearchCriteria,
   readSearchCriteria
 } from "@/features/search/lib/search-query";
-import { useJobSearch } from "@/features/search/hooks/useJobSearch";
 
-export function SearchResultsExperience() {
+export function SearchResultsView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const criteria = readSearchCriteria(searchParams);
   const { status, data, errorMessage } = useJobSearch(criteria);

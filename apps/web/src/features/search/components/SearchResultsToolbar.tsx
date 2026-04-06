@@ -1,6 +1,6 @@
 import { Button } from "@mui/material";
 import { useState } from "react";
-import { SearchInput } from "@/features/search/components/SearchInput";
+import { SearchInput } from "@/components/SearchInput";
 
 type SearchResultsToolbarProps = {
   initialKeyword: string;

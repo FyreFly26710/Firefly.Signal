@@ -1,7 +1,7 @@
 import { useLocation } from "react-router-dom";
-import { SearchResultsExperience } from "@/features/search/components/SearchResultsExperience";
+import { SearchResultsView } from "@/features/search/views/SearchResultsView";
 
 export function SearchResultsPage() {
   const location = useLocation();
-  return <SearchResultsExperience key={location.search} />;
+  return <SearchResultsView key={location.search} />;
 }
