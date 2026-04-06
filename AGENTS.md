@@ -141,6 +141,11 @@ When Codex works in this repo:
 - Treat the GitHub issue as the source of truth for the requested change when the task comes from GitHub.
 - Expect implementation issues to use the `task` issue template with `Goal`, `Scope`, `Acceptance Criteria`, `Constraints`, and optional `Context`.
 - Stop and surface ambiguity when the issue goal, scope, or constraints are not clear enough to implement safely.
+- Update the source GitHub issue with visible status comments during issue-driven work:
+  - mark it `in progress` when work starts
+  - mark it `blocked` if progress stops on an unresolved dependency or clarification
+  - mark it `ready for review` when implementation and validation are complete
+- Treat issue comments as the required status signal in the current manual workflow, and mirror labels only when the repository label set supports them.
 - Use `firefly-github-delivery` as the orchestration skill for issue-driven work.
 - Use `firefly-planning` when the issue needs refinement, decomposition, or sequencing before coding.
 - Use `firefly-frontend-delivery` or `firefly-backend-delivery` for area-specific implementation guidance once the touched area is clear.
