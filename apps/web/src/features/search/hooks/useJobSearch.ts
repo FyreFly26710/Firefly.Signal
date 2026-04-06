@@ -1,60 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { SearchCriteria, SearchStatus, SearchViewModel } from "@/features/search/types/search.types";
 import { searchJobs } from "@/features/search/api/search.api";
-import { ApiError } from "@/lib/http/api-error";
+import { createAsyncState, type AsyncState } from "@/lib/async/async-state";
+import { useAsyncTask } from "@/lib/async/useAsyncTask";
 
-type SearchState = {
-  status: SearchStatus;
-  data: SearchViewModel | null;
-  errorMessage: string | null;
-};
+type SearchState = AsyncState<SearchViewModel, SearchStatus>;
 
-export const initialSearchState: SearchState = {
-  status: "idle",
-  data: null,
-  errorMessage: null
-};
+export const initialSearchState: SearchState = createAsyncState("idle");
 
 export function useJobSearch({ postcode, keyword }: SearchCriteria) {
-  const [state, setState] = useState<SearchState>(initialSearchState);
+  const { status, data, errorMessage, execute } = useAsyncTask(searchJobs);
+  const hasCriteria = Boolean(postcode || keyword);
 
   useEffect(() => {
-    if (!postcode && !keyword) {
-      setState(initialSearchState);
+    if (!hasCriteria) {
       return;
     }
 
     let isCancelled = false;
 
     async function loadSearchResults() {
-      setState((current) => ({
-        ...current,
-        status: "loading",
-        errorMessage: null
-      }));
-
       try {
-        const data = await searchJobs(postcode, keyword);
+        await execute(postcode, keyword);
 
         if (isCancelled) {
           return;
         }
-
-        setState({
-          status: data.jobs.length === 0 ? "empty" : "success",
-          data,
-          errorMessage: null
-        });
-      } catch (error) {
+      } catch {
         if (isCancelled) {
           return;
         }
-
-        setState({
-          status: "error",
-          data: null,
-          errorMessage: error instanceof ApiError ? error.message : "Something went wrong while searching."
-        });
       }
     }
 
@@ -63,7 +38,15 @@ export function useJobSearch({ postcode, keyword }: SearchCriteria) {
     return () => {
       isCancelled = true;
     };
-  }, [postcode, keyword]);
+  }, [execute, hasCriteria, postcode, keyword]);
 
-  return state;
+  if (!hasCriteria) {
+    return initialSearchState;
+  }
+
+  return {
+    status: status === "success" && data?.jobs.length === 0 ? "empty" : status,
+    data,
+    errorMessage
+  } satisfies SearchState;
 }
