@@ -10,16 +10,37 @@ It turns the existing frontend direction into explicit operating rules so future
 - keep feature behavior discoverable and close to the feature that owns it
 - preserve reusable contracts, state models, and UX states for future mobile clients
 
-## 2. Core Boundary Model
+## 2. Current Implementation Summary
+
+The current frontend implementation now follows this practical structure:
+
+- `routes/`
+  Thin `Page` files that act as route entries only.
+- `features/<feature>/views/`
+  `View` components that own orchestration, routing coordination, async hooks, and screen composition.
+- `features/<feature>/components/`
+  Dumb feature-specific presentational components and sections.
+- `components/`
+  Dumb shared presentational primitives that are proven cross-feature.
+- `api/`
+  Shared backend request modules and DTO contracts.
+- `lib/`
+  Shared technical helpers such as HTTP primitives and async-state utilities.
+
+This is the preferred shape for future frontend work unless a task explicitly calls for a different structure.
+
+## 3. Core Boundary Model
 
 The frontend should be read through four main boundaries:
 
 - `app/`
   App-wide composition such as providers, router setup, theme setup, and shell wiring.
 - `features/`
-  The main implementation area. Each feature owns its UI behavior, feature-specific types, API mapping, and local orchestration.
+  The main implementation area. Each feature owns its `View`, feature-specific components, local types, mappers, and hooks.
 - `components/`
   Shared presentational UI that is reused across features and remains business-light.
+- `api/`
+  Shared backend-facing request functions and DTO contracts.
 - `lib/`
   Small shared technical helpers such as the HTTP client, environment helpers, date helpers, and error normalization.
 
@@ -34,13 +55,14 @@ Supporting boundaries:
 - `test/`
   Shared test helpers and setup.
 
-## 3. Folder And Ownership Rules
+## 4. Folder And Ownership Rules
 
 Use this structure as the default shape:
 
 ```text
 apps/web/src/
   app/
+  api/
   components/
   features/
   lib/
@@ -53,14 +75,37 @@ apps/web/src/
 Ownership rules:
 
 - `app/` owns startup and cross-app composition, not feature behavior.
+- `api/` owns shared backend request functions and DTOs.
 - `features/` owns business-facing UI and should be the default home for new work.
-- `components/` should contain only shared UI that has already proven reusable.
+- `features/<feature>/views/` owns screen-level orchestration for that feature.
+- `features/<feature>/components/` owns dumb feature-specific UI.
+- `components/` should contain only shared UI that has already proven reusable and was explicitly promoted.
 - `lib/` should stay technical and boring, not become a second feature layer.
 - `store/` should stay small because most state should remain local or feature-scoped.
 
 Do not move code into `components/`, `lib/`, or `store/` just to make the tree look tidy.
 
-## 4. Route Composition Rules
+## 5. Page And View Rules
+
+The top-level UI hierarchy should be:
+
+- `Page`
+- `View`
+- low-level components
+
+Use these meanings:
+
+- `Page`
+  Thin route-entry file that passes route params, search params, or route context down to one `View`.
+- `View`
+  Smart screen-level component that owns orchestration, API or hook usage, and composition of lower-level pieces.
+- low-level components
+  Dumb presentational components that receive props and callbacks and may compose other dumb components.
+
+Low-level components may include other low-level components freely.
+The rule is not about rendering depth. The rule is that business orchestration stays in the `View`.
+
+## 6. Route Composition Rules
 
 Routes represent user-visible screens, not implementation layers.
 
@@ -78,7 +123,7 @@ Route files should not:
 
 When a route starts carrying substantial behavior, move that behavior into the relevant feature folder and keep the route as a composition entry point.
 
-## 5. Feature Slice Rules
+## 7. Feature Slice Rules
 
 Each feature owns the code that explains how that feature works.
 
@@ -87,7 +132,7 @@ Typical feature shape:
 ```text
 features/
   search/
-    api/
+    views/
     components/
     hooks/
     mappers/
@@ -98,23 +143,46 @@ Add only the subfolders a feature actually needs.
 
 A feature may own:
 
-- feature containers and presentational pieces
-- request and response types specific to that feature
-- typed feature API modules
+- one or more `View` components
+- feature-specific presentational pieces
+- UI-facing types specific to that feature
 - mappers from backend DTOs to UI models
 - custom hooks that coordinate feature logic
 - feature-level validation helpers
 
 A feature should not introduce its own global store unless the state is genuinely shared across the app.
 
-## 6. Component Architecture Rules
+## 8. Feature Isolation Rule
+
+Features should not reference code inside another feature.
+
+Do not import:
+
+- components from another feature
+- hooks from another feature
+- mappers from another feature
+- types from another feature
+- view models from another feature
+
+If another feature needs similar behavior or UI, it should create its own code by default.
+Promote code into a shared layer only when explicitly instructed or when a deliberate shared decision is made.
+
+Preferred shared destinations:
+
+- `components/` for shared dumb UI
+- `api/` for shared DTOs and request functions
+- `lib/` for shared technical helpers
+
+This repo should prefer duplicated clarity over accidental coupling between features.
+
+## 9. Component Architecture Rules
 
 Use this split:
 
-- route component
-  screen entry and route-level composition
-- feature container
-  feature-owned orchestration, request state, and composition
+- page
+  route entry and route-level composition
+- view
+  feature-owned orchestration, request state, API or hook usage, and composition
 - presentational component
   mostly stateless UI focused on rendering and local interaction
 - shared UI component
@@ -128,10 +196,11 @@ Move a component into `src/components/` only when all of these are true:
 - the abstraction reduces noise rather than hiding intent
 - the component API stays small and explicit
 - the component does not pull feature-specific business rules with it
+- the promotion is a deliberate shared decision, not an opportunistic shortcut
 
 Do not build a broad internal component library before real repetition proves the need.
 
-## 7. Hook Creation Rules
+## 10. Hook Creation Rules
 
 Create a custom hook when it improves clarity by grouping reusable behavior or feature orchestration.
 
@@ -142,6 +211,9 @@ A feature hook is a good fit when it owns:
 - feature-level action handlers that are easier to read outside JSX
 - synchronization with routing or external APIs
 
+Views should usually call hooks.
+Low-level components should usually not call feature orchestration hooks.
+
 Keep logic in the component instead when:
 
 - the behavior is short and local to one component
@@ -149,7 +221,7 @@ Keep logic in the component instead when:
 
 Do not use hooks as a place to hide global mutable state or to recreate service layers inside React.
 
-## 8. State And Session Rules
+## 11. State And Session Rules
 
 State should live in the smallest reasonable place.
 
@@ -177,27 +249,34 @@ Session rule:
 Auth and session concerns should stay centralized in app-level or store-level code.
 Feature code should consume session state through clear selectors or typed access points rather than parsing tokens or duplicating auth logic.
 
-## 9. API Architecture Rules
+## 12. API Architecture Rules
 
 Frontend API access should be explicit, typed, and easy to trace.
 
 Use this split:
 
-- `lib/http/` or similar shared client code for low-level HTTP concerns
-- `features/<feature>/api/` for feature-facing request functions
+- `lib/http/` for low-level HTTP concerns
+- `api/<domain>/` for shared request functions and DTO contracts
 - `features/<feature>/mappers/` for mapping backend DTOs to UI-oriented models when needed
+- `features/<feature>/types/` for feature-local UI types and view models
 
 API rules:
 
-- one small API module per feature area
-- keep request building and response parsing in the API layer
-- keep UI-specific mapping close to the consuming feature
+- one shared API module per backend capability area
+- keep request building and response parsing in the shared API layer
+- keep UI-specific mapping close to the consuming feature by default
 - normalize backend errors into a stable frontend error shape where useful
 - avoid leaking raw backend DTOs widely through the UI
 
+If multiple features use the same endpoint:
+
+- DTOs stay shared in `api/`
+- request functions stay shared in `api/`
+- feature-local mappers, hooks, and UI models stay local unless explicitly promoted
+
 Do not introduce a large frontend data framework unless the app clearly proves the need.
 
-## 10. Request And UI State Rules
+## 13. Request And UI State Rules
 
 Every user-visible async flow should model explicit UI states:
 
@@ -215,12 +294,14 @@ Validation and failure rules:
 - define a stable frontend error shape for API failures
 - make retry paths obvious when retry is appropriate
 - preserve submitted values where that helps the user recover quickly
+- prefer shared async-state utilities in `lib/` for repeated async state patterns rather than ad hoc per-feature boilerplate
 
-## 11. Naming Rules
+## 14. Naming Rules
 
 Use these file-name conventions:
 
 - React components: `PascalCase.tsx`
+- views: `XView.tsx`
 - hooks: `useX.ts`
 - stores: `x.store.ts`
 - API modules: `x.api.ts`
@@ -235,7 +316,7 @@ Naming rules:
 - keep component APIs value-oriented and explicit
 - avoid giant options bags and generic `data` props when a specific prop shape is clearer
 
-## 12. Styling And Design System Rules
+## 15. Styling And Design System Rules
 
 The styling architecture remains:
 
@@ -252,27 +333,18 @@ Styling rules:
 
 Shared styled components should follow the same promotion rule as shared UI components: promote only after real repetition.
 
-## 13. Testing Architecture Rules
+## 16. Testing Architecture Rules
 
-Testing should follow the architecture rather than fight it.
+The current UI tests have been intentionally removed and will be reintroduced later.
 
-Use:
+When frontend tests return, they should follow the architecture rather than fight it:
 
-- unit tests for pure helpers, mappers, validation, and small feature logic
-- component tests for key user behavior and explicit UI states
-- narrow E2E coverage for the most important end-to-end flows
+- test view orchestration where behavior matters
+- test shared utilities and feature mappers where useful
+- avoid forcing low-level presentational components to carry most of the testing burden
+- avoid snapshot-heavy suites that provide low signal for a single-maintainer workflow
 
-Testing priorities:
-
-- search input validation
-- request-state transitions
-- success, empty, and error rendering
-- route-to-feature composition where behavior matters
-- auth guard behavior once protected routes expand
-
-Avoid snapshot-heavy suites that provide low signal for a single-maintainer workflow.
-
-## 14. Mobile Portability Rule
+## 17. Mobile Portability Rule
 
 The web app does not need shared mobile UI, but it should preserve reusable intent for future Android and iOS clients:
 
@@ -284,15 +356,16 @@ The web app does not need shared mobile UI, but it should preserve reusable inte
 
 Preserve those assets without pretending the same UI components will be reused across platforms.
 
-## 15. Practical Decision Rule
+## 18. Practical Decision Rule
 
 When choosing where new frontend code belongs, prefer this order of questions:
 
 1. Is this app-wide composition
-2. Is this feature-owned behavior
-3. Is this proven shared UI
-4. Is this low-level shared technical support
-5. Does this state truly need to be global
+2. Is this shared backend contract code
+3. Is this feature-owned view or feature-owned UI
+4. Is this proven shared UI
+5. Is this low-level shared technical support
+6. Does this state truly need to be global
 
 If the answer is unclear, keep the code closer to the feature first.
 The repo should bias toward explicit feature ownership over abstract neatness.
