@@ -19,7 +19,10 @@ describe("useSessionStore", () => {
   it("signs in, stores the session, and updates the store", async () => {
     vi.mocked(login).mockResolvedValueOnce({
       accessToken: "token-123",
+      tokenType: "Bearer",
+      expiresAtUtc: "2026-04-06T15:00:00.000Z",
       user: {
+        userId: 1,
         userAccount: "ada",
         displayName: "Ada Lovelace",
         role: "admin",
@@ -71,6 +74,7 @@ describe("useSessionStore", () => {
   it("hydrates the current user when an access token exists", async () => {
     writeAccessToken("token-123");
     vi.mocked(getCurrentUser).mockResolvedValueOnce({
+      userId: 2,
       userAccount: "sam",
       displayName: null,
       role: "user",
