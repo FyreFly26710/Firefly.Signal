@@ -9,6 +9,7 @@ Start by reading:
 - `AGENTS.md`
 - `docs/plans.md`
 - `docs/frontend-designs.md`
+- `docs/frontend-designs/architecture.md`
 - the relevant file in `docs/frontend-designs/`
 
 Implementation rules:

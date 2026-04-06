@@ -7,6 +7,7 @@
 
 ## Detailed Reference Docs
 Use the files in `docs/frontend-designs/` as the detailed frontend source of truth for implementation style:
+- `architecture.md`
 - `overview.md`
 - `coding-style.md`
 - `solution-structure.md`
@@ -67,6 +68,8 @@ apps/web/
     store/
     styles/
 ```
+
+The concrete architectural operating rules for those folders live in `docs/frontend-designs/architecture.md`.
 
 Recommended meaning:
 - `app/` for providers, app shell, theme, and router setup
@@ -157,6 +160,7 @@ Start with one feature slice, one page, one route, and one API client boundary.
 That will keep the first frontend issue sequence fast and understandable while leaving room to grow cleanly.
 
 Current repo frontend direction:
+- `docs/frontend-designs/architecture.md` is the concrete architecture contract for future frontend work
 - feature-based structure inside `apps/web/src`
 - route entries stay thin and compose feature-owned UI
 - Zustand is reserved for cross-route or session-level state

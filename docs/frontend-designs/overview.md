@@ -22,14 +22,16 @@ It is intentionally self-contained so future frontend scaffolding can follow one
 - Optimize for web first while keeping patterns portable to future mobile clients.
 
 ## Read Order
-1. `solution-structure.md`
-2. `coding-style.md`
-3. `state-routing-and-api.md`
-4. `styling-and-design-system.md`
-5. `testing-and-quality.md`
+1. `architecture.md`
+2. `solution-structure.md`
+3. `coding-style.md`
+4. `state-routing-and-api.md`
+5. `styling-and-design-system.md`
+6. `testing-and-quality.md`
 
 ## What These Docs Optimize For
 - fast MVP delivery
+- concrete architecture decisions for future frontend issues
 - feature ownership
 - consistent React and TypeScript style
 - predictable UI states
