@@ -13,6 +13,7 @@ body:
 
         Codex workflow note:
         - When Codex picks up this issue in `co-op` mode, it should post issue status comments such as `in progress`, `blocked`, and `ready for review`
+        - It should also keep the workflow labels in sync, including `in-progress`, `blocked`, and `ready-for-review`
   - type: textarea
     id: goal
     attributes:
