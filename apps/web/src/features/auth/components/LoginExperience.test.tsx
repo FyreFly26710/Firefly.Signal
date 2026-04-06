@@ -34,7 +34,7 @@ describe("LoginExperience", () => {
     await user.type(screen.getByLabelText(/user account/i), "wrong");
     await user.clear(screen.getByLabelText(/password/i));
     await user.type(screen.getByLabelText(/password/i), "bad-password");
-    await user.click(screen.getByRole("button", { name: /continue to app/i }));
+    await user.click(screen.getByRole("button", { name: /continue to workspace/i }));
 
     expect(await screen.findByText(/rejected by the identity api/i)).toBeInTheDocument();
   });
@@ -73,7 +73,7 @@ describe("LoginExperience", () => {
       </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: /continue to app/i }));
+    await user.click(screen.getByRole("button", { name: /continue to workspace/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Workspace route")).toBeInTheDocument();

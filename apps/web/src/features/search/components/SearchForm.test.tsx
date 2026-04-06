@@ -5,9 +5,11 @@ import { SearchForm } from "@/features/search/components/SearchForm";
 import { renderWithProviders } from "@/test/render";
 
 describe("SearchForm", () => {
-  it("requires postcode and keyword before submitting", async () => {
+  it("requires at least one search term before submitting", async () => {
     const user = userEvent.setup();
-    const onSubmit = vi.fn<() => Promise<void>>().mockResolvedValue();
+    const onSubmit = vi.fn<(postcode: string, keyword: string) => void>().mockImplementation(
+      () => undefined
+    );
 
     renderWithProviders(
       <SearchForm
@@ -18,10 +20,9 @@ describe("SearchForm", () => {
       />
     );
 
-    await user.click(screen.getByRole("button", { name: /search jobs/i }));
+    await user.click(screen.getByRole("button", { name: /search uk jobs/i }));
 
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText("Enter a postcode.")).toBeInTheDocument();
-    expect(screen.getByText("Enter a keyword.")).toBeInTheDocument();
+    expect(screen.getByText("Enter a keyword or postcode to start searching.")).toBeInTheDocument();
   });
 });
