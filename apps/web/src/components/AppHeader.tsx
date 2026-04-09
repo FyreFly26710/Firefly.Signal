@@ -4,6 +4,7 @@ import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
+import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
 import { Button } from "@mui/material";
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -21,7 +22,8 @@ const publicLinks = [
 
 const authenticatedLinks = [
   ...publicLinks,
-  { to: "/app", label: "Workspace", icon: <DashboardRoundedIcon fontSize="inherit" /> }
+  { to: "/app", label: "Workspace", icon: <DashboardRoundedIcon fontSize="inherit" /> },
+  { to: "/admin/manage-jobs", label: "Manage jobs", icon: <WorkOutlineRoundedIcon fontSize="inherit" /> }
 ];
 
 export function AppHeader({ variant = "public", actions }: AppHeaderProps) {

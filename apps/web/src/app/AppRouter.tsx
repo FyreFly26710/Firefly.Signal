@@ -1,5 +1,8 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
+import { AppJobCreatePage } from "@/routes/AppJobCreatePage";
+import { AppJobDetailPage } from "@/routes/AppJobDetailPage";
+import { AppJobsPage } from "@/routes/AppJobsPage";
 import { AppHomePage } from "@/routes/AppHomePage";
 import { JobDetailPage } from "@/routes/JobDetailPage";
 import { LoginPage } from "@/routes/LoginPage";
@@ -28,6 +31,30 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <AppHomePage />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/manage-jobs",
+    element: (
+      <ProtectedRoute>
+        <AppJobsPage />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/manage-jobs/new",
+    element: (
+      <ProtectedRoute>
+        <AppJobCreatePage />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/manage-jobs/:jobId",
+    element: (
+      <ProtectedRoute>
+        <AppJobDetailPage />
       </ProtectedRoute>
     )
   }

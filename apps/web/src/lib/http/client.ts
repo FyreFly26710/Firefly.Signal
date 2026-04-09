@@ -24,7 +24,51 @@ export async function postJson<TResponse, TBody>(
   });
 }
 
+export async function putJson<TResponse, TBody>(
+  path: string,
+  body: TBody,
+  init?: Omit<RequestInit, "method" | "body">
+): Promise<TResponse> {
+  return requestJson<TResponse>(path, {
+    ...init,
+    method: "PUT",
+    body: JSON.stringify(body)
+  });
+}
+
+export async function deleteRequest(
+  path: string,
+  init?: Omit<RequestInit, "method">
+): Promise<void> {
+  await request(path, {
+    ...init,
+    method: "DELETE"
+  });
+}
+
+export async function deleteJson<TResponse, TBody>(
+  path: string,
+  body: TBody,
+  init?: Omit<RequestInit, "method" | "body">
+): Promise<TResponse> {
+  return requestJson<TResponse>(path, {
+    ...init,
+    method: "DELETE",
+    body: JSON.stringify(body)
+  });
+}
+
 async function requestJson<TResponse>(path: string, init: RequestInit): Promise<TResponse> {
+  const response = await request(path, init);
+
+  if (response.status === 204) {
+    return null as TResponse;
+  }
+
+  return (await response.json()) as TResponse;
+}
+
+async function request(path: string, init: RequestInit): Promise<Response> {
   const accessToken = readAccessToken();
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
@@ -40,7 +84,7 @@ async function requestJson<TResponse>(path: string, init: RequestInit): Promise<
     throw new ApiError(await getErrorMessage(response), response.status);
   }
 
-  return (await response.json()) as TResponse;
+  return response;
 }
 
 async function getErrorMessage(response: Response): Promise<string> {
