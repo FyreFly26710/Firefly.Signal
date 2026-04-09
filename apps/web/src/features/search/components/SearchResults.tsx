@@ -1,3 +1,6 @@
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import { Button, MenuItem, TextField } from "@mui/material";
 import type { SearchStatus } from "@/features/search/types/search.types";
 import { JobCard } from "@/features/jobs/components/JobCard";
 import type { JobCardModel } from "@/features/jobs/types/job.types";
@@ -9,6 +12,10 @@ type SearchResultsProps = {
   totalCount: number;
   keyword: string;
   postcode: string;
+  pageIndex: number;
+  pageSize: number;
+  onPageChange: (pageIndex: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 };
 
 export function SearchResults({
@@ -17,7 +24,11 @@ export function SearchResults({
   results,
   totalCount,
   keyword,
-  postcode
+  postcode,
+  pageIndex,
+  pageSize,
+  onPageChange,
+  onPageSizeChange
 }: SearchResultsProps) {
   if (status === "idle") {
     return (
@@ -84,6 +95,45 @@ export function SearchResults({
         {results.map((job) => (
           <JobCard key={job.id} job={job} />
         ))}
+      </div>
+
+      <div className="mt-6 flex flex-col gap-4 rounded-lg border border-border bg-background-elevated px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-sm text-foreground-secondary">
+          Page <span className="font-medium text-foreground">{pageIndex + 1}</span> of{" "}
+          <span className="font-medium text-foreground">{Math.max(1, Math.ceil(totalCount / pageSize))}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <TextField
+            select
+            size="small"
+            label="Per page"
+            value={String(pageSize)}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            sx={{ minWidth: 120 }}
+          >
+            <MenuItem value="20">20</MenuItem>
+            <MenuItem value="50">50</MenuItem>
+            <MenuItem value="100">100</MenuItem>
+          </TextField>
+          <Button
+            variant="outlined"
+            color="inherit"
+            startIcon={<ChevronLeftRoundedIcon />}
+            disabled={pageIndex === 0}
+            onClick={() => onPageChange(pageIndex - 1)}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outlined"
+            color="inherit"
+            endIcon={<ChevronRightRoundedIcon />}
+            disabled={pageIndex + 1 >= Math.max(1, Math.ceil(totalCount / pageSize))}
+            onClick={() => onPageChange(pageIndex + 1)}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </>
   );

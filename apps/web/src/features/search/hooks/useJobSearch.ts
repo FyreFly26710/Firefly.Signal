@@ -1,4 +1,4 @@
-import { searchJobs } from "@/api/job-search/job-search.api";
+import { getJobsPage } from "@/api/jobs/jobs.api";
 import { useCallback, useEffect } from "react";
 import type { SearchCriteria, SearchStatus, SearchViewModel } from "@/features/search/types/search.types";
 import { mapSearchResponse } from "@/features/search/mappers/search.mappers";
@@ -9,26 +9,26 @@ type SearchState = AsyncState<SearchViewModel, SearchStatus>;
 
 export const initialSearchState: SearchState = createAsyncState("idle");
 
-export function useJobSearch({ postcode, keyword }: SearchCriteria) {
+export function useJobSearch({ postcode, keyword, pageIndex, pageSize }: SearchCriteria) {
   const runSearch = useCallback(
-    async (nextPostcode: string, nextKeyword: string) =>
-      mapSearchResponse(await searchJobs(nextPostcode, nextKeyword, "adzuna")),
+    async (nextPostcode: string, nextKeyword: string, nextPageIndex: number, nextPageSize: number) =>
+      mapSearchResponse(
+        await getJobsPage({
+          pageIndex: nextPageIndex,
+          pageSize: nextPageSize,
+          postcode: nextPostcode || undefined,
+          keyword: nextKeyword || undefined,
+          isHidden: false
+        }),
+        { postcode: nextPostcode, keyword: nextKeyword }
+      ),
     []
   );
   const { status, data, errorMessage, execute } = useAsyncTask(runSearch);
-  const hasCriteria = Boolean(postcode || keyword);
 
   useEffect(() => {
-    if (!hasCriteria) {
-      return;
-    }
-
-    void execute(postcode, keyword);
-  }, [execute, hasCriteria, postcode, keyword]);
-
-  if (!hasCriteria) {
-    return initialSearchState;
-  }
+    void execute(postcode, keyword, pageIndex, pageSize);
+  }, [execute, pageIndex, pageSize, postcode, keyword]);
 
   return {
     status: status === "success" && data?.jobs.length === 0 ? "empty" : status,
