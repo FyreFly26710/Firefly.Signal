@@ -8,7 +8,7 @@ It supplements the general backend design docs with provider-specific behavior, 
 - Overview: `https://developer.adzuna.com/overview`
 - Search docs: `https://developer.adzuna.com/docs/search`
 - Terms of service: `https://developer.adzuna.com/docs/terms_of_service`
-- Interactive docs: `https://developer.adzuna.com/activedocs#/`
+- Interactive docs: `https://developer.adzuna.com/activedocs?`
 - OpenAPI spec: `https://developer.adzuna.com/swagger/spec/test2.json`
 
 ## Endpoint Shape

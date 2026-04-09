@@ -1,16 +1,16 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
-using Firefly.Signal.EventBus;
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.JobSearch.Domain;
-using Firefly.Signal.JobSearch.Infrastructure.External;
+using Firefly.Signal.JobSearch.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Firefly.Signal.JobSearch.FunctionalTests;
@@ -19,70 +19,127 @@ namespace Firefly.Signal.JobSearch.FunctionalTests;
 public class JobSearchApiTests
 {
     [TestMethod]
-    public async Task Search_requires_authentication()
+    public async Task Jobs_requires_authentication()
     {
-        await using var factory = CreateFactory(new StubJobSearchProvider());
+        await using var factory = CreateFactory();
         using var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/api/job-search/search?postcode=SW1A&keyword=.NET&pageIndex=0&pageSize=20&provider=adzuna");
+        var response = await client.GetAsync("/api/job-search/jobs?pageIndex=0&pageSize=20");
 
         Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [TestMethod]
-    public async Task Search_returns_results_when_bearer_token_is_present()
+    public async Task Get_page_returns_seeded_jobs_for_authenticated_user()
     {
-        await using var factory = CreateFactory(new StubJobSearchProvider());
+        await using var factory = CreateFactory();
+        await SeedJobAsync(factory.Services);
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateAccessToken());
 
-        var response = await client.GetAsync("/api/job-search/search?postcode=SW1A&keyword=.NET&pageIndex=0&pageSize=20&provider=adzuna");
+        var response = await client.GetAsync("/api/job-search/jobs?pageIndex=0&pageSize=20");
 
         response.EnsureSuccessStatusCode();
         var payload = await response.Content.ReadAsStringAsync();
-
         StringAssert.Contains(payload, ".NET Backend Developer");
         StringAssert.Contains(payload, "\"totalCount\":1");
     }
 
     [TestMethod]
-    public async Task Search_returns_service_unavailable_when_provider_fails()
+    public async Task Delete_returns_conflict_when_job_is_not_hidden()
     {
-        await using var factory = CreateFactory(new ThrowingJobSearchProvider());
+        await using var factory = CreateFactory();
+        var jobId = await SeedJobAsync(factory.Services);
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateAccessToken());
 
-        var response = await client.GetAsync("/api/job-search/search?postcode=SW1A&keyword=.NET&pageIndex=0&pageSize=20&provider=adzuna");
+        var response = await client.DeleteAsync($"/api/job-search/jobs/{jobId}");
 
-        Assert.AreEqual(HttpStatusCode.ServiceUnavailable, response.StatusCode);
-        var payload = await response.Content.ReadAsStringAsync();
-        StringAssert.Contains(payload, "Job search provider unavailable");
+        Assert.AreEqual(HttpStatusCode.Conflict, response.StatusCode);
     }
 
     [TestMethod]
-    public async Task Search_returns_bad_request_for_unknown_provider()
+    public async Task Hide_then_delete_removes_job()
     {
-        await using var factory = CreateFactory(new StubJobSearchProvider());
+        await using var factory = CreateFactory();
+        var jobId = await SeedJobAsync(factory.Services);
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateAccessToken());
 
-        var response = await client.GetAsync("/api/job-search/search?postcode=SW1A&keyword=.NET&pageIndex=0&pageSize=20&provider=unknown");
+        var hideResponse = await client.PostAsJsonAsync($"/api/job-search/jobs/{jobId}/hide", new { });
+        hideResponse.EnsureSuccessStatusCode();
 
-        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        var deleteResponse = await client.DeleteAsync($"/api/job-search/jobs/{jobId}");
+        Assert.AreEqual(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        var getResponse = await client.GetAsync($"/api/job-search/jobs/{jobId}");
+        Assert.AreEqual(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
-    private static WebApplicationFactory<Firefly.Signal.JobSearch.Api.Program> CreateFactory(IJobSearchProvider providerClient)
+    private static WebApplicationFactory<Firefly.Signal.JobSearch.Api.Program> CreateFactory()
     {
+        var databaseName = Guid.NewGuid().ToString("N");
+
         return new WebApplicationFactory<Firefly.Signal.JobSearch.Api.Program>()
             .WithWebHostBuilder(builder =>
             {
                 builder.UseEnvironment("Testing");
                 builder.ConfigureServices(services =>
                 {
-                    services.RemoveAll<IJobSearchProvider>();
-                    services.AddSingleton(providerClient);
+                    var descriptor = services.Single(x => x.ServiceType == typeof(DbContextOptions<JobSearchDbContext>));
+                    services.Remove(descriptor);
+                    services.AddDbContext<JobSearchDbContext>(options =>
+                        options.UseInMemoryDatabase(databaseName));
                 });
             });
+    }
+
+    private static async Task<long> SeedJobAsync(IServiceProvider services)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<JobSearchDbContext>();
+
+        var job = JobPosting.Create(
+            jobRefreshRunId: null,
+            sourceName: "Adzuna",
+            sourceJobId: Guid.NewGuid().ToString("N"),
+            sourceAdReference: null,
+            title: ".NET Backend Developer",
+            description: "Build internal APIs with .NET 10, PostgreSQL and RabbitMQ.",
+            summary: "Build internal APIs with .NET 10, PostgreSQL and RabbitMQ.",
+            url: "https://example.com/jobs/backend-dotnet",
+            company: "North Star Tech",
+            companyDisplayName: "North Star Tech",
+            companyCanonicalName: "north-star-tech",
+            postcode: "SW1A 1AA",
+            locationName: "London",
+            locationDisplayName: "London",
+            locationAreaJson: "[\"UK\",\"London\"]",
+            latitude: null,
+            longitude: null,
+            categoryTag: "it-jobs",
+            categoryLabel: "IT Jobs",
+            salaryMin: 70000,
+            salaryMax: 90000,
+            salaryCurrency: "GBP",
+            salaryIsPredicted: false,
+            contractTime: "full_time",
+            contractType: "permanent",
+            isFullTime: true,
+            isPartTime: false,
+            isPermanent: true,
+            isContract: false,
+            isRemote: true,
+            postedAtUtc: new DateTime(2025, 4, 3, 10, 0, 0, DateTimeKind.Utc),
+            importedAtUtc: DateTime.UtcNow,
+            lastSeenAtUtc: DateTime.UtcNow,
+            isHidden: false,
+            rawPayloadJson: "{}");
+
+        dbContext.Jobs.Add(job);
+        await dbContext.SaveChangesAsync();
+
+        return job.Id;
     }
 
     private static string CreateAccessToken()
@@ -104,34 +161,5 @@ public class JobSearchApiTests
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    private sealed class StubJobSearchProvider : IJobSearchProvider
-    {
-        public JobSearchProviderKind Provider => JobSearchProviderKind.Adzuna;
-
-        public Task<PublicJobSearchResult> SearchAsync(SearchJobsRequest request, CancellationToken cancellationToken = default)
-            => Task.FromResult(new PublicJobSearchResult(
-                1,
-                [
-                    JobPosting.Create(
-                        ".NET Backend Developer",
-                        "North Star Tech",
-                        request.Postcode,
-                        "London",
-                        "Build internal APIs with .NET 10, PostgreSQL and RabbitMQ.",
-                        "https://example.com/jobs/backend-dotnet",
-                        "Adzuna",
-                        true,
-                        new DateTime(2025, 4, 3, 10, 0, 0, DateTimeKind.Utc))
-                ]));
-    }
-
-    private sealed class ThrowingJobSearchProvider : IJobSearchProvider
-    {
-        public JobSearchProviderKind Provider => JobSearchProviderKind.Adzuna;
-
-        public Task<PublicJobSearchResult> SearchAsync(SearchJobsRequest request, CancellationToken cancellationToken = default)
-            => throw new JobSearchProviderException("The configured job search provider could not return results right now.");
     }
 }
