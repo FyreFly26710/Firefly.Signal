@@ -18,6 +18,7 @@ builder.AddFireflyServiceDefaults();
 builder.AddDefaultOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<AdzunaOptions>(builder.Configuration.GetSection(AdzunaOptions.SectionName));
 builder.Services.AddDbContext<JobSearchDbContext>(options =>
 {
     if (builder.Environment.IsEnvironment("Testing"))
@@ -47,7 +48,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IJobSearchService, DbJobSearchService>();
-builder.Services.AddSingleton<IPublicJobSourceClient, NoOpPublicJobSourceClient>();
+builder.Services.AddHttpClient<IPublicJobSourceClient, AdzunaPublicJobSourceClient>();
 if (builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddSingleton<IEventBus, NoOpEventBus>();

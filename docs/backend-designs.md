@@ -25,8 +25,8 @@ The backend should start as a small set of focused .NET 10 services behind a gat
   - JWT issuance
   - user CRUD and current-user/auth endpoints
 - `Job Search Service`
-  - PostgreSQL-backed job search slice with seeded sample jobs
-  - orchestrates provider lookups, normalization, ranking basics, and future persistence
+  - provider-backed job search slice for live search
+  - orchestrates provider lookups, normalization, ranking basics, and optional future persistence
 - `AI API`
   - hosts no-op AI endpoints first
   - consumes RabbitMQ integration events for future enrichment workflows
@@ -106,7 +106,8 @@ Use PostgreSQL for:
 - normalized job records when persistence becomes necessary
 - user profile or preference data later
 
-Do not introduce complex schemas until the first persistence use case is real.
+Do not make PostgreSQL the required source of truth for the first live search flow.
+Introduce durable job storage only when a concrete persistence use case is real.
 
 ### Redis
 Use Redis only if needed for:

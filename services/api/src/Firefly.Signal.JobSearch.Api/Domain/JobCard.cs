@@ -1,10 +1,10 @@
 namespace Firefly.Signal.JobSearch.Domain;
 
 public sealed record JobCard(
-    long Id,
+    string Id,
     string Title,
     string Company,
-    string Location,
+    string LocationName,
     string Summary,
     string Url,
     string SourceName,
