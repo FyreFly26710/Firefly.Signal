@@ -5,21 +5,23 @@ labels:
   - bug
 body:
   - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Optional background to help start the discussion with the agent.
+      placeholder: Add reproduction notes, observed behavior, screenshots, logs, or extra context.
+  - type: textarea
     id: goal
     attributes:
       label: Goal
       description: Describe the expected fixed outcome in one clear sentence.
       placeholder: Explain what should be true after the bug is fixed.
-    validations:
-      required: true
   - type: textarea
     id: scope
     attributes:
       label: Scope
       description: Call out the affected route, workflow, component, service, or file area.
       placeholder: Keep this bug report focused on one behavior or area.
-    validations:
-      required: true
   - type: textarea
     id: acceptance
     attributes:
@@ -29,17 +31,9 @@ body:
         - [ ] Broken behavior is corrected
         - [ ] Relevant regression risk is covered
         - [ ] User-visible outcome is verified
-    validations:
-      required: true
   - type: textarea
     id: constraints
     attributes:
       label: Constraints
       description: Optional. State what must not be changed and any important technical or product boundaries.
       placeholder: Note boundaries, exclusions, or technical limitations.
-  - type: textarea
-    id: description
-    attributes:
-      label: Description
-      description: Optional background to help start the discussion with the agent.
-      placeholder: Add reproduction notes, observed behavior, screenshots, logs, or extra context.

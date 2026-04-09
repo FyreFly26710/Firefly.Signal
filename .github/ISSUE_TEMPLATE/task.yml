@@ -5,21 +5,23 @@ labels:
   - task
 body:
   - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Optional background to help start the discussion with the agent.
+      placeholder: Add any useful starting context, examples, links, or references.
+  - type: textarea
     id: goal
     attributes:
       label: Goal
       description: Describe the requested outcome in one clear sentence.
       placeholder: Add a concise statement of what needs to be done.
-    validations:
-      required: true
   - type: textarea
     id: scope
     attributes:
       label: Scope
       description: Call out the allowed files, modules, or areas to modify.
       placeholder: Keep this task focused and reviewable.
-    validations:
-      required: true
   - type: textarea
     id: acceptance
     attributes:
@@ -29,17 +31,9 @@ body:
         - [ ] Condition 1
         - [ ] Condition 2
         - [ ] Condition 3
-    validations:
-      required: true
   - type: textarea
     id: constraints
     attributes:
       label: Constraints
       description: Optional. State what must not be done and any important technical or product boundaries.
       placeholder: Note boundaries, exclusions, or technical limitations.
-  - type: textarea
-    id: description
-    attributes:
-      label: Description
-      description: Optional background to help start the discussion with the agent.
-      placeholder: Add any useful starting context, examples, links, or references.
