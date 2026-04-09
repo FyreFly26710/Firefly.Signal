@@ -4,7 +4,7 @@ This document describes the first delivery loop to prove before adding OpenClaw 
 
 ## Goal
 
-Verify that Codex can take a small GitHub issue, refine it with you from the Mac server, and then return a pull request that is ready for your final review.
+Verify that Codex can take a small GitHub issue from the Mac server and then return a pull request that is ready for your final review.
 
 ## Preconditions
 
@@ -35,9 +35,8 @@ It can be revisited later after the co-op flow is stable.
    - posts an issue status update when work begins
    - applies the matching issue labels when work begins
    - creates a focused branch
-   - proposes refinements to the issue before implementation
-   - waits for your confirmation before coding
-   - updates the issue body once the refined task shape is agreed
+   - discusses missing issue details with you when needed
+   - updates the issue body once the final task shape is agreed
    - implements only the requested scope
    - runs relevant checks
    - posts a blocked status comment if the work cannot continue
@@ -54,8 +53,8 @@ The exact trigger command can evolve, but it should always preserve the same con
 - point Codex at one issue only
 - require it to treat the issue as the source of truth
 - require it to read `AGENTS.md` and the relevant docs first
-- require it to refine the issue with you before coding starts
-- require it to update the issue body after refinement so the issue remains the source of truth
+- require it to discuss missing issue details with you when needed
+- require it to update the issue body after agreement so the issue remains the source of truth
 - require it to post visible issue status comments as work progresses
 - require it to keep issue labels aligned with those status transitions
 - keep scope limited to the issue
@@ -71,14 +70,13 @@ The eventual OpenClaw command should call the same underlying workflow.
 
 When you build the manual command, the prompt should tell Codex to:
 - fetch and summarize the target issue
-- restate the issue goal, scope, acceptance criteria, constraints, and context
+- restate the issue goal, scope, acceptance criteria, constraints, and description
 - read the relevant repo docs before implementation work starts
 - create a branch named for the issue
 - mark the issue `in progress` with a short status comment when work starts
 - apply `codex`, `co-op`, and `in-progress` labels when work starts
-- propose any missing or unclear `Goal`, `Scope`, and `Acceptance Criteria` back to you before coding
-- wait for confirmation on the refined issue before implementation begins
-- update the issue body once the refinement is agreed
+- discuss missing or unclear issue details with you when needed
+- update the issue body once the final task shape is agreed
 - implement the smallest change that satisfies the issue
 - add or update tests when appropriate
 - run relevant checks
@@ -95,7 +93,6 @@ When you build the manual command, the prompt should tell Codex to:
 ## Success Criteria For The Trial
 
 The first trial is successful if:
-- Codex refines ambiguous issues with you before implementation starts
 - Codex stays within the issue scope
 - Codex produces a focused branch
 - Codex runs the relevant checks that exist
