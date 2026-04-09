@@ -214,4 +214,79 @@ public sealed class JobPosting : AuditableEntity, IAggregateRoot
         IsHidden = false;
         Touch();
     }
+
+    public void Update(
+        long? jobRefreshRunId,
+        string sourceName,
+        string sourceJobId,
+        string? sourceAdReference,
+        string title,
+        string description,
+        string summary,
+        string url,
+        string company,
+        string? companyDisplayName,
+        string? companyCanonicalName,
+        string postcode,
+        string locationName,
+        string? locationDisplayName,
+        string? locationAreaJson,
+        decimal? latitude,
+        decimal? longitude,
+        string? categoryTag,
+        string? categoryLabel,
+        decimal? salaryMin,
+        decimal? salaryMax,
+        string? salaryCurrency,
+        bool? salaryIsPredicted,
+        string? contractTime,
+        string? contractType,
+        bool isFullTime,
+        bool isPartTime,
+        bool isPermanent,
+        bool isContract,
+        bool isRemote,
+        DateTime postedAtUtc,
+        DateTime importedAtUtc,
+        DateTime lastSeenAtUtc,
+        bool isHidden,
+        string rawPayloadJson)
+    {
+        JobRefreshRunId = jobRefreshRunId;
+        SourceName = sourceName.Trim();
+        SourceJobId = sourceJobId.Trim();
+        SourceAdReference = string.IsNullOrWhiteSpace(sourceAdReference) ? null : sourceAdReference.Trim();
+        Title = title.Trim();
+        Description = description.Trim();
+        Summary = summary.Trim();
+        Url = url.Trim();
+        Company = company.Trim();
+        CompanyDisplayName = string.IsNullOrWhiteSpace(companyDisplayName) ? null : companyDisplayName.Trim();
+        CompanyCanonicalName = string.IsNullOrWhiteSpace(companyCanonicalName) ? null : companyCanonicalName.Trim();
+        Postcode = postcode.Trim().ToUpperInvariant();
+        LocationName = locationName.Trim();
+        LocationDisplayName = string.IsNullOrWhiteSpace(locationDisplayName) ? null : locationDisplayName.Trim();
+        LocationAreaJson = string.IsNullOrWhiteSpace(locationAreaJson) ? null : locationAreaJson.Trim();
+        Latitude = latitude;
+        Longitude = longitude;
+        CategoryTag = string.IsNullOrWhiteSpace(categoryTag) ? null : categoryTag.Trim();
+        CategoryLabel = string.IsNullOrWhiteSpace(categoryLabel) ? null : categoryLabel.Trim();
+        SalaryMin = salaryMin;
+        SalaryMax = salaryMax;
+        SalaryCurrency = string.IsNullOrWhiteSpace(salaryCurrency) ? null : salaryCurrency.Trim();
+        SalaryIsPredicted = salaryIsPredicted;
+        ContractTime = string.IsNullOrWhiteSpace(contractTime) ? null : contractTime.Trim();
+        ContractType = string.IsNullOrWhiteSpace(contractType) ? null : contractType.Trim();
+        IsFullTime = isFullTime;
+        IsPartTime = isPartTime;
+        IsPermanent = isPermanent;
+        IsContract = isContract;
+        IsRemote = isRemote;
+        PostedAtUtc = postedAtUtc;
+        ImportedAtUtc = importedAtUtc;
+        LastSeenAtUtc = lastSeenAtUtc;
+        IsHidden = isHidden;
+        RawPayloadJson = string.IsNullOrWhiteSpace(rawPayloadJson) ? "{}" : rawPayloadJson.Trim();
+        Touch();
+    }
 }
