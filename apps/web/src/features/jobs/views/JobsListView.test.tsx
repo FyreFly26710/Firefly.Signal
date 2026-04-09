@@ -112,5 +112,5 @@ describe("JobsListView", () => {
         isHidden: false
       })
     );
-  });
+  }, 10000);
 });

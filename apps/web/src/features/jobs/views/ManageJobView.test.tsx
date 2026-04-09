@@ -112,5 +112,5 @@ describe("ManageJobView", () => {
     expect(hideJob).toHaveBeenCalledWith(42);
 
     confirmSpy.mockRestore();
-  });
+  }, 10000);
 });

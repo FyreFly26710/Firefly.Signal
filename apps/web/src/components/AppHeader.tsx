@@ -30,7 +30,8 @@ export function AppHeader({ variant = "public", actions }: AppHeaderProps) {
   const navigate = useNavigate();
   const user = useSessionStore((state) => state.user);
   const signOut = useSessionStore((state) => state.signOut);
-  const links = variant === "authenticated" ? authenticatedLinks : publicLinks;
+  const effectiveVariant = user ? "authenticated" : variant;
+  const links = effectiveVariant === "authenticated" ? authenticatedLinks : publicLinks;
 
   function handleSignOut() {
     signOut();
@@ -73,7 +74,7 @@ export function AppHeader({ variant = "public", actions }: AppHeaderProps) {
 
         <div className="flex items-center gap-3">
           {actions}
-          {variant === "authenticated" && user ? (
+          {effectiveVariant === "authenticated" && user ? (
             <>
               <div className="hidden text-right sm:block">
                 <p className="text-sm font-medium text-foreground">{user.displayName}</p>
