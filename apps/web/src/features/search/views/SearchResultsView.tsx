@@ -6,7 +6,6 @@ import { SearchResultsToolbar } from "@/features/search/components/SearchResults
 import { useJobSearch } from "@/features/search/hooks/useJobSearch";
 import {
   createSearchParams,
-  hasSearchCriteria,
   readSearchCriteria
 } from "@/features/search/lib/search-query";
 
@@ -14,6 +13,10 @@ export function SearchResultsView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const criteria = readSearchCriteria(searchParams);
   const { status, data, errorMessage } = useJobSearch(criteria);
+
+  function updateCriteria(nextCriteria: typeof criteria) {
+    setSearchParams(createSearchParams(nextCriteria));
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,7 +29,12 @@ export function SearchResultsView() {
             initialKeyword={criteria.keyword}
             initialPostcode={criteria.postcode}
             onSearch={(nextKeyword, nextPostcode) => {
-              setSearchParams(createSearchParams({ keyword: nextKeyword, postcode: nextPostcode }));
+              updateCriteria({
+                ...criteria,
+                keyword: nextKeyword,
+                postcode: nextPostcode,
+                pageIndex: 0
+              });
             }}
           />
         </div>
@@ -37,12 +45,27 @@ export function SearchResultsView() {
 
         <main>
           <SearchResults
-            status={hasSearchCriteria(criteria) ? status : "idle"}
+            status={status}
             errorMessage={errorMessage}
             results={data?.jobs ?? []}
             totalCount={data?.totalCount ?? 0}
             keyword={criteria.keyword}
             postcode={criteria.postcode}
+            pageIndex={data?.pageIndex ?? criteria.pageIndex}
+            pageSize={data?.pageSize ?? criteria.pageSize}
+            onPageChange={(pageIndex) => {
+              updateCriteria({
+                ...criteria,
+                pageIndex
+              });
+            }}
+            onPageSizeChange={(pageSize) => {
+              updateCriteria({
+                ...criteria,
+                pageSize,
+                pageIndex: 0
+              });
+            }}
           />
         </main>
       </div>

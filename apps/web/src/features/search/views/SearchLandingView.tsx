@@ -13,7 +13,7 @@ export function SearchLandingView() {
   const navigate = useNavigate();
 
   function handleSearch(postcode: string, keyword: string) {
-    void navigate(createSearchPath({ keyword, postcode }));
+    void navigate(createSearchPath({ keyword, postcode, pageIndex: 0, pageSize: 20 }));
   }
 
   return (

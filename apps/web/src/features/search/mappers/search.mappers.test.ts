@@ -55,6 +55,8 @@ describe("mapSearchResponse", () => {
     expect(result).toEqual({
       postcode: "EC2A",
       keyword: "designer",
+      pageIndex: 0,
+      pageSize: 20,
       totalCount: 1,
       jobs: [
         {

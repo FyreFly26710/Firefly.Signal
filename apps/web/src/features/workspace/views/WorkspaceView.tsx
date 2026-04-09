@@ -31,11 +31,11 @@ export function WorkspaceView() {
       return;
     }
 
-    void navigate(createSearchPath({ keyword, postcode: "" }));
+    void navigate(createSearchPath({ keyword, postcode: "", pageIndex: 0, pageSize: 20 }));
   }
 
   function handleSelectSearch(query: string) {
-    void navigate(createSearchPath({ keyword: query, postcode: "" }));
+    void navigate(createSearchPath({ keyword: query, postcode: "", pageIndex: 0, pageSize: 20 }));
   }
 
   return (

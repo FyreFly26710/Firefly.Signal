@@ -9,13 +9,13 @@ type SearchState = AsyncState<SearchViewModel, SearchStatus>;
 
 export const initialSearchState: SearchState = createAsyncState("idle");
 
-export function useJobSearch({ postcode, keyword }: SearchCriteria) {
+export function useJobSearch({ postcode, keyword, pageIndex, pageSize }: SearchCriteria) {
   const runSearch = useCallback(
-    async (nextPostcode: string, nextKeyword: string) =>
+    async (nextPostcode: string, nextKeyword: string, nextPageIndex: number, nextPageSize: number) =>
       mapSearchResponse(
         await getJobsPage({
-          pageIndex: 0,
-          pageSize: 20,
+          pageIndex: nextPageIndex,
+          pageSize: nextPageSize,
           postcode: nextPostcode || undefined,
           keyword: nextKeyword || undefined,
           isHidden: false
@@ -25,19 +25,10 @@ export function useJobSearch({ postcode, keyword }: SearchCriteria) {
     []
   );
   const { status, data, errorMessage, execute } = useAsyncTask(runSearch);
-  const hasCriteria = Boolean(postcode || keyword);
 
   useEffect(() => {
-    if (!hasCriteria) {
-      return;
-    }
-
-    void execute(postcode, keyword);
-  }, [execute, hasCriteria, postcode, keyword]);
-
-  if (!hasCriteria) {
-    return initialSearchState;
-  }
+    void execute(postcode, keyword, pageIndex, pageSize);
+  }, [execute, pageIndex, pageSize, postcode, keyword]);
 
   return {
     status: status === "success" && data?.jobs.length === 0 ? "empty" : status,

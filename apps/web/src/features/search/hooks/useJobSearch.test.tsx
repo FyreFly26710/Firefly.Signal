@@ -24,15 +24,29 @@ describe("useJobSearch", () => {
     vi.clearAllMocks();
   });
 
-  it("stays idle when no criteria are provided", () => {
-    const { result } = renderHook(() => useJobSearch({ keyword: "", postcode: "" }));
-
-    expect(result.current).toEqual({
-      status: "idle",
-      data: null,
-      errorMessage: null
+  it("loads visible jobs even when no criteria are provided", async () => {
+    vi.mocked(getJobsPage).mockResolvedValueOnce({
+      pageIndex: 0,
+      pageSize: 20,
+      totalCount: 0,
+      items: []
     });
-    expect(getJobsPage).not.toHaveBeenCalled();
+
+    const { result } = renderHook(() =>
+      useJobSearch({ keyword: "", postcode: "", pageIndex: 0, pageSize: 20 })
+    );
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("empty");
+    });
+
+    expect(getJobsPage).toHaveBeenCalledWith({
+      pageIndex: 0,
+      pageSize: 20,
+      postcode: undefined,
+      keyword: undefined,
+      isHidden: false
+    });
   });
 
   it("loads and returns mapped results for a populated search", async () => {
@@ -42,7 +56,9 @@ describe("useJobSearch", () => {
     const { result } = renderHook(() =>
       useJobSearch({
         keyword: "designer",
-        postcode: "EC2A"
+        postcode: "EC2A",
+        pageIndex: 1,
+        pageSize: 50
       })
     );
 
@@ -52,7 +68,7 @@ describe("useJobSearch", () => {
 
     deferred.resolve({
       pageIndex: 0,
-      pageSize: 20,
+      pageSize: 50,
       totalCount: 1,
       items: [
         {
@@ -106,10 +122,14 @@ describe("useJobSearch", () => {
       location: "London",
       salary: "\u00a370,000 - \u00a390,000"
     });
+    expect(result.current.data).toMatchObject({
+      pageIndex: 0,
+      pageSize: 50
+    });
     expect(result.current.errorMessage).toBeNull();
     expect(getJobsPage).toHaveBeenCalledWith({
-      pageIndex: 0,
-      pageSize: 20,
+      pageIndex: 1,
+      pageSize: 50,
       postcode: "EC2A",
       keyword: "designer",
       isHidden: false
@@ -127,7 +147,9 @@ describe("useJobSearch", () => {
     const { result } = renderHook(() =>
       useJobSearch({
         keyword: "analyst",
-        postcode: "SE1"
+        postcode: "SE1",
+        pageIndex: 0,
+        pageSize: 20
       })
     );
 
@@ -144,7 +166,9 @@ describe("useJobSearch", () => {
     const { result } = renderHook(() =>
       useJobSearch({
         keyword: "engineer",
-        postcode: "M1"
+        postcode: "M1",
+        pageIndex: 0,
+        pageSize: 20
       })
     );
 

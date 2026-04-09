@@ -49,7 +49,7 @@ const emptyFilters: JobsListFilters = {
   visibility: "visible"
 };
 
-const pageSize = 20;
+const defaultPageSize = 20;
 
 export function JobsListView() {
   const navigate = useNavigate();
@@ -58,15 +58,20 @@ export function JobsListView() {
   const [draftFilters, setDraftFilters] = useState<JobsListFilters>(emptyFilters);
   const [filters, setFilters] = useState<JobsListFilters>(emptyFilters);
   const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(defaultPageSize);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const loadJobs = useCallback(async (nextPageIndex: number, nextFilters: JobsListFilters) => {
+  const loadJobs = useCallback(async (
+    nextPageIndex: number,
+    nextPageSize: number,
+    nextFilters: JobsListFilters
+  ) => {
     return getJobsPage({
       pageIndex: nextPageIndex,
-      pageSize,
+      pageSize: nextPageSize,
       keyword: normalizeText(nextFilters.keyword),
       company: normalizeText(nextFilters.company),
       postcode: normalizeText(nextFilters.postcode),
@@ -80,8 +85,8 @@ export function JobsListView() {
   const { status, data, errorMessage, execute } = useAsyncTask(loadJobs);
 
   useEffect(() => {
-    void execute(pageIndex, filters);
-  }, [execute, filters, pageIndex]);
+    void execute(pageIndex, pageSize, filters);
+  }, [execute, filters, pageIndex, pageSize]);
 
   useEffect(() => {
     const visibleIds = new Set((data?.items ?? []).map((job) => job.id));
@@ -115,7 +120,7 @@ export function JobsListView() {
       const result = await hideJobs(selectedIds);
       setActionMessage(buildHideSummary(result.hiddenCount, result.missingIds.length));
       setSelectedIds([]);
-      await execute(pageIndex, filters);
+      await execute(pageIndex, pageSize, filters);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Unable to hide the selected jobs.");
     } finally {
@@ -140,7 +145,7 @@ export function JobsListView() {
       const result = await deleteJobs(selectedIds);
       setActionMessage(buildDeleteSummary(result));
       setSelectedIds([]);
-      await execute(pageIndex, filters);
+      await execute(pageIndex, pageSize, filters);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Unable to delete the selected jobs.");
     } finally {
@@ -443,7 +448,11 @@ export function JobsListView() {
                 page={pageIndex}
                 onPageChange={(_, nextPage) => setPageIndex(nextPage)}
                 rowsPerPage={pageSize}
-                rowsPerPageOptions={[pageSize]}
+                onRowsPerPageChange={(event) => {
+                  setPageSize(Number(event.target.value));
+                  setPageIndex(0);
+                }}
+                rowsPerPageOptions={[20, 50, 100]}
               />
             </>
           ) : null}

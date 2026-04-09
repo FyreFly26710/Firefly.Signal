@@ -9,6 +9,8 @@ export function mapSearchResponse(
   return {
     postcode: criteria.postcode,
     keyword: criteria.keyword,
+    pageIndex: response.pageIndex,
+    pageSize: response.pageSize,
     totalCount: response.totalCount,
     jobs: response.items.map(mapJobCard)
   };
