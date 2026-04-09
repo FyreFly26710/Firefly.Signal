@@ -14,6 +14,7 @@ Use the files in `docs/backend-designs/` as the detailed backend source of truth
 - `messaging-migrations-and-outbox.md`
 - `local-docker-and-compose.md`
 - `identity-api-direction.md`
+- `adzuna-api.md`
 
 ## High-Level Architecture
 The backend should start as a small set of focused .NET 10 services behind a gateway:

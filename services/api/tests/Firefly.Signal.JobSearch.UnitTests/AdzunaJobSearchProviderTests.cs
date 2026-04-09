@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text;
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.JobSearch.Infrastructure.External;
+using Firefly.Signal.JobSearch.Infrastructure.JobSearchProviders.Adzuna;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -54,7 +55,28 @@ public class AdzunaJobSearchProviderTests
             new AdzunaJobSearchResponseMapper(),
             NullLogger<AdzunaJobSearchProvider>.Instance);
 
-        var result = await provider.SearchAsync(new SearchJobsRequest("SW1A 1AA", ".NET", 1, 25, JobSearchProviderKind.Adzuna));
+        var result = await provider.SearchAsync(new SearchJobsRequest(
+            "SW1A 1AA",
+            ".NET",
+            1,
+            25,
+            JobSearchProviderKind.Adzuna,
+            ExcludedKeyword: "senior",
+            DistanceKilometers: 10,
+            Category: "it-jobs",
+            SalaryMin: 60000,
+            SalaryMax: 120000,
+            FullTime: true,
+            PartTime: false,
+            Permanent: true,
+            Contract: false,
+            SortBy: "date",
+            MaxDaysOld: 30,
+            Company: "North Star Tech",
+            TitleOnly: true,
+            Location0: "UK",
+            Location1: "London",
+            Location2: "London"));
 
         Assert.AreEqual(27, result.TotalCount);
         Assert.HasCount(1, result.Jobs);
@@ -71,6 +93,22 @@ public class AdzunaJobSearchProviderTests
         StringAssert.Contains(handler.LastRequestUri, "results_per_page=25");
         StringAssert.Contains(handler.LastRequestUri, "what=.NET");
         StringAssert.Contains(handler.LastRequestUri, "where=SW1A");
+        StringAssert.Contains(handler.LastRequestUri, "what_exclude=senior");
+        StringAssert.Contains(handler.LastRequestUri, "distance=10");
+        StringAssert.Contains(handler.LastRequestUri, "category=it-jobs");
+        StringAssert.Contains(handler.LastRequestUri, "salary_min=60000");
+        StringAssert.Contains(handler.LastRequestUri, "salary_max=120000");
+        StringAssert.Contains(handler.LastRequestUri, "full_time=1");
+        StringAssert.Contains(handler.LastRequestUri, "part_time=0");
+        StringAssert.Contains(handler.LastRequestUri, "permanent=1");
+        StringAssert.Contains(handler.LastRequestUri, "contract=0");
+        StringAssert.Contains(handler.LastRequestUri, "sort_by=date");
+        StringAssert.Contains(handler.LastRequestUri, "max_days_old=30");
+        StringAssert.Contains(handler.LastRequestUri, "company=North");
+        StringAssert.Contains(handler.LastRequestUri, "title_only=1");
+        StringAssert.Contains(handler.LastRequestUri, "location0=UK");
+        Assert.IsFalse(handler.LastRequestUri?.Contains("location1=", StringComparison.Ordinal) ?? false);
+        Assert.IsFalse(handler.LastRequestUri?.Contains("location2=", StringComparison.Ordinal) ?? false);
     }
 
     [TestMethod]

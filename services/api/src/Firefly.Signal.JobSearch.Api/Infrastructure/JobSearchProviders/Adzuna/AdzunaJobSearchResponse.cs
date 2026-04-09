@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Firefly.Signal.JobSearch.Infrastructure.External;
+namespace Firefly.Signal.JobSearch.Infrastructure.JobSearchProviders.Adzuna;
 
 public sealed class AdzunaJobSearchResponse
 {
