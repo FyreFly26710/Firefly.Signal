@@ -1,5 +1,5 @@
 using Firefly.Signal.JobSearch.Application;
-using Firefly.Signal.JobSearch.Domain;
+using Firefly.Signal.JobSearch.Infrastructure.External;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,31 +11,17 @@ public static class JobSearchEndpoints
     {
         var group = endpoints.MapGroup("/api/job-search").RequireAuthorization();
 
-        group.MapGet("/demo", DemoAsync);
-        group.MapGet("/", ListAsync);
-        group.MapGet("/{id:long}", GetByIdAsync);
         group.MapGet("/search", SearchAsync);
 
         return endpoints;
     }
 
-    private static async Task<Ok<SearchJobsResponse>> DemoAsync(IJobSearchService service, CancellationToken cancellationToken)
-        => TypedResults.Ok(await service.SearchAsync(new SearchJobsRequest("SW1A", ".NET"), cancellationToken));
-
-    private static async Task<Ok<IReadOnlyList<JobCard>>> ListAsync(IJobSearchService service, CancellationToken cancellationToken)
-        => TypedResults.Ok(await service.ListAsync(cancellationToken));
-
-    private static async Task<Results<Ok<JobCard>, NotFound>> GetByIdAsync(long id, IJobSearchService service, CancellationToken cancellationToken)
-    {
-        var job = await service.GetByIdAsync(id, cancellationToken);
-        return job is null ? TypedResults.NotFound() : TypedResults.Ok(job);
-    }
-
-    private static async Task<Results<Ok<SearchJobsResponse>, BadRequest<ProblemDetails>>> SearchAsync(
+    private static async Task<Results<Ok<SearchJobsResponse>, BadRequest<ProblemDetails>, ProblemHttpResult>> SearchAsync(
         [FromQuery] string postcode,
         [FromQuery] string keyword,
         [FromQuery] int pageIndex,
         [FromQuery] int pageSize,
+        [FromQuery] string? provider,
         IJobSearchService service,
         CancellationToken cancellationToken)
     {
@@ -57,7 +43,37 @@ public static class JobSearchEndpoints
             });
         }
 
-        var request = new SearchJobsRequest(postcode, keyword, Math.Max(pageIndex, 0), pageSize <= 0 ? 20 : pageSize);
-        return TypedResults.Ok(await service.SearchAsync(request, cancellationToken));
+        if (!TryParseProvider(provider, out var parsedProvider))
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid provider",
+                Detail = "The requested job search provider is not supported."
+            });
+        }
+
+        var request = new SearchJobsRequest(postcode, keyword, Math.Max(pageIndex, 0), pageSize <= 0 ? 20 : pageSize, parsedProvider);
+        try
+        {
+            return TypedResults.Ok(await service.SearchAsync(request, cancellationToken));
+        }
+        catch (JobSearchProviderException exception)
+        {
+            return TypedResults.Problem(
+                title: "Job search provider unavailable",
+                detail: exception.Message,
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+    }
+
+    private static bool TryParseProvider(string? provider, out JobSearchProviderKind parsedProvider)
+    {
+        if (string.IsNullOrWhiteSpace(provider))
+        {
+            parsedProvider = JobSearchProviderKind.Adzuna;
+            return true;
+        }
+
+        return Enum.TryParse(provider, ignoreCase: true, out parsedProvider);
     }
 }

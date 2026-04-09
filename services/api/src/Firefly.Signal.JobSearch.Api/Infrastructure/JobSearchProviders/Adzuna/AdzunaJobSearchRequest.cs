@@ -1,0 +1,45 @@
+using System.Text.Json.Serialization;
+
+namespace Firefly.Signal.JobSearch.Infrastructure.JobSearchProviders.Adzuna;
+
+public sealed record AdzunaJobSearchRequest(
+    [property: JsonIgnore]
+    int PageNumber,
+    [property: JsonPropertyName("results_per_page")]
+    int ResultsPerPage,
+    [property: JsonPropertyName("what")]
+    string What,
+    [property: JsonPropertyName("what_exclude")]
+    string? WhatExclude,
+    [property: JsonPropertyName("where")]
+    string Where,
+    [property: JsonPropertyName("distance")]
+    int? Distance,
+    [property: JsonPropertyName("category")]
+    string? Category,
+    [property: JsonPropertyName("salary_min")]
+    decimal? SalaryMin,
+    [property: JsonPropertyName("salary_max")]
+    decimal? SalaryMax,
+    [property: JsonPropertyName("full_time")]
+    bool? FullTime,
+    [property: JsonPropertyName("part_time")]
+    bool? PartTime,
+    [property: JsonPropertyName("permanent")]
+    bool? Permanent,
+    [property: JsonPropertyName("contract")]
+    bool? Contract,
+    [property: JsonPropertyName("sort_by")]
+    string? SortBy,
+    [property: JsonPropertyName("max_days_old")]
+    int? MaxDaysOld,
+    [property: JsonPropertyName("company")]
+    string? Company,
+    [property: JsonPropertyName("title_only")]
+    bool TitleOnly,
+    [property: JsonPropertyName("location0")]
+    string? Location0,
+    [property: JsonPropertyName("location1")]
+    string? Location1,
+    [property: JsonPropertyName("location2")]
+    string? Location2);

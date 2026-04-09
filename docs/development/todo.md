@@ -31,6 +31,14 @@ It is meant to stay lightweight and easy to update as new thoughts come up.
 - Export saved jobs or search results
 - Basic notification idea for new matching jobs
 
+## Issues
+
+- Persist normalized job search results and deduplicate repeated listings.
+- Add saved searches and search history on top of the real search flow.
+- Add scheduled refresh for saved searches or tracked job queries.
+- Add a second provider or fallback provider for better result coverage and resilience.
+- Add clearer provider-failure handling, observability, and rate-limit protection for live search.
+
 ## Notes
 
 - If an idea becomes important enough to affect sequencing, add it to `roadmap.md` instead.

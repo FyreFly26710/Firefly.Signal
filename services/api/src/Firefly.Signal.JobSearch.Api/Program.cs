@@ -4,6 +4,7 @@ using Firefly.Signal.EventBus;
 using Firefly.Signal.EventBusRabbitMQ;
 using Firefly.Signal.JobSearch.Endpoints;
 using Firefly.Signal.JobSearch.Infrastructure.External;
+using Firefly.Signal.JobSearch.Infrastructure.JobSearchProviders.Adzuna;
 using Firefly.Signal.JobSearch.Infrastructure.Persistence;
 using Firefly.Signal.JobSearch.Infrastructure.Services;
 using Firefly.Signal.ServiceDefaults;
@@ -18,6 +19,7 @@ builder.AddFireflyServiceDefaults();
 builder.AddDefaultOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<AdzunaOptions>(builder.Configuration.GetSection(AdzunaOptions.SectionName));
 builder.Services.AddDbContext<JobSearchDbContext>(options =>
 {
     if (builder.Environment.IsEnvironment("Testing"))
@@ -47,7 +49,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IJobSearchService, DbJobSearchService>();
-builder.Services.AddSingleton<IPublicJobSourceClient, NoOpPublicJobSourceClient>();
+builder.Services.AddSingleton<AdzunaJobSearchRequestMapper>();
+builder.Services.AddSingleton<AdzunaJobSearchResponseMapper>();
+builder.Services.AddSingleton<MockAdzunaJobSearchProvider>();
+builder.Services.AddHttpClient<AdzunaJobSearchProvider>();
+builder.Services.AddScoped<IJobSearchProvider>(services =>
+{
+    var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AdzunaOptions>>().Value;
+    return options.UseLiveApi
+        ? services.GetRequiredService<AdzunaJobSearchProvider>()
+        : services.GetRequiredService<MockAdzunaJobSearchProvider>();
+});
 if (builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddSingleton<IEventBus, NoOpEventBus>();
