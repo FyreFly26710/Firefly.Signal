@@ -48,7 +48,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IJobSearchService, DbJobSearchService>();
-builder.Services.AddHttpClient<IPublicJobSourceClient, AdzunaPublicJobSourceClient>();
+builder.Services.AddSingleton<AdzunaJobSearchRequestMapper>();
+builder.Services.AddSingleton<AdzunaJobSearchResponseMapper>();
+builder.Services.AddHttpClient<AdzunaJobSearchProvider>();
+builder.Services.AddScoped<IJobSearchProvider>(services => services.GetRequiredService<AdzunaJobSearchProvider>());
 if (builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddSingleton<IEventBus, NoOpEventBus>();

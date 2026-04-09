@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 namespace Firefly.Signal.JobSearch.UnitTests;
 
 [TestClass]
-public class AdzunaPublicJobSourceClientTests
+public class AdzunaJobSearchProviderTests
 {
     [TestMethod]
     public async Task SearchAsync_builds_provider_request_and_maps_results()
@@ -41,7 +41,7 @@ public class AdzunaPublicJobSourceClientTests
                 "application/json")
         });
 
-        var client = new AdzunaPublicJobSourceClient(
+        var provider = new AdzunaJobSearchProvider(
             new HttpClient(handler),
             Options.Create(new AdzunaOptions
             {
@@ -50,9 +50,11 @@ public class AdzunaPublicJobSourceClientTests
                 AppId = "app-id",
                 AppKey = "app-key"
             }),
-            NullLogger<AdzunaPublicJobSourceClient>.Instance);
+            new AdzunaJobSearchRequestMapper(),
+            new AdzunaJobSearchResponseMapper(),
+            NullLogger<AdzunaJobSearchProvider>.Instance);
 
-        var result = await client.SearchAsync(new SearchJobsRequest("SW1A 1AA", ".NET", 1, 25));
+        var result = await provider.SearchAsync(new SearchJobsRequest("SW1A 1AA", ".NET", 1, 25, JobSearchProviderKind.Adzuna));
 
         Assert.AreEqual(27, result.TotalCount);
         Assert.HasCount(1, result.Jobs);
@@ -74,13 +76,15 @@ public class AdzunaPublicJobSourceClientTests
     [TestMethod]
     public async Task SearchAsync_throws_when_credentials_are_missing()
     {
-        var client = new AdzunaPublicJobSourceClient(
+        var provider = new AdzunaJobSearchProvider(
             new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK))),
             Options.Create(new AdzunaOptions()),
-            NullLogger<AdzunaPublicJobSourceClient>.Instance);
+            new AdzunaJobSearchRequestMapper(),
+            new AdzunaJobSearchResponseMapper(),
+            NullLogger<AdzunaJobSearchProvider>.Instance);
 
         await Assert.ThrowsExactlyAsync<JobSearchProviderException>(() =>
-            client.SearchAsync(new SearchJobsRequest("SW1A 1AA", ".NET")));
+            provider.SearchAsync(new SearchJobsRequest("SW1A 1AA", ".NET", 0, 20, JobSearchProviderKind.Adzuna)));
     }
 
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> handler) : HttpMessageHandler

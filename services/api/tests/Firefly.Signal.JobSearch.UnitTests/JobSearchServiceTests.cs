@@ -13,7 +13,8 @@ public class JobSearchServiceTests
     [TestMethod]
     public async Task SearchAsync_returns_provider_backed_results()
     {
-        var provider = Substitute.For<IPublicJobSourceClient>();
+        var provider = Substitute.For<IJobSearchProvider>();
+        provider.Provider.Returns(JobSearchProviderKind.Adzuna);
         provider.SearchAsync(Arg.Any<SearchJobsRequest>(), Arg.Any<CancellationToken>())
             .Returns(new PublicJobSearchResult(
                 1,
@@ -31,9 +32,9 @@ public class JobSearchServiceTests
                 ]));
 
         var eventBus = Substitute.For<IEventBus>();
-        var service = new DbJobSearchService(provider, eventBus);
+        var service = new DbJobSearchService([provider], eventBus);
 
-        var result = await service.SearchAsync(new SearchJobsRequest("SW1A", ".NET"));
+        var result = await service.SearchAsync(new SearchJobsRequest("SW1A", ".NET", 0, 20, JobSearchProviderKind.Adzuna));
 
         Assert.AreEqual(1, result.TotalCount);
         Assert.AreEqual("Backend .NET Developer", result.Jobs[0].Title);

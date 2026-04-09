@@ -12,7 +12,7 @@ export const initialSearchState: SearchState = createAsyncState("idle");
 export function useJobSearch({ postcode, keyword }: SearchCriteria) {
   const runSearch = useCallback(
     async (nextPostcode: string, nextKeyword: string) =>
-      mapSearchResponse(await searchJobs(nextPostcode, nextKeyword)),
+      mapSearchResponse(await searchJobs(nextPostcode, nextKeyword, "adzuna")),
     []
   );
   const { status, data, errorMessage, execute } = useAsyncTask(runSearch);

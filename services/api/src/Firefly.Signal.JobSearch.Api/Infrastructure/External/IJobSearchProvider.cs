@@ -1,9 +1,10 @@
 using Firefly.Signal.JobSearch.Application;
-using Firefly.Signal.JobSearch.Domain;
 
 namespace Firefly.Signal.JobSearch.Infrastructure.External;
 
-public interface IPublicJobSourceClient
+public interface IJobSearchProvider
 {
+    JobSearchProviderKind Provider { get; }
+
     Task<PublicJobSearchResult> SearchAsync(SearchJobsRequest request, CancellationToken cancellationToken = default);
 }

@@ -7,20 +7,25 @@ using Firefly.Signal.SharedKernel.Domain;
 namespace Firefly.Signal.JobSearch.Infrastructure.Services;
 
 public sealed class DbJobSearchService(
-    IPublicJobSourceClient publicJobSourceClient,
+    IEnumerable<IJobSearchProvider> providers,
     IEventBus eventBus) : IJobSearchService
 {
     public async Task<SearchJobsResponse> SearchAsync(SearchJobsRequest request, CancellationToken cancellationToken = default)
     {
         var normalizedPostcode = request.Postcode.Trim().ToUpperInvariant();
         var normalizedKeyword = request.Keyword.Trim();
-        var providerResult = await publicJobSourceClient.SearchAsync(
-            request with
-            {
-                Postcode = normalizedPostcode,
-                Keyword = normalizedKeyword
-            },
-            cancellationToken);
+        var normalizedRequest = request with
+        {
+            Postcode = normalizedPostcode,
+            Keyword = normalizedKeyword
+        };
+        var provider = providers.SingleOrDefault(x => x.Provider == normalizedRequest.Provider);
+        if (provider is null)
+        {
+            throw new JobSearchProviderException($"The {normalizedRequest.Provider} job search provider is not registered.");
+        }
+
+        var providerResult = await provider.SearchAsync(normalizedRequest, cancellationToken);
 
         await eventBus.PublishAsync(new JobSearchRequestedIntegrationEvent(
             SearchId: SnowflakeId.GenerateId(),

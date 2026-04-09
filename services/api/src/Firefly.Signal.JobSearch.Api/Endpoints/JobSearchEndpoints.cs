@@ -21,6 +21,7 @@ public static class JobSearchEndpoints
         [FromQuery] string keyword,
         [FromQuery] int pageIndex,
         [FromQuery] int pageSize,
+        [FromQuery] string? provider,
         IJobSearchService service,
         CancellationToken cancellationToken)
     {
@@ -42,7 +43,16 @@ public static class JobSearchEndpoints
             });
         }
 
-        var request = new SearchJobsRequest(postcode, keyword, Math.Max(pageIndex, 0), pageSize <= 0 ? 20 : pageSize);
+        if (!TryParseProvider(provider, out var parsedProvider))
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid provider",
+                Detail = "The requested job search provider is not supported."
+            });
+        }
+
+        var request = new SearchJobsRequest(postcode, keyword, Math.Max(pageIndex, 0), pageSize <= 0 ? 20 : pageSize, parsedProvider);
         try
         {
             return TypedResults.Ok(await service.SearchAsync(request, cancellationToken));
@@ -54,5 +64,16 @@ public static class JobSearchEndpoints
                 detail: exception.Message,
                 statusCode: StatusCodes.Status503ServiceUnavailable);
         }
+    }
+
+    private static bool TryParseProvider(string? provider, out JobSearchProviderKind parsedProvider)
+    {
+        if (string.IsNullOrWhiteSpace(provider))
+        {
+            parsedProvider = JobSearchProviderKind.Adzuna;
+            return true;
+        }
+
+        return Enum.TryParse(provider, ignoreCase: true, out parsedProvider);
     }
 }

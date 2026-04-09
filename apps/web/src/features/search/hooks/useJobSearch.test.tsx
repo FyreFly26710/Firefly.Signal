@@ -81,7 +81,7 @@ describe("useJobSearch", () => {
       location: "London"
     });
     expect(result.current.errorMessage).toBeNull();
-    expect(searchJobs).toHaveBeenCalledWith("EC2A", "designer");
+    expect(searchJobs).toHaveBeenCalledWith("EC2A", "designer", "adzuna");
   });
 
   it("returns the empty state when the search succeeds without jobs", async () => {
