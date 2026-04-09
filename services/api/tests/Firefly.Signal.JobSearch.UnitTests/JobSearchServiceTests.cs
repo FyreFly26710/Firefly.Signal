@@ -92,7 +92,7 @@ public class JobSearchServiceTests
         var result = await service.GetPageAsync(new GetJobsPageRequest(0, 20));
 
         Assert.AreEqual(1L, result.TotalCount);
-        Assert.AreEqual("Backend .NET Developer", result.Jobs[0].Title);
+        Assert.AreEqual("Backend .NET Developer", result.Items[0].Title);
     }
 
     [TestMethod]

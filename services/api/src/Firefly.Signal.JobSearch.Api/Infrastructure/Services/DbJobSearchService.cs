@@ -1,6 +1,7 @@
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.JobSearch.Domain;
 using Firefly.Signal.JobSearch.Infrastructure.Persistence;
+using Firefly.Signal.SharedKernel.Models;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,7 @@ public sealed class DbJobSearchService(JobSearchDbContext dbContext) : IJobSearc
             .Select(ToResponse())
             .SingleOrDefaultAsync(cancellationToken);
 
-    public async Task<PagedJobsResponse> GetPageAsync(GetJobsPageRequest request, CancellationToken cancellationToken = default)
+    public async Task<Paged<JobDetailsResponse>> GetPageAsync(GetJobsPageRequest request, CancellationToken cancellationToken = default)
     {
         var pageIndex = Math.Max(request.PageIndex, 0);
         var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
@@ -79,7 +80,7 @@ public sealed class DbJobSearchService(JobSearchDbContext dbContext) : IJobSearc
             .Select(ToResponse())
             .ToListAsync(cancellationToken);
 
-        return new PagedJobsResponse(pageIndex, pageSize, totalCount, jobs);
+        return new Paged<JobDetailsResponse>(pageIndex, pageSize, totalCount, jobs);
     }
 
     public async Task<JobDetailsResponse> CreateAsync(CreateJobRequest request, CancellationToken cancellationToken = default)

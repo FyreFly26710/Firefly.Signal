@@ -1,3 +1,5 @@
+using Firefly.Signal.SharedKernel.Models;
+
 namespace Firefly.Signal.JobSearch.Application;
 
 public sealed record JobDetailsResponse(
@@ -48,12 +50,6 @@ public sealed record GetJobsPageRequest(
     string? SourceName = null,
     string? CategoryTag = null,
     bool? IsHidden = false);
-
-public sealed record PagedJobsResponse(
-    int PageIndex,
-    int PageSize,
-    long TotalCount,
-    IReadOnlyList<JobDetailsResponse> Jobs);
 
 public sealed record CreateJobRequest(
     long? JobRefreshRunId,
@@ -139,5 +135,3 @@ public sealed record DeleteJobsResponse(
     IReadOnlyList<long> DeletedIds,
     IReadOnlyList<long> MissingIds,
     IReadOnlyList<long> NotHiddenIds);
-
-public sealed record BulkJobIdsRequest(IReadOnlyList<long> Ids);

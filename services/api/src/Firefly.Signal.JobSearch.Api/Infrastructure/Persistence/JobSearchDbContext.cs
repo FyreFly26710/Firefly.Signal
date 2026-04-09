@@ -1,4 +1,5 @@
 using Firefly.Signal.JobSearch.Domain;
+using Firefly.Signal.SharedKernel.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 
 namespace Firefly.Signal.JobSearch.Infrastructure.Persistence;
@@ -48,7 +49,6 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
             entity.HasIndex(x => x.PostedAtUtc);
             entity.HasIndex(x => x.IsHidden);
             entity.HasIndex(x => x.SourceName);
-            entity.HasQueryFilter(x => !x.IsDeleted);
         });
 
         modelBuilder.Entity<JobRefreshRun>(entity =>
@@ -67,7 +67,8 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
             entity.HasIndex(x => x.Status);
             entity.HasIndex(x => x.StartedAtUtc);
-            entity.HasQueryFilter(x => !x.IsDeleted);
         });
+
+        modelBuilder.ApplySoftDeleteQueryFilters();
     }
 }

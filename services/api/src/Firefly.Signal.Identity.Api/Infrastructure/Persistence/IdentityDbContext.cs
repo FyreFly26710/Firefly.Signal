@@ -1,4 +1,5 @@
 using Firefly.Signal.Identity.Domain;
+using Firefly.Signal.SharedKernel.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 
 namespace Firefly.Signal.Identity.Infrastructure.Persistence;
@@ -27,7 +28,8 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
             entity.HasIndex(x => x.UserAccountName).IsUnique();
             entity.HasIndex(x => x.Email).IsUnique();
-            entity.HasQueryFilter(x => !x.IsDeleted);
         });
+
+        modelBuilder.ApplySoftDeleteQueryFilters();
     }
 }

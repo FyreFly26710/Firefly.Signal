@@ -1,4 +1,5 @@
 using Firefly.Signal.JobSearch.Application;
+using Firefly.Signal.SharedKernel.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +26,7 @@ public static class JobSearchEndpoints
         return endpoints;
     }
 
-    private static async Task<Ok<PagedJobsResponse>> GetPageAsync(
+    private static async Task<Ok<Paged<JobDetailsResponse>>> GetPageAsync(
         [FromQuery] int pageIndex,
         [FromQuery] int pageSize,
         [FromQuery] string? keyword,
@@ -102,7 +103,7 @@ public static class JobSearchEndpoints
     }
 
     private static async Task<Results<Ok<DeleteJobsResponse>, Conflict<ProblemDetails>>> DeleteManyAsync(
-        [FromBody] BulkJobIdsRequest request,
+        [FromBody] IdBatchRequest<long> request,
         [FromServices] IJobSearchService service,
         CancellationToken cancellationToken)
     {
@@ -126,7 +127,7 @@ public static class JobSearchEndpoints
         => TypedResults.Ok(await service.HideAsync([id], cancellationToken));
 
     private static async Task<Ok<HideJobsResponse>> HideManyAsync(
-        [FromBody] BulkJobIdsRequest request,
+        [FromBody] IdBatchRequest<long> request,
         [FromServices] IJobSearchService service,
         CancellationToken cancellationToken)
         => TypedResults.Ok(await service.HideAsync(request.Ids, cancellationToken));
