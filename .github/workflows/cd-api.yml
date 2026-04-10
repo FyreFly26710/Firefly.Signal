@@ -4,21 +4,17 @@ on:
   push:
     branches:
       - main
-      - master
-      - dev
     paths:
       - "services/api/**"
       - "infra/docker/**"
       - "infra/deploy/**"
       - ".github/workflows/cd-api.yml"
-  workflow_dispatch:
 
 jobs:
   preflight:
     runs-on: ubuntu-latest
     outputs:
       docker_ready: ${{ steps.docker.outputs.ready }}
-      deploy_ready: ${{ steps.deploy.outputs.ready }}
     steps:
       - name: Check Docker Hub secrets
         id: docker
@@ -28,29 +24,6 @@ jobs:
           DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
         run: |
           if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ] && [ -n "$DOCKERHUB_NAMESPACE" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Check deployment secrets
-        id: deploy
-        env:
-          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
-          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
-          DEPLOY_SSH_USERNAME: ${{ secrets.DEPLOY_SSH_USERNAME }}
-          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}
-          JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
-          RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
-          DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
-          CORS_ALLOWED_ORIGIN: ${{ secrets.CORS_ALLOWED_ORIGIN }}
-        run: |
-          if [ -n "$DEPLOY_SSH_HOST" ] && [ -n "$DEPLOY_SSH_PORT" ] && [ -n "$DEPLOY_SSH_USERNAME" ] && [ -n "$DEPLOY_SSH_PRIVATE_KEY" ] && [ -n "$DEPLOY_REMOTE_PATH" ] && [ -n "$JWT_SIGNING_KEY" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ] && [ -n "$RABBITMQ_DEFAULT_USER" ] && [ -n "$RABBITMQ_DEFAULT_PASS" ] && [ -n "$DOCKERHUB_NAMESPACE" ] && [ -n "$CORS_ALLOWED_ORIGIN" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -99,74 +72,4 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_NAMESPACE }}/${{ matrix.image }}:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_NAMESPACE }}/${{ matrix.image }}:${{ github.ref_name }}
-
-  deploy:
-    needs:
-      - preflight
-      - build-and-push
-    if: needs.preflight.outputs.deploy_ready == 'true' && needs.preflight.outputs.docker_ready == 'true'
-    runs-on: ubuntu-latest
-    env:
-      DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
-      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
-      DEPLOY_SSH_USERNAME: ${{ secrets.DEPLOY_SSH_USERNAME }}
-      DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}
-      JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
-      RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
-      DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
-      CORS_ALLOWED_ORIGIN: ${{ secrets.CORS_ALLOWED_ORIGIN }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: Configure SSH
-        run: |
-          cat << EOF > ~/.ssh/config
-          Host firefly-mac-mini
-            HostName ${DEPLOY_SSH_HOST}
-            User ${DEPLOY_SSH_USERNAME}
-            Port ${DEPLOY_SSH_PORT}
-          EOF
-
-      - name: Generate deployment env file
-        run: |
-          cat << EOF > .deploy.env
-          POSTGRES_USER=${POSTGRES_USER}
-          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-          POSTGRES_DB=${POSTGRES_DB}
-          RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-          RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-          JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
-          DOCKERHUB_NAMESPACE=${DOCKERHUB_NAMESPACE}
-          CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN}
-          IMAGE_TAG=${GITHUB_SHA}
-          EOF
-
-      - name: Upload deployment files
-        run: |
-          ssh -o StrictHostKeyChecking=no firefly-mac-mini "mkdir -p ${DEPLOY_REMOTE_PATH}"
-          scp -P ${DEPLOY_SSH_PORT} -o StrictHostKeyChecking=no infra/deploy/docker-compose.production.yml firefly-mac-mini:${DEPLOY_REMOTE_PATH}/docker-compose.production.yml
-          scp -P ${DEPLOY_SSH_PORT} -o StrictHostKeyChecking=no .deploy.env firefly-mac-mini:${DEPLOY_REMOTE_PATH}/.env
-
-      - name: Deploy on server
-        run: |
-          ssh -o StrictHostKeyChecking=no firefly-mac-mini "
-            set -eux
-            export PATH=/usr/local/bin:/opt/homebrew/bin:\$PATH
-            cd ${DEPLOY_REMOTE_PATH}
-            docker compose -f docker-compose.production.yml --env-file .env pull
-            docker compose -f docker-compose.production.yml --env-file .env up -d --remove-orphans
-            docker compose -f docker-compose.production.yml --env-file .env ps
-          "
+            ${{ secrets.DOCKERHUB_NAMESPACE }}/${{ matrix.image }}:main

@@ -1,0 +1,121 @@
+name: Deploy API
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Docker image tag to deploy
+        required: true
+        default: main
+        type: string
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_ready: ${{ steps.deploy.outputs.ready }}
+    steps:
+      - name: Check deployment secrets
+        id: deploy
+        env:
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          DEPLOY_SSH_USERNAME: ${{ secrets.DEPLOY_SSH_USERNAME }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}
+          JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
+          RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
+          DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
+          CORS_ALLOWED_ORIGIN: ${{ secrets.CORS_ALLOWED_ORIGIN }}
+        run: |
+          if [ -n "$DEPLOY_SSH_HOST" ] && [ -n "$DEPLOY_SSH_PORT" ] && [ -n "$DEPLOY_SSH_USERNAME" ] && [ -n "$DEPLOY_SSH_PRIVATE_KEY" ] && [ -n "$DEPLOY_REMOTE_PATH" ] && [ -n "$JWT_SIGNING_KEY" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ] && [ -n "$RABBITMQ_DEFAULT_USER" ] && [ -n "$RABBITMQ_DEFAULT_PASS" ] && [ -n "$DOCKERHUB_NAMESPACE" ] && [ -n "$CORS_ALLOWED_ORIGIN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: preflight
+    if: needs.preflight.outputs.deploy_ready == 'true'
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+      DEPLOY_SSH_USERNAME: ${{ secrets.DEPLOY_SSH_USERNAME }}
+      DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}
+      JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
+      RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
+      DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
+      CORS_ALLOWED_ORIGIN: ${{ secrets.CORS_ALLOWED_ORIGIN }}
+      IMAGE_TAG: ${{ inputs.image_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Configure SSH
+        run: |
+          cat << EOF > ~/.ssh/config
+          Host firefly-mac-mini
+            HostName ${DEPLOY_SSH_HOST}
+            User ${DEPLOY_SSH_USERNAME}
+            Port ${DEPLOY_SSH_PORT}
+          EOF
+
+      - name: Generate deployment env file
+        run: |
+          cat << EOF > .deploy.env
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          POSTGRES_DB=${POSTGRES_DB}
+          RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+          RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+          JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
+          DOCKERHUB_NAMESPACE=${DOCKERHUB_NAMESPACE}
+          CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN}
+          IMAGE_TAG=${IMAGE_TAG}
+          EOF
+
+      - name: Upload deployment files
+        run: |
+          ssh -o StrictHostKeyChecking=no firefly-mac-mini "mkdir -p ${DEPLOY_REMOTE_PATH}"
+          scp -P ${DEPLOY_SSH_PORT} -o StrictHostKeyChecking=no infra/deploy/docker-compose.production.yml firefly-mac-mini:${DEPLOY_REMOTE_PATH}/docker-compose.production.yml
+          scp -P ${DEPLOY_SSH_PORT} -o StrictHostKeyChecking=no .deploy.env firefly-mac-mini:${DEPLOY_REMOTE_PATH}/.env
+
+      - name: Deploy API services on server
+        run: |
+          ssh -o StrictHostKeyChecking=no firefly-mac-mini "
+            set -eux
+            export PATH=/usr/local/bin:/opt/homebrew/bin:\$PATH
+            cd ${DEPLOY_REMOTE_PATH}
+            echo Deploying API image tag: ${IMAGE_TAG}
+            docker compose -f docker-compose.production.yml --env-file .env pull gateway-api identity-api job-search-api ai-api
+            docker compose -f docker-compose.production.yml --env-file .env up -d --no-deps gateway-api identity-api job-search-api ai-api
+            docker compose -f docker-compose.production.yml --env-file .env ps gateway-api identity-api job-search-api ai-api
+            for attempt in \$(seq 1 10); do
+              if curl --fail --silent --show-error http://localhost:21000/api/demo/status; then
+                break
+              fi
+              if [ \$attempt -eq 10 ]; then
+                exit 1
+              fi
+              sleep 3
+            done
+            for container in runtime-gateway-api-1 runtime-identity-api-1 runtime-job-search-api-1 runtime-ai-api-1; do
+              docker inspect \$container --format '{{.Name}} {{.Config.Image}}'
+            done
+          "
