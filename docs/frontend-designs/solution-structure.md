@@ -133,12 +133,16 @@ Use only the subfolders that the feature actually needs.
 
 Start with a small route surface:
 - `/`
-- future `/jobs/:id`
-- future `/saved`
-- future `/profile`
-- future `/insights`
+- `/search`
+- `/jobs/:id`
+- `/login`
+- `/app`
+- `/saved`
+- `/applied`
+- `/profile`
+- `/admin/*`
 
-The first real app can begin with one route if that keeps the code cleaner.
+The route surface should stay focused, but the MVP is no longer assumed to be a one-route app.
 
 ## 6. Future Mobile Compatibility Rule
 

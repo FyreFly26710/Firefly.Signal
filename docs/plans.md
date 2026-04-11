@@ -1,62 +1,68 @@
 # Firefly Signal Plan
 
 ## Planning Scope
-This document captures the initial execution plan for the repository before application scaffolding begins.
-It is intentionally biased toward a practical personal-use MVP, with enough structure to support future AI-assisted development and GitHub issue driven delivery.
+This document captures the current execution plan for Firefly Signal from the repository's real baseline.
+It is intentionally biased toward a practical personal-use MVP that already includes most of the intended final product workflow.
 
-## Working Assumptions
-- The first shipped experience is a web app for UK job discovery.
-- The frontend is client-side only and will talk directly to backend APIs through a Cloudflare-exposed entry point.
+The main features intentionally left beyond the MVP are:
+- advanced user management
+- native mobile applications
+
+## Working Product Assumptions
+- The product is primarily for the repository owner's personal use.
+- The MVP should still behave like a real product that recruiters can review.
+- The MVP should include persisted job data, job workflow management, profile data, document linkage, and bounded AI assistance.
+- The first supported geography is the United Kingdom only.
+- The first supported role category is developer jobs only.
+- The frontend is client-side only and will talk to backend APIs through a Cloudflare-exposed entry point.
 - The backend will run on a Mac mini in Docker behind Cloudflare Tunnel.
-- The initial architecture should preserve room for service separation without forcing distributed-system complexity on day one.
-- The repository owner will review and merge pull requests created with Codex assistance.
 
-## Goals For The First Foundation Phase
-- Clarify the product and technical direction in docs.
-- Establish repo conventions that make future issue-driven work smoother.
-- Prepare for frontend and backend scaffolding without generating unnecessary code too early.
-- Create enough CI and automation structure to keep the repo organized as code arrives.
+## Goals For The Current Planning Phase
+- Keep the product requirements and implementation-facing docs aligned.
+- Deliver the full personal job-search workflow in small, reviewable issues.
+- Keep backend boundaries explicit while avoiding premature service sprawl.
+- Preserve strong code review quality for both maintainability and recruiter visibility.
 
 ## Recommended Delivery Phases
-### Phase 0: Planning And Repo Foundation
-- Finalize product, frontend, backend, and delivery documents.
-- Add detailed extracted backend reference docs under `docs/backend-designs/`.
-- Add deployment assets under `infra/`.
-- Establish repo guardrails in `AGENTS.md`.
-- Add Codex repository skills for planning and implementation workflow.
-- Add root repo hygiene files such as `.gitignore`, `.editorconfig`, and GitHub workflows.
-- Add lightweight linting and formatting conventions for future frontend work.
+### Phase 0: Product And Planning Alignment
+- Clarify the PRD and source-of-truth documentation boundaries.
+- Update roadmap and backlog docs to match the actual MVP.
+- Add a concrete backend data model plan for the MVP workflow.
 
-### Phase 1: Frontend Skeleton
-- Create `apps/web` with React 18, TypeScript, and Vite.
-- Add routing, layout shell, API client boundary, Zustand store setup, MUI theme, and Tailwind integration.
-- Implement the first search page with postcode and keyword inputs, loading state, empty state, and results list placeholders.
-- Add basic linting, testing, and build scripts for the frontend.
-- Use the detailed source of truth in `docs/frontend-designs/` for structure, coding style, state, styling, and testing conventions.
-- Prepare the Cloudflare Pages deployment workflow and app configuration.
+### Phase 1: Identity, Roles, And Profile Foundations
+- Keep the existing auth foundation and formalize role behavior for `admin` and `test-admin`.
+- Add user profile persistence for personal information.
+- Add document metadata and upload handling for CVs and other profile documents.
+- Ensure test admin matches admin frontend visibility while remaining backend read-only.
 
-### Phase 2: Backend Skeleton
-- Create `services/api` as a .NET 10 solution.
-- Use `.slnx` and do not use `.slnf`.
-- Introduce the API gateway, the custom identity API, the job search API, and a lightweight AI API.
-- Add `Directory.Build.props`, `Directory.Build.targets`, and `Directory.Packages.props`.
-- Add shared local Docker development for PostgreSQL, pgweb, RabbitMQ, Redis, and RedisInsight.
-- Establish auth boundary, Snowflake-based long IDs, EF Core migrations and seeding, event bus wiring, configuration loading, health checks, logging, and testing strategy.
-- Keep production Dockerfiles and Mac mini deployment assets under `infra/`, separate from local dev Compose.
+### Phase 2: Persisted Job Catalog And Admin Management
+- Make persisted job storage a first-class MVP capability.
+- Support provider-backed import runs with normalization and deduplication.
+- Support admin CRUD, moderation, and catalog review workflows.
+- Preserve source payload metadata for auditability and future remapping.
 
-### Phase 3: MVP Job Search Flow
-- Implement public source integration for job discovery.
-- Normalize and return search results through the backend.
-- Connect frontend search form to the gateway.
-- Add observability, rate limiting where needed, and persistence decisions only if they add clear value.
+### Phase 3: Search, Filtering, Sorting, And Distance
+- Deliver search over the persisted job catalog.
+- Support keyword, postcode, distance, sorting, and practical filtering.
+- Keep the experience constrained to UK developer jobs.
+- Maintain clear loading, empty, error, and permission states.
 
-### Phase 4: Post-MVP Platform Enhancements
-- Scheduled collection
-- Storage and deduplication
-- Saved searches and tracking
-- Resume-aware scoring
-- AI-assisted workflows
-- Dashboard and analytics
+### Phase 4: Personal Job Workflow
+- Add save-job, applied-job, and rejected-job states.
+- Add views for saved jobs and applied jobs.
+- Support notes on applied jobs.
+- Support attaching submitted CVs and cover letters to applications.
+
+### Phase 5: AI-Assisted Review
+- Let admin select jobs and run AI rating against stored user profile/CV context.
+- Return a 1-5 star rating per job.
+- Support optional detailed explanation and CV improvement guidance.
+- Persist AI outputs and keep them linked to the user they were generated for.
+
+### Phase 6: Recruiter-Visible Hardening
+- Improve code quality, testing coverage, and operational clarity where needed.
+- Refine the UI and admin/test-admin flows for demonstration quality.
+- Keep docs, architecture, and code structure aligned for reviewability.
 
 ## Repository Shape To Grow Into
 ```text
@@ -76,41 +82,39 @@ services/
 ```
 
 ## Delivery Principles
-- Prefer vertical slices over broad platform-first buildout.
-- Keep each GitHub issue small enough to implement, test, and review in one PR.
-- Avoid creating infrastructure pieces that are not yet exercised by a real feature.
+- Prefer vertical slices over abstract platform work.
+- Keep each issue small enough for one focused branch and one reviewable PR.
+- Use real persisted state where the MVP requires it instead of relying on placeholder workflows.
 - Treat docs as active architecture, not passive notes.
-- Preserve optionality for later mobile expansion by keeping API contracts and UI states disciplined.
+- Keep implementation choices easy to explain in a code-review context.
 
-## Proposed Early GitHub Issue Sequence
-1. Initialize repository plumbing
-2. Scaffold frontend app shell
-3. Define frontend design tokens and app layout
-4. Scaffold backend solution and gateway
-5. Add Docker Compose for local dependencies
-6. Define auth strategy and configuration model
-7. Implement job search contract end to end
-8. Add frontend search experience
-9. Integrate first public job source
-10. Add CI quality gates for code paths that now exist
+## Proposed Issue Themes From Here
+1. Clarify PRD and source-of-truth docs
+2. Add user profile and CV/document metadata persistence
+3. Formalize `admin` and `test-admin` authorization behavior
+4. Persist imported jobs and deduplicate provider records
+5. Add admin workflows for job CRUD and moderation
+6. Add postcode distance filtering and sorting over stored jobs
+7. Add saved-job and applied-job persistence
+8. Add application notes and submitted-document linkage
+9. Add AI job rating workflow linked to user profile context
+10. Harden frontend and backend quality around the end-to-end workflow
 
 ## Risks To Manage Early
-- Overcommitting to microservices before the first feature lands
-- Letting frontend and backend contracts drift without a documented API boundary
-- Introducing RabbitMQ or Redis before a concrete use case exists
-- Creating AI features before the underlying product workflow is stable
-- Depending on unstable or restrictive public job data sources without fallback planning
+- Under-modeling the personal workflow and later patching it with ad hoc fields
+- Overcomplicating service boundaries before the workflow is fully implemented
+- Letting document storage and linkage become inconsistent
+- Building AI features without clear user-owned context and auditability
+- Letting product docs lag behind the actual intended MVP
 
 ## Success Criteria For The Planning Phase
-- Product direction is written down and reviewable.
-- Frontend and backend designs are clear enough to guide scaffolding.
-- Repo automation supports disciplined future issue work.
-- The next issue can focus on implementation instead of re-deciding architecture.
-- Frontend architecture, coding style, and delivery guidance are detailed enough to scaffold `apps/web` without re-arguing structure.
+- Product direction is explicit enough to create focused issues without re-deciding scope.
+- MVP boundaries are clear across PRD, plan, backend, and development docs.
+- The backend data model direction is concrete enough to guide implementation.
+- The backlog is prioritized around the real personal-use workflow rather than a smaller demo product.
 
 ## Notes For Future Codex Work
-- Read this file first for sequencing context.
-- Then read `docs/development/overview.md` for the practical coding roadmap and backlog from the current repo baseline.
-- Confirm whether a task belongs to foundation, frontend, backend, or product.
-- Keep issue branches focused on one phase outcome where possible.
-- Record deviations from these assumptions in the PR summary and, when durable, in the relevant design doc.
+- Read the PRD first for scope.
+- Then read this file for sequencing.
+- Then read `docs/development/roadmap.md` and `docs/development/todo.md` for practical issue planning.
+- Update these docs whenever durable product or sequencing decisions change.

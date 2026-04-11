@@ -1,9 +1,9 @@
 # Backend Design
 
 ## Objectives
-- Support a web-first career intelligence product with a clean path to future mobile clients.
+- Support a web-first personal career intelligence product with a clean path to future mobile clients.
 - Keep initial operations simple while preserving clear backend boundaries.
-- Make local development reliable with Docker and production deployment practical on a Mac mini.
+- Make the MVP capable of storing and managing the full personal workflow, not only transient search.
 
 ## Detailed Reference Docs
 Use the files in `docs/backend-designs/` as the detailed backend source of truth for implementation style:
@@ -15,6 +15,7 @@ Use the files in `docs/backend-designs/` as the detailed backend source of truth
 - `local-docker-and-compose.md`
 - `identity-api-direction.md`
 - `adzuna-api.md`
+- `data-model-plan.md`
 
 ## High-Level Architecture
 The backend should start as a small set of focused .NET 10 services behind a gateway:
@@ -22,57 +23,56 @@ The backend should start as a small set of focused .NET 10 services behind a gat
   - public entry point exposed through Cloudflare Tunnel
   - routing, auth enforcement, request correlation, and cross-cutting concerns
 - `Identity API`
-  - seeded local account flow first, with Google OAuth added next
+  - seeded local account flow first, with Google OAuth added later if still needed
   - JWT issuance
-  - user CRUD and current-user/auth endpoints
-- `Job Search Service`
-  - provider-backed job search slice for live search
-  - orchestrates provider lookups, normalization, ranking basics, and optional future persistence
+  - user CRUD, current-user/auth endpoints, role claims, and user profile ownership
+- `Job Search API`
+  - provider-backed ingestion and persisted job catalog
+  - admin job management, search, filtering, sorting, save/apply/reject workflow, and AI result persistence
 - `AI API`
-  - hosts no-op AI endpoints first
-  - consumes RabbitMQ integration events for future enrichment workflows
+  - bounded job-fit and explanation endpoints
+  - may use RabbitMQ later for asynchronous enrichment, but should start with explicit workflow contracts
 - Future services only when needed
-  - profile service
-  - job tracking service
-  - AI workflow service
   - document service
+  - profile service
+  - AI workflow service
 
-This should behave like a deliberate, modular platform rather than a fragmented fleet of services.
+For the MVP, prefer extending the current Identity and Job Search services instead of immediately introducing more deployable services.
 
 ## Early Service Boundary Recommendation
 Start with four deployable backend components:
 1. API gateway
 2. Identity API
-3. Job search service
+3. Job Search API
 4. AI API
 
-Keep the rest documented but unimplemented until the product proves the need.
+Keep document and profile capabilities inside existing service boundaries until there is real pressure to split them out.
 
 ## Request Flow
-1. Web client sends request to Cloudflare-hosted domain.
+1. Web client sends request to the Cloudflare-hosted domain.
 2. Cloudflare routes API traffic through Tunnel to the Mac mini.
 3. Gateway authenticates the request and forwards it to the appropriate backend service.
-4. Identity API handles sign-in and token issuance for auth flows.
-5. Job search service queries external job sources, normalizes results, and returns a stable contract.
-6. Gateway returns a client-safe response with traceable metadata for logs and diagnostics.
+4. Identity API handles sign-in, token issuance, user-role claims, and profile ownership concerns.
+5. Job Search API stores imported jobs, handles search and workflow state, and persists user-linked AI results.
+6. AI API evaluates selected jobs against user profile material when requested.
+7. Gateway returns client-safe responses with traceable metadata for logs and diagnostics.
 
 ## Technology Decisions
 - Runtime: .NET 10
 - Persistence: PostgreSQL via EF Core
 - Messaging: RabbitMQ for asynchronous workflows only
 - Caching or transient coordination: Redis only where it solves a specific problem
-- Auth: Google OAuth using Gmail identity, issuing JWTs for API calls
+- Auth: seeded local auth first, with room for Google OAuth later
 - Deployment: Docker containers on a Mac mini
 - Public exposure: Cloudflare Tunnel
 
 ## Design Principles
 - Use vertical slices within each service.
 - Keep application logic independent of transport and persistence details.
-- Share contracts carefully; avoid a premature shared-kernel dependency tangle.
 - Favor explicit DTOs at service boundaries.
-- Centralize logging, tracing, and auth middleware patterns.
+- Centralize logging, tracing, auth, and permission patterns.
 - Prefer synchronous APIs first; add messaging when business flow truly benefits.
-- Use a repo-owned event bus abstraction with explicit subscriptions instead of a large broker framework.
+- Model the real personal workflow directly instead of hiding it behind placeholder abstractions.
 
 ## Suggested Solution Structure
 ```text
@@ -98,55 +98,51 @@ services/api/
     Firefly.Signal.JobSearch.FunctionalTests/
 ```
 
-This keeps Clean Architecture boundaries available without forcing every future service to share one rigid template.
-
 ## Data Strategy
 ### PostgreSQL
-Use PostgreSQL for:
-- persisted searches or saved jobs when introduced
-- normalized job records when persistence becomes necessary
-- user profile or preference data later
+Use PostgreSQL as a first-class source of truth for the MVP for:
+- user accounts and roles
+- user profile information
+- document metadata
+- imported and normalized job records
+- save/apply/reject workflow state
+- application notes
+- AI rating and explanation records
 
-Do not make PostgreSQL the required source of truth for the first live search flow.
-Introduce durable job storage only when a concrete persistence use case is real.
+The MVP is not a stateless search-only product.
+Persisted workflow data is part of the core requirement.
+
+### File Storage
+Use a simple local-first file storage approach for uploaded CVs, cover letters, and other user files during the MVP.
+Persist document metadata in PostgreSQL and keep storage implementation easy to replace later.
 
 ### Redis
 Use Redis only if needed for:
-- short-lived caching of external job queries
+- external provider result caching
 - rate-limit support
-- distributed locks or short-lived coordination
-
-Do not make Redis mandatory for the first end-to-end slice unless a concrete need appears.
+- short-lived coordination around provider ingestion or AI execution
 
 ### RabbitMQ
 Use RabbitMQ when:
-- background enrichment is valuable
-- scheduled or batch collection is introduced
-- non-blocking AI workflows are added
+- provider ingestion becomes scheduled or asynchronous
+- AI analysis needs background batch processing
+- import and enrichment workflows benefit from decoupling
 
-Keep the first synchronous search flow free of messaging if possible.
-
-Current repo messaging shape:
-- publishers depend on `Firefly.Signal.EventBus`
-- RabbitMQ implementation lives in `Firefly.Signal.EventBusRabbitMQ`
-- events are published to one durable direct exchange
-- each consuming API owns one durable queue named by `SubscriptionClientName`
-- handlers are registered explicitly with `AddSubscription<TEvent, THandler>()`
-- keep request-response flows on HTTP; use RabbitMQ for asynchronous side effects and downstream processing
+Do not force async workflows into the first implementation if synchronous request flows are still clear and manageable.
 
 ## Authentication And Authorization
-- Use Google OAuth for sign-in, anchored to Gmail identity.
-- Exchange validated identity for backend-issued JWTs.
+- Support at least `admin` and `test-admin` roles.
+- `admin` can perform backend write operations.
+- `test-admin` should see the same frontend areas but be restricted to backend read-only access.
 - Keep JWT generation and validation centralized.
-- Start with a single-user or low-user-count assumption, but avoid hard-coding identity shortcuts that block later expansion.
-- Design role and permission claims lightly even if only one user exists initially.
+- Model permission behavior explicitly instead of relying on frontend-only restrictions.
 
 ## API Design Guidance
 - Version public APIs from the start, even if only `v1`.
-- Return stable result models for job cards and detail expansions.
+- Return stable result models for job cards, job detail, workflow lists, user profile data, and AI outputs.
 - Normalize provider-specific quirks before they reach the frontend.
-- Include paging and source metadata in search responses.
-- Design idempotent endpoints where practical.
+- Keep search, workflow, profile, and AI contracts explicit and typed.
+- Design bulk admin and AI-selection workflows carefully so they remain reviewable and auditable.
 
 ## Operational Guidance
 - Use Docker Compose locally for PostgreSQL, pgweb, RabbitMQ, Redis, and service containers when they exist.
@@ -159,29 +155,33 @@ Current repo messaging shape:
 - Unit tests for domain and application logic
 - Integration tests for persistence and service boundaries
 - Contract tests around gateway-to-service behavior when multiple services exist
-- Keep end-to-end tests lean and focused on critical flows
+- Functional tests around auth, job management, search, and personal workflow endpoints
 
 ## Phased Backend Implementation
 ### Phase 1
-- Create the solution structure
-- Create gateway, identity API, and job search service shells
-- Add configuration, health checks, logging, and test projects
+- Formalize user roles and permission rules
+- Add user profile and document metadata persistence
+- Keep auth flows simple but explicit
 
 ### Phase 2
-- Implement search contract and first provider integration
-- Add JWT auth flow and secure gateway forwarding
-- Introduce Docker Compose for local dependencies
+- Persist imported jobs and provider refresh runs
+- Add admin CRUD and moderation workflows for jobs
+- Add deduplication and provider auditability
 
 ### Phase 3
-- Add persistence only when needed
-- Introduce caching if search behavior justifies it
-- Add RabbitMQ-backed workflows for async enrichment or collection
+- Add stored search, filtering, sorting, and postcode-distance support
+- Add personal save/apply/reject workflow data
+- Add notes and application document linkage
+
+### Phase 4
+- Add AI analysis contracts, persistence, and bounded execution flow
+- Move long-running work to RabbitMQ only if needed
 
 ## Open Questions
-- Which public job sources are acceptable for the MVP from a reliability and terms perspective?
-- Should the first release persist searches and results, or stay stateless?
-- Is the gateway a thin reverse proxy plus auth layer, or should it also perform lightweight response shaping?
+- Which provider or providers should be implemented first for dependable UK developer-job coverage?
+- Should uploaded document binaries stay on local disk for the full MVP, or move earlier to a managed object store?
+- Does postcode-distance filtering rely on a local postcode lookup dataset, an external postcode API, or both?
 
 ## Current Recommendation
-Favor a thin gateway, a lightweight identity API, and one real backend service first.
-That gives you a microservice-compatible starting point without paying the full coordination cost before the first product loop is proven.
+Favor a thin gateway, a lightweight identity API, one strong job-search/workflow service, and a bounded AI API.
+That matches the current codebase, supports the real MVP, and keeps the system understandable for one maintainer and outside reviewers.
