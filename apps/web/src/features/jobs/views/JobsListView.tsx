@@ -1,13 +1,27 @@
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
-import { Alert, Button } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert } from "@mui/material";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { SectionCard } from "@/components/SectionCard";
-import { deleteJobs, getJobsPage, hideJobs } from "@/api/jobs/jobs.api";
-import type { DeleteJobsResponseDto } from "@/api/jobs/jobs.types";
+import {
+  deleteJobs,
+  exportJobs,
+  getJobsPage,
+  hideJobs,
+  importJobsFromJson,
+  importJobsFromProvider
+} from "@/api/jobs/jobs.api";
+import type {
+  DeleteJobsResponseDto,
+  ImportJobsFromProviderRequestDto
+} from "@/api/jobs/jobs.types";
 import { JobsManagementHeader } from "@/features/jobs/components/JobsManagementHeader";
+import { JobsImportPanel } from "@/features/jobs/components/JobsImportPanel";
+import {
+  JobsImportProviderDialog,
+  type JobsImportProviderFormValues
+} from "@/features/jobs/components/JobsImportProviderDialog";
 import {
   JobsManagementToolbar,
   type JobsListFilters,
@@ -28,6 +42,29 @@ const emptyFilters: JobsListFilters = {
 };
 
 const defaultPageSize = 20;
+const defaultImportForm: JobsImportProviderFormValues = {
+  postcode: "",
+  keyword: "",
+  pageIndex: "0",
+  pageSize: "20",
+  provider: "Adzuna",
+  excludedKeyword: "",
+  distanceKilometers: "",
+  category: "",
+  salaryMin: "",
+  salaryMax: "",
+  fullTime: "",
+  partTime: "",
+  permanent: "",
+  contract: "",
+  sortBy: "",
+  maxDaysOld: "",
+  company: "",
+  titleOnly: false,
+  location0: "",
+  location1: "",
+  location2: ""
+};
 
 export function JobsListView() {
   const navigate = useNavigate();
@@ -41,6 +78,9 @@ export function JobsListView() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importForm, setImportForm] = useState<JobsImportProviderFormValues>(defaultImportForm);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadJobs = useCallback(async (
     nextPageIndex: number,
@@ -129,34 +169,146 @@ export function JobsListView() {
     }
   }
 
+  async function handleProviderImport() {
+    if (!isAdmin) {
+      return;
+    }
+
+    const keyword = importForm.keyword.trim();
+    const postcode = importForm.postcode.trim();
+    if (!keyword || !postcode) {
+      setActionMessage(null);
+      setActionError("Enter both a keyword and postcode before importing from the provider.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setActionMessage(null);
+    setActionError(null);
+
+    try {
+      const result = await importJobsFromProvider(buildImportRequest(importForm, keyword, postcode));
+      setActionMessage(`Imported ${result.importedCount} jobs from ${result.source}.`);
+      setIsImportDialogOpen(false);
+      await execute(pageIndex, pageSize, filters);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Unable to import jobs from the provider.");
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
+  async function handleJsonImport(file: File) {
+    if (!isAdmin) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setActionMessage(null);
+    setActionError(null);
+
+    try {
+      const result = await importJobsFromJson(file);
+      setActionMessage(`Imported ${result.importedCount} jobs from ${file.name}.`);
+      await execute(pageIndex, pageSize, filters);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Unable to import jobs from JSON.");
+    } finally {
+      setIsProcessing(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }
+
+  async function handleExport() {
+    if (!isAdmin) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setActionMessage(null);
+    setActionError(null);
+
+    try {
+      const exportResult = await exportJobs({
+        pageIndex,
+        pageSize,
+        keyword: normalizeText(filters.keyword),
+        company: normalizeText(filters.company),
+        postcode: normalizeText(filters.postcode),
+        location: normalizeText(filters.location),
+        sourceName: normalizeText(filters.sourceName),
+        categoryTag: normalizeText(filters.categoryTag),
+        isHidden: mapVisibilityToHiddenFlag(filters.visibility)
+      });
+
+      const blob = new Blob([JSON.stringify(exportResult, null, 2)], {
+        type: "application/json"
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `jobs-export-${new Date().toISOString().replaceAll(":", "-")}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+
+      setActionMessage(`Exported ${exportResult.count} jobs to JSON.`);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Unable to export jobs to JSON.");
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader
-        variant="authenticated"
-        actions={
-          isAdmin ? (
-            <Button
-              onClick={() => void navigate("/admin/manage-jobs/new")}
-              variant="contained"
-              startIcon={<AddRoundedIcon />}
-              sx={{
-                bgcolor: "accent.main",
-                "&:hover": { bgcolor: "accent.dark" }
-              }}
-            >
-              New job
-            </Button>
-          ) : null
-        }
-      />
+      <AppHeader variant="authenticated" />
 
       <div className="mx-auto max-w-[1400px] px-5 py-8 sm:px-8">
         <JobsManagementHeader totalCount={totalCount} />
 
+        {isAdmin ? (
+          <>
+            <JobsImportPanel
+              isProcessing={isProcessing}
+              onCreateJob={() => void navigate("/admin/manage-jobs/new")}
+              onExportJson={() => void handleExport()}
+              onImportJson={() => fileInputRef.current?.click()}
+              onImportProvider={() => setIsImportDialogOpen(true)}
+            />
+            <JobsImportProviderDialog
+              isOpen={isImportDialogOpen}
+              isSubmitting={isProcessing}
+              values={importForm}
+              onChange={setImportForm}
+              onClose={() => {
+                if (!isProcessing) {
+                  setIsImportDialogOpen(false);
+                }
+              }}
+              onSubmit={() => void handleProviderImport()}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                  void handleJsonImport(file);
+                }
+              }}
+            />
+          </>
+        ) : null}
+
         {!isAdmin ? (
           <Alert severity="warning" sx={{ mb: 4 }}>
             This route is intended for admin job management. Your session can read jobs, but batch
-            hide, batch delete, and edit actions require the admin role from the backend API.
+            hide, batch delete, edit, import, and export actions require the admin role from the
+            backend API.
           </Alert>
         ) : null}
 
@@ -245,6 +397,54 @@ function mapVisibilityToHiddenFlag(value: VisibilityFilter): boolean | undefined
 function normalizeText(value: string): string | undefined {
   const trimmed = value.trim();
   return trimmed ? trimmed : undefined;
+}
+
+function parseOptionalNumber(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parseOptionalBoolean(value: "" | "true" | "false"): boolean | undefined {
+  if (value === "") {
+    return undefined;
+  }
+
+  return value === "true";
+}
+
+function buildImportRequest(
+  values: JobsImportProviderFormValues,
+  keyword: string,
+  postcode: string
+): ImportJobsFromProviderRequestDto {
+  return {
+    postcode,
+    keyword,
+    pageIndex: parseOptionalNumber(values.pageIndex) ?? 0,
+    pageSize: parseOptionalNumber(values.pageSize) ?? 20,
+    provider: values.provider,
+    excludedKeyword: normalizeText(values.excludedKeyword),
+    distanceKilometers: parseOptionalNumber(values.distanceKilometers),
+    category: normalizeText(values.category),
+    salaryMin: parseOptionalNumber(values.salaryMin),
+    salaryMax: parseOptionalNumber(values.salaryMax),
+    fullTime: parseOptionalBoolean(values.fullTime),
+    partTime: parseOptionalBoolean(values.partTime),
+    permanent: parseOptionalBoolean(values.permanent),
+    contract: parseOptionalBoolean(values.contract),
+    sortBy: normalizeText(values.sortBy),
+    maxDaysOld: parseOptionalNumber(values.maxDaysOld),
+    company: normalizeText(values.company),
+    titleOnly: values.titleOnly,
+    location0: normalizeText(values.location0),
+    location1: normalizeText(values.location1),
+    location2: normalizeText(values.location2)
+  };
 }
 
 function buildHideSummary(hiddenCount: number, missingCount: number): string {

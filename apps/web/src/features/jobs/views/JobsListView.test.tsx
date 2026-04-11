@@ -4,19 +4,32 @@ import { ThemeProvider } from "@mui/material";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { theme } from "@/app/theme";
-import { getJobsPage, hideJobs } from "@/api/jobs/jobs.api";
+import {
+  exportJobs,
+  getJobsPage,
+  hideJobs,
+  importJobsFromJson,
+  importJobsFromProvider
+} from "@/api/jobs/jobs.api";
 import { JobsListView } from "@/features/jobs/views/JobsListView";
 import { useSessionStore } from "@/store/session.store";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
   deleteJobs: vi.fn(),
+  exportJobs: vi.fn(),
   getJobsPage: vi.fn(),
-  hideJobs: vi.fn()
+  hideJobs: vi.fn(),
+  importJobsFromJson: vi.fn(),
+  importJobsFromProvider: vi.fn()
 }));
 
 describe("JobsListView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn(() => "blob:jobs-export"),
+      revokeObjectURL: vi.fn()
+    });
     useSessionStore.setState({
       user: {
         userAccount: "admin",
@@ -113,4 +126,87 @@ describe("JobsListView", () => {
       })
     );
   }, 10000);
+
+  it("supports provider import, json import, and json export for admin users", async () => {
+    const user = userEvent.setup();
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+    vi.mocked(getJobsPage).mockResolvedValue({
+      pageIndex: 0,
+      pageSize: 20,
+      totalCount: 0,
+      items: []
+    });
+
+    vi.mocked(importJobsFromProvider).mockResolvedValue({
+      jobRefreshRunId: 1,
+      source: "Adzuna",
+      importedCount: 2,
+      failedCount: 0
+    });
+
+    vi.mocked(importJobsFromJson).mockResolvedValue({
+      jobRefreshRunId: 2,
+      source: "json-upload",
+      importedCount: 1,
+      failedCount: 0
+    });
+
+    vi.mocked(exportJobs).mockResolvedValue({
+      exportedAtUtc: "2026-04-11T10:00:00Z",
+      count: 1,
+      jobs: []
+    });
+
+    render(
+      <ThemeProvider theme={theme}>
+        <MemoryRouter initialEntries={["/admin/manage-jobs"]}>
+          <JobsListView />
+        </MemoryRouter>
+      </ThemeProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Manage jobs" })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Import from provider" }));
+    await user.type(screen.getByRole("textbox", { name: "Keyword" }), "frontend engineer");
+    await user.type(screen.getByRole("textbox", { name: "Postcode" }), "SW1A 1AA");
+    await user.click(screen.getByRole("button", { name: "Run import" }));
+
+    await waitFor(() => {
+      expect(importJobsFromProvider).toHaveBeenCalledWith(
+        expect.objectContaining({
+          keyword: "frontend engineer",
+          postcode: "SW1A 1AA",
+          pageIndex: 0,
+          pageSize: 20,
+          provider: "Adzuna"
+        })
+      );
+    });
+
+    const file = new File(
+      [JSON.stringify({ exportedAtUtc: "2026-04-11T10:00:00Z", count: 1, jobs: [] })],
+      "jobs.json",
+      { type: "application/json" }
+    );
+
+    const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+    await user.upload(fileInput, file);
+
+    await waitFor(() => {
+      expect(importJobsFromJson).toHaveBeenCalledWith(file);
+    });
+
+    await user.click(screen.getByRole("button", { name: "Export JSON" }));
+
+    await waitFor(() => {
+      expect(exportJobs).toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
+    });
+
+    clickSpy.mockRestore();
+  }, 30000);
 });

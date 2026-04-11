@@ -113,3 +113,40 @@ export type DeleteJobsResponseDto = {
 export type IdBatchRequestDto = {
   ids: number[];
 };
+
+export type ImportJobsFromProviderRequestDto = {
+  postcode: string;
+  keyword: string;
+  pageIndex?: number;
+  pageSize?: number;
+  provider?: "Adzuna";
+  excludedKeyword?: string;
+  distanceKilometers?: number;
+  category?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  fullTime?: boolean;
+  partTime?: boolean;
+  permanent?: boolean;
+  contract?: boolean;
+  sortBy?: string;
+  maxDaysOld?: number;
+  company?: string;
+  titleOnly?: boolean;
+  location0?: string;
+  location1?: string;
+  location2?: string;
+};
+
+export type ImportJobsResponseDto = {
+  jobRefreshRunId: number;
+  source: string;
+  importedCount: number;
+  failedCount: number;
+};
+
+export type ExportJobsResponseDto = {
+  exportedAtUtc: string;
+  count: number;
+  jobs: JobDetailsResponseDto[];
+};
