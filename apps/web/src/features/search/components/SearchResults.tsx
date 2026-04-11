@@ -64,8 +64,7 @@ export function SearchResults({
       <div className="rounded-lg border border-border bg-background-elevated px-6 py-14 text-center">
         <h3 className="font-serif text-2xl font-semibold text-foreground">No results found</h3>
         <p className="mx-auto mt-3 max-w-xl text-foreground-secondary">
-          Try adjusting your search terms or filters. You can search by role, company, skill, or
-          location using the mock data set.
+          Try adjusting your keyword or postcode to broaden the search.
         </p>
       </div>
     );

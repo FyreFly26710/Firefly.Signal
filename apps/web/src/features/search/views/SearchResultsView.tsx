@@ -1,6 +1,5 @@
 import { useSearchParams } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
-import { SearchFiltersPanel } from "@/features/search/components/SearchFiltersPanel";
 import { SearchResults } from "@/features/search/components/SearchResults";
 import { SearchResultsToolbar } from "@/features/search/components/SearchResultsToolbar";
 import { useJobSearch } from "@/features/search/hooks/useJobSearch";
@@ -40,9 +39,7 @@ export function SearchResultsView() {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 sm:px-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <SearchFiltersPanel />
-
+      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
         <main>
           <SearchResults
             status={status}

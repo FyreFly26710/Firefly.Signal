@@ -16,23 +16,23 @@ export function LoginHighlightsSection() {
           Sign in to continue into your career intelligence workspace.
         </h1>
         <p className="mt-6 max-w-2xl text-xl leading-8 text-foreground-secondary">
-          The app uses the live auth flow, but everything after sign-in is currently powered by
-          mock job data so the new UI can be reviewed independently from backend search work.
+          Access your search workspace, continue exploring live job listings, and keep your next
+          search within easy reach.
         </p>
       </div>
 
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         <LoginHighlightsPanel
-          title="Real auth"
-          description="Keep the existing JWT-backed login path so protected flows still behave like the real app."
+          title="Secure access"
+          description="Use the existing JWT-backed sign-in flow to open protected parts of the app."
         />
         <LoginHighlightsPanel
-          title="Mock discovery"
-          description="The signed-in workspace and job search experience use mock data only for this UI pass."
+          title="Focused search"
+          description="Jump back into job discovery quickly with a workspace built around search and review."
         />
         <LoginHighlightsPanel
-          title="Future-ready"
-          description="The layout leaves room for saved searches, job tracking, resume workflows, and AI support."
+          title="Clear workflow"
+          description="The current release keeps the signed-in experience lean and ready for day-to-day use."
         />
       </div>
     </SectionCard>

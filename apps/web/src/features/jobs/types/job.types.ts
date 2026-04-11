@@ -15,7 +15,7 @@ export type JobCardModel = {
   type?: string;
 };
 
-export type MockJob = JobCardModel & {
+export type JobDetailModel = JobCardModel & {
   postcode: string;
-  freshness: JobFreshness;
+  description: string;
 };

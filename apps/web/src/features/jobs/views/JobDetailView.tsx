@@ -1,47 +1,75 @@
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
-import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
+import { Alert } from "@mui/material";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
+import { getJobById } from "@/api/jobs/jobs.api";
 import { JobDetailContentPanel } from "@/features/jobs/components/JobDetailContentPanel";
 import { JobDetailHeroCard } from "@/features/jobs/components/JobDetailHeroCard";
-import { JobDetailListPanel } from "@/features/jobs/components/JobDetailListPanel";
 import { JobDetailNotFound } from "@/features/jobs/components/JobDetailNotFound";
 import { JobInsightCard } from "@/features/jobs/components/JobInsightCard";
-import { getMockJobById } from "@/features/jobs/data/mockJobs";
+import { mapJobDetail } from "@/features/jobs/mappers/job-detail.mappers";
+import type { JobDetailModel } from "@/features/jobs/types/job.types";
+import { ApiError } from "@/lib/http/api-error";
 
 type JobDetailViewProps = {
   jobId: string | undefined;
 };
 
-const responsibilities = [
-  "Lead design for new features from concept to launch.",
-  "Conduct user research and usability testing.",
-  "Collaborate with product managers and engineers.",
-  "Contribute to and maintain our design system.",
-  "Mentor junior teammates and raise quality across the team."
-];
-
-const requirements = [
-  "5+ years of relevant experience in the discipline.",
-  "Strong portfolio or track record showing thoughtful execution.",
-  "Comfortable working inside a modern product team.",
-  "Able to communicate clearly with technical and non-technical partners.",
-  "Experience with iterative delivery and feedback loops."
-];
-
-const benefits = [
-  "Competitive salary and equity package.",
-  "Flexible hybrid working arrangements.",
-  "Learning and development budget.",
-  "Private health cover.",
-  "Generous annual leave."
-];
-
 export function JobDetailView({ jobId }: JobDetailViewProps) {
-  const job = jobId ? getMockJobById(jobId) : undefined;
+  const numericJobId = Number(jobId);
+  const hasValidJobId = Boolean(jobId) && !Number.isNaN(numericJobId);
+  const [job, setJob] = useState<JobDetailModel | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "not-found" | "error">(
+    "idle"
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (!job) {
+  useEffect(() => {
+    if (!hasValidJobId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadJob() {
+      setStatus("loading");
+      setErrorMessage(null);
+
+      try {
+        const response = await getJobById(numericJobId);
+
+        if (cancelled) {
+          return;
+        }
+
+        setJob(mapJobDetail(response));
+        setStatus("success");
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setJob(null);
+
+        if (error instanceof ApiError && error.status === 404) {
+          setStatus("not-found");
+          return;
+        }
+
+        setStatus("error");
+        setErrorMessage(error instanceof Error ? error.message : "Unable to load this job.");
+      }
+    }
+
+    void loadJob();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasValidJobId, numericJobId]);
+
+  if (!hasValidJobId || status === "not-found") {
     return <JobDetailNotFound />;
   }
 
@@ -63,35 +91,49 @@ export function JobDetailView({ jobId }: JobDetailViewProps) {
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <main className="space-y-8">
-          <JobDetailHeroCard job={job} />
-          <JobDetailContentPanel title="About the role">
-            <p className="text-foreground-secondary">{job.summary}</p>
-            <p className="mt-4 text-foreground-secondary">
-              This mock page shows how Firefly Signal can present an individual opportunity with
-              enough context to support quick judgment today and richer AI-assisted review later.
-            </p>
-          </JobDetailContentPanel>
-          <JobDetailListPanel
-            title="What you'll do"
-            items={responsibilities}
-            icon={<CheckCircleRoundedIcon className="text-accent-primary" />}
-          />
-          <JobDetailListPanel
-            title="What we're looking for"
-            items={requirements}
-            icon={<ErrorOutlineRoundedIcon className="text-foreground-tertiary" />}
-          />
-          <JobDetailListPanel
-            title="What we offer"
-            items={benefits}
-            icon={<CheckCircleRoundedIcon className="text-signal-fresh" />}
-          />
+          {status === "loading" ? (
+            <JobDetailContentPanel title="Loading job">
+              <p className="text-foreground-secondary">Fetching the latest job details...</p>
+            </JobDetailContentPanel>
+          ) : null}
+
+          {status === "error" ? (
+            <Alert severity="error">{errorMessage ?? "Unable to load this job."}</Alert>
+          ) : null}
+
+          {status === "success" && job ? (
+            <>
+              <JobDetailHeroCard job={job} />
+              <JobDetailContentPanel title="About the role">
+                {getDescriptionParagraphs(job).map((paragraph) => (
+                  <p key={paragraph} className="text-foreground-secondary">
+                    {paragraph}
+                  </p>
+                ))}
+              </JobDetailContentPanel>
+            </>
+          ) : null}
         </main>
 
-        <aside className="space-y-6">
-          <JobInsightCard />
-        </aside>
+        {status === "success" && job ? (
+          <aside className="space-y-6">
+            <JobInsightCard />
+          </aside>
+        ) : null}
       </div>
     </div>
   );
+}
+
+function getDescriptionParagraphs(job: JobDetailModel): string[] {
+  const paragraphs = job.description
+    .split(/\n\s*\n/g)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+
+  if (paragraphs.length > 0) {
+    return paragraphs;
+  }
+
+  return [job.summary];
 }
