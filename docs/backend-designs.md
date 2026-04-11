@@ -113,8 +113,8 @@ The MVP is not a stateless search-only product.
 Persisted workflow data is part of the core requirement.
 
 ### File Storage
-Use a simple local-first file storage approach for uploaded CVs, cover letters, and other user files during the MVP.
-Persist document metadata in PostgreSQL and keep storage implementation easy to replace later.
+Use Amazon S3 for uploaded CVs, cover letters, and other user-owned files during the MVP.
+Persist document metadata in PostgreSQL and keep the relational model separate from binary storage concerns.
 
 ### Redis
 Use Redis only if needed for:
@@ -179,7 +179,6 @@ Do not force async workflows into the first implementation if synchronous reques
 
 ## Open Questions
 - Which provider or providers should be implemented first for dependable UK developer-job coverage?
-- Should uploaded document binaries stay on local disk for the full MVP, or move earlier to a managed object store?
 - Does postcode-distance filtering rely on a local postcode lookup dataset, an external postcode API, or both?
 
 ## Current Recommendation

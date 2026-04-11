@@ -3,6 +3,7 @@ using Firefly.Signal.Identity.Domain;
 using Firefly.Signal.Identity.Endpoints;
 using Firefly.Signal.Identity.Infrastructure.Persistence;
 using Firefly.Signal.Identity.Infrastructure.Services;
+using Firefly.Signal.Identity.Infrastructure.Storage;
 using Firefly.Signal.ServiceDefaults;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -16,6 +17,7 @@ builder.AddFireflyServiceDefaults();
 builder.AddDefaultOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+builder.Services.AddUserDocumentStorage(builder.Configuration, builder.Environment);
 builder.Services.AddDbContext<IdentityDbContext>(options =>
 {
     if (builder.Environment.IsEnvironment("Testing"))
@@ -65,6 +67,7 @@ app.MapGet("/", () => Results.Ok(new
 
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
+app.MapUserDocumentEndpoints();
 
 app.UseDefaultOpenApi();
 app.Run();

@@ -102,6 +102,7 @@ Recommended `DocumentType` values:
 Notes:
 - store binary files outside the relational row
 - keep metadata in PostgreSQL
+- use the `StorageKey` as the Amazon S3 object key for the uploaded file
 
 ## Job Search Domain Entities
 ### JobRefreshRun
