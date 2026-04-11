@@ -33,7 +33,7 @@ Use the files in `docs/frontend-designs/` as the detailed frontend source of tru
 - Do not let one feature reference another feature directly; promote to shared only by deliberate decision.
 
 ## Initial App Scope
-The first frontend slice should support:
+The MVP frontend should support:
 - a landing/search page
 - postcode input
 - keyword input
@@ -42,20 +42,31 @@ The first frontend slice should support:
 - results list
 - empty state
 - error state
-
-Future capabilities such as saved jobs, dashboards, AI recommendations, and document workflows should stay out of the first implementation unless explicitly planned.
+- login and protected routes
+- an authenticated workspace for personal job workflow
+- admin-facing job management flows
+- future saved-job, applied-job, profile, document, and AI-assisted views as part of the real MVP
 
 ## Information Architecture
 Recommended early route shape:
 - `/`
-  - search experience and results
-- future routes
-  - `/jobs/:id`
-  - `/saved`
-  - `/profile`
-  - `/insights`
-
-The first iteration can begin with a single route if that reduces noise.
+  - landing and search entry
+- `/search`
+  - search results
+- `/jobs/:id`
+  - public job detail
+- `/login`
+  - auth entry
+- `/app`
+  - authenticated workspace
+- `/saved`
+  - saved jobs
+- `/applied`
+  - applied jobs
+- `/profile`
+  - user profile and documents
+- `/admin/*`
+  - admin management and AI workflows
 
 ## Suggested Frontend Structure
 ```text
@@ -140,8 +151,8 @@ Use Tailwind for:
 - Ensure loading and error states are screen-reader friendly.
 
 ## Testing Guidance
-- The current UI test files have been intentionally removed and will be reintroduced later.
-- When tests return, prioritize view-level behavior, shared utilities, and important feature logic over low-signal component snapshots.
+- Prioritize view-level behavior, shared utilities, and important feature logic over low-signal component snapshots.
+- Keep auth, search, job workflow, and permission-sensitive UI covered with focused tests.
 
 ## Phased Frontend Implementation
 ### Phase 1
@@ -159,8 +170,8 @@ Use Tailwind for:
 - Add saved state or richer client behavior only if the product requires it
 
 ## Current Recommendation
-Start with one feature slice, one page, one route, and one API client boundary.
-That will keep the first frontend issue sequence fast and understandable while leaving room to grow cleanly.
+Keep the route surface intentional and tied to the real MVP workflow.
+The frontend should stay feature-oriented and reviewable even as the product grows beyond the initial public search slice.
 
 Current repo frontend direction:
 - `docs/frontend-designs/architecture.md` is the concrete architecture contract for future frontend work
