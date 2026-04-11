@@ -30,7 +30,7 @@ public class UserDocumentEndpointsTests
             fileBytes: "sample-cv-pdf-content"u8.ToArray(),
             displayName: "Primary CV");
 
-        var uploadResponse = await client.PostAsync("/api/documents", uploadContent);
+        var uploadResponse = await client.PostAsync("/api/users/documents", uploadContent);
         uploadResponse.EnsureSuccessStatusCode();
 
         var createdDocument = await uploadResponse.Content.ReadFromJsonAsync<UserDocumentResponse>();
@@ -41,7 +41,7 @@ public class UserDocumentEndpointsTests
         Assert.IsFalse(string.IsNullOrWhiteSpace(createdDocument.StorageKey));
         Assert.AreEqual("application/pdf", createdDocument.ContentType);
 
-        var listResponse = await client.GetAsync("/api/documents");
+        var listResponse = await client.GetAsync("/api/users/documents");
         listResponse.EnsureSuccessStatusCode();
 
         var documents = await listResponse.Content.ReadFromJsonAsync<List<UserDocumentResponse>>();
@@ -62,7 +62,7 @@ public class UserDocumentEndpointsTests
         var firstDocument = await UploadDocumentAsync(client, "cv", "first-cv.pdf", "application/pdf", "first"u8.ToArray(), "First CV");
         var secondDocument = await UploadDocumentAsync(client, "cv", "second-cv.pdf", "application/pdf", "second"u8.ToArray(), "Second CV");
 
-        var setDefaultResponse = await client.PostAsync($"/api/documents/{secondDocument.Id}/default", content: null);
+        var setDefaultResponse = await client.PostAsync($"/api/users/documents/{secondDocument.Id}/default", content: null);
         setDefaultResponse.EnsureSuccessStatusCode();
 
         var updatedDocument = await setDefaultResponse.Content.ReadFromJsonAsync<UserDocumentResponse>();
@@ -70,7 +70,7 @@ public class UserDocumentEndpointsTests
         Assert.AreEqual(secondDocument.Id, updatedDocument.Id);
         Assert.IsTrue(updatedDocument.IsDefault);
 
-        var documents = await client.GetFromJsonAsync<List<UserDocumentResponse>>("/api/documents");
+        var documents = await client.GetFromJsonAsync<List<UserDocumentResponse>>("/api/users/documents");
         Assert.IsNotNull(documents);
         Assert.HasCount(2, documents);
         Assert.AreEqual(secondDocument.Id, documents.Single(x => x.IsDefault).Id);
@@ -89,10 +89,10 @@ public class UserDocumentEndpointsTests
         var firstDocument = await UploadDocumentAsync(client, "cv", "first-cv.pdf", "application/pdf", "first"u8.ToArray(), "First CV");
         var secondDocument = await UploadDocumentAsync(client, "cv", "second-cv.pdf", "application/pdf", "second"u8.ToArray(), "Second CV");
 
-        var deleteResponse = await client.DeleteAsync($"/api/documents/{firstDocument.Id}");
+        var deleteResponse = await client.DeleteAsync($"/api/users/documents/{firstDocument.Id}");
         Assert.AreEqual(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
-        var documents = await client.GetFromJsonAsync<List<UserDocumentResponse>>("/api/documents");
+        var documents = await client.GetFromJsonAsync<List<UserDocumentResponse>>("/api/users/documents");
         Assert.IsNotNull(documents);
         Assert.HasCount(1, documents);
         Assert.AreEqual(secondDocument.Id, documents[0].Id);
@@ -115,7 +115,7 @@ public class UserDocumentEndpointsTests
             fileBytes: [1, 2, 3, 4],
             displayName: "Unsafe CV");
 
-        var uploadResponse = await client.PostAsync("/api/documents", uploadContent);
+        var uploadResponse = await client.PostAsync("/api/users/documents", uploadContent);
 
         Assert.AreEqual(HttpStatusCode.BadRequest, uploadResponse.StatusCode);
     }
@@ -151,7 +151,7 @@ public class UserDocumentEndpointsTests
         string displayName)
     {
         using var uploadContent = CreateUploadContent(documentType, fileName, contentType, fileBytes, displayName);
-        var response = await client.PostAsync("/api/documents", uploadContent);
+        var response = await client.PostAsync("/api/users/documents", uploadContent);
         response.EnsureSuccessStatusCode();
 
         var document = await response.Content.ReadFromJsonAsync<UserDocumentResponse>();

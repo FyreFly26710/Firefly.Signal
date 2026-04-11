@@ -37,4 +37,33 @@ describe("AppHeader", () => {
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Workspace" })).toBeInTheDocument();
   });
+
+  it("keeps the workspace link inactive when the profile route is active", () => {
+    useSessionStore.setState({
+      user: {
+        userAccount: "admin",
+        displayName: "Admin",
+        role: "admin",
+        email: "admin@example.com"
+      },
+      isAuthenticated: true
+    });
+
+    render(
+      <ThemeProvider theme={theme}>
+        <MemoryRouter initialEntries={["/app/profile"]}>
+          <AppHeader variant="authenticated" />
+        </MemoryRouter>
+      </ThemeProvider>
+    );
+
+    expect(screen.getByRole("link", { name: "Profile" })).toHaveClass(
+      "bg-accent-secondary",
+      "text-accent-secondary-foreground"
+    );
+    expect(screen.getByRole("link", { name: "Workspace" })).not.toHaveClass(
+      "bg-accent-secondary",
+      "text-accent-secondary-foreground"
+    );
+  });
 });

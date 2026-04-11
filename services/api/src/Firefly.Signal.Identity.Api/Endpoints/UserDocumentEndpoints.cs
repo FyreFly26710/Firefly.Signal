@@ -15,7 +15,7 @@ public static class UserDocumentEndpoints
 {
     public static IEndpointRouteBuilder MapUserDocumentEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/documents").RequireAuthorization();
+        var group = endpoints.MapGroup("/api/users/documents").RequireAuthorization();
 
         group.MapGet("/", ListAsync);
         group.MapGet("/{id:long}", GetByIdAsync);
@@ -158,7 +158,7 @@ public static class UserDocumentEndpoints
             dbContext.UserDocuments.Add(document);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return Results.Created($"/api/documents/{document.Id}", document.ToResponse());
+            return Results.Created($"/api/users/documents/{document.Id}", document.ToResponse());
         }
         catch
         {

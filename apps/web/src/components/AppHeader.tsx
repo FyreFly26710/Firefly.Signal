@@ -2,6 +2,7 @@ import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
@@ -15,14 +16,22 @@ type AppHeaderProps = {
   actions?: ReactNode;
 };
 
-const publicLinks = [
-  { to: "/", label: "Discover", icon: <SearchRoundedIcon fontSize="inherit" /> },
-  { to: "/search", label: "Search", icon: <VisibilityRoundedIcon fontSize="inherit" /> }
+type NavigationLink = {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  end?: boolean;
+};
+
+const publicLinks: NavigationLink[] = [
+  { to: "/", label: "Discover", icon: <SearchRoundedIcon fontSize="inherit" />, end: true },
+  { to: "/search", label: "Search", icon: <VisibilityRoundedIcon fontSize="inherit" />, end: true }
 ];
 
-const authenticatedLinks = [
+const authenticatedLinks: NavigationLink[] = [
   ...publicLinks,
-  { to: "/app", label: "Workspace", icon: <DashboardRoundedIcon fontSize="inherit" /> },
+  { to: "/app", label: "Workspace", icon: <DashboardRoundedIcon fontSize="inherit" />, end: true },
+  { to: "/app/profile", label: "Profile", icon: <PersonRoundedIcon fontSize="inherit" />, end: true },
   { to: "/admin/manage-jobs", label: "Manage jobs", icon: <WorkOutlineRoundedIcon fontSize="inherit" /> }
 ];
 
@@ -58,6 +67,7 @@ export function AppHeader({ variant = "public", actions }: AppHeaderProps) {
             <NavLink
               key={link.to}
               to={link.to}
+              end={link.end}
               className={({ isActive }) =>
                 `inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   isActive

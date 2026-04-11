@@ -66,6 +66,7 @@ app.MapGet("/", () => Results.Ok(new
 }));
 
 app.MapAuthEndpoints();
+app.MapUserProfileEndpoints();
 app.MapUserEndpoints();
 app.MapUserDocumentEndpoints();
 
