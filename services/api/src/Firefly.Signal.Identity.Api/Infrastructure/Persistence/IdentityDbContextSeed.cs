@@ -14,10 +14,10 @@ public sealed class IdentityDbContextSeed(IPasswordHasher<UserAccount> passwordH
             var admin = UserAccount.Create("admin", string.Empty, "admin@firefly.local", "Firefly Admin", Roles.Admin);
             admin.ChangePassword(passwordHasher.HashPassword(admin, "Admin123!"));
 
-            var analyst = UserAccount.Create("analyst", string.Empty, "analyst@firefly.local", "Sample Analyst", Roles.User);
-            analyst.ChangePassword(passwordHasher.HashPassword(analyst, "Analyst123!"));
+            var testAdmin = UserAccount.Create("testadmin", string.Empty, "testadmin@firefly.local", "Firefly Test Admin", Roles.TestAdmin);
+            testAdmin.ChangePassword(passwordHasher.HashPassword(testAdmin, "TestAdmin123!"));
 
-            context.Users.AddRange(admin, analyst);
+            context.Users.AddRange(admin, testAdmin);
             await context.SaveChangesAsync();
         }
     }
