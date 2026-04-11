@@ -52,7 +52,9 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
             entity.Property(x => x.ImportedAtUtc).IsRequired();
             entity.Property(x => x.LastSeenAtUtc).IsRequired();
             entity.Property(x => x.RawPayloadJson).HasColumnType("jsonb").IsRequired();
-            entity.HasIndex(x => new { x.SourceName, x.SourceJobId }).IsUnique();
+            entity.HasIndex(x => new { x.SourceName, x.SourceJobId })
+                .IsUnique()
+                .HasFilter("\"SourceJobId\" <> ''");
             entity.HasIndex(x => x.Postcode);
             entity.HasIndex(x => x.PostedAtUtc);
             entity.HasIndex(x => x.IsHidden);
