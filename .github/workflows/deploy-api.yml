@@ -11,6 +11,7 @@ on:
 
 jobs:
   preflight:
+    environment: production
     runs-on: ubuntu-latest
     outputs:
       deploy_ready: ${{ steps.deploy.outputs.ready }}
@@ -31,8 +32,13 @@ jobs:
           RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
           DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
           CORS_ALLOWED_ORIGIN: ${{ secrets.CORS_ALLOWED_ORIGIN }}
+          IDENTITY_S3_BUCKET_NAME: ${{ secrets.IDENTITY_S3_BUCKET_NAME }}
+          IDENTITY_S3_REGION: ${{ secrets.IDENTITY_S3_REGION }}
+          IDENTITY_S3_KEY_PREFIX: ${{ secrets.IDENTITY_S3_KEY_PREFIX }}
+          IDENTITY_S3_ACCESS_KEY_ID: ${{ secrets.IDENTITY_S3_ACCESS_KEY_ID }}
+          IDENTITY_S3_SECRET_ACCESS_KEY: ${{ secrets.IDENTITY_S3_SECRET_ACCESS_KEY }}
         run: |
-          if [ -n "$DEPLOY_SSH_HOST" ] && [ -n "$DEPLOY_SSH_PORT" ] && [ -n "$DEPLOY_SSH_USERNAME" ] && [ -n "$DEPLOY_SSH_PRIVATE_KEY" ] && [ -n "$DEPLOY_REMOTE_PATH" ] && [ -n "$JWT_SIGNING_KEY" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ] && [ -n "$RABBITMQ_DEFAULT_USER" ] && [ -n "$RABBITMQ_DEFAULT_PASS" ] && [ -n "$DOCKERHUB_NAMESPACE" ] && [ -n "$CORS_ALLOWED_ORIGIN" ]; then
+          if [ -n "$DEPLOY_SSH_HOST" ] && [ -n "$DEPLOY_SSH_PORT" ] && [ -n "$DEPLOY_SSH_USERNAME" ] && [ -n "$DEPLOY_SSH_PRIVATE_KEY" ] && [ -n "$DEPLOY_REMOTE_PATH" ] && [ -n "$JWT_SIGNING_KEY" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ] && [ -n "$RABBITMQ_DEFAULT_USER" ] && [ -n "$RABBITMQ_DEFAULT_PASS" ] && [ -n "$DOCKERHUB_NAMESPACE" ] && [ -n "$CORS_ALLOWED_ORIGIN" ] && [ -n "$IDENTITY_S3_BUCKET_NAME" ] && [ -n "$IDENTITY_S3_REGION" ] && [ -n "$IDENTITY_S3_KEY_PREFIX" ] && [ -n "$IDENTITY_S3_ACCESS_KEY_ID" ] && [ -n "$IDENTITY_S3_SECRET_ACCESS_KEY" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -41,6 +47,7 @@ jobs:
   deploy:
     needs: preflight
     if: needs.preflight.outputs.deploy_ready == 'true'
+    environment: production
     runs-on: ubuntu-latest
     env:
       DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
@@ -55,6 +62,11 @@ jobs:
       RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
       DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
       CORS_ALLOWED_ORIGIN: ${{ secrets.CORS_ALLOWED_ORIGIN }}
+      IDENTITY_S3_BUCKET_NAME: ${{ secrets.IDENTITY_S3_BUCKET_NAME }}
+      IDENTITY_S3_REGION: ${{ secrets.IDENTITY_S3_REGION }}
+      IDENTITY_S3_KEY_PREFIX: ${{ secrets.IDENTITY_S3_KEY_PREFIX }}
+      IDENTITY_S3_ACCESS_KEY_ID: ${{ secrets.IDENTITY_S3_ACCESS_KEY_ID }}
+      IDENTITY_S3_SECRET_ACCESS_KEY: ${{ secrets.IDENTITY_S3_SECRET_ACCESS_KEY }}
       IMAGE_TAG: ${{ inputs.image_tag }}
 
     steps:
@@ -87,6 +99,11 @@ jobs:
           JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
           DOCKERHUB_NAMESPACE=${DOCKERHUB_NAMESPACE}
           CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN}
+          IDENTITY_S3_BUCKET_NAME=${IDENTITY_S3_BUCKET_NAME}
+          IDENTITY_S3_REGION=${IDENTITY_S3_REGION}
+          IDENTITY_S3_KEY_PREFIX=${IDENTITY_S3_KEY_PREFIX}
+          IDENTITY_S3_ACCESS_KEY_ID=${IDENTITY_S3_ACCESS_KEY_ID}
+          IDENTITY_S3_SECRET_ACCESS_KEY=${IDENTITY_S3_SECRET_ACCESS_KEY}
           IMAGE_TAG=${IMAGE_TAG}
           EOF
 

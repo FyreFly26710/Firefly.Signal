@@ -55,6 +55,11 @@ services:
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__FireflySignalDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Jwt__SigningKey: ${JWT_SIGNING_KEY}
+      UserDocumentStorage__BucketName: ${IDENTITY_S3_BUCKET_NAME}
+      UserDocumentStorage__Region: ${IDENTITY_S3_REGION}
+      UserDocumentStorage__KeyPrefix: ${IDENTITY_S3_KEY_PREFIX}
+      UserDocumentStorage__AccessKeyId: ${IDENTITY_S3_ACCESS_KEY_ID}
+      UserDocumentStorage__SecretAccessKey: ${IDENTITY_S3_SECRET_ACCESS_KEY}
     depends_on:
       postgres:
         condition: service_healthy

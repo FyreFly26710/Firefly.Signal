@@ -180,6 +180,7 @@ The MVP should already include these core capabilities in a practical single-use
 - Saved and applied states are persisted per user.
 - Notes are persisted per application or job workflow record.
 - Uploaded document metadata is persisted in the database.
+- Uploaded document binaries are stored in Amazon S3.
 - AI outputs are persisted and linked to both user and job context.
 
 ## Quality Attributes
@@ -215,7 +216,6 @@ The MVP should already include these core capabilities in a practical single-use
 
 ## Deliberately Deferred Decisions
 - Exact provider order after the first live provider is integrated
-- Exact long-term storage backend for document binaries beyond the MVP local-first path
 - Whether scraping becomes necessary for provider coverage after public API evaluation
 - Whether future non-admin roles beyond `test-admin` are justified
 
