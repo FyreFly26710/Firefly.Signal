@@ -139,6 +139,7 @@ Do not force async workflows into the first implementation if synchronous reques
 
 ## API Design Guidance
 - Version public APIs from the start, even if only `v1`.
+- Keep gateway-facing route shapes grouped by downstream API area, for example `/api/auth/...`, `/api/users/...`, `/api/job-search/...`, and `/api/ai/...`.
 - Return stable result models for job cards, job detail, workflow lists, user profile data, and AI outputs.
 - Normalize provider-specific quirks before they reach the frontend.
 - Keep search, workflow, profile, and AI contracts explicit and typed.

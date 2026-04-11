@@ -20,12 +20,17 @@ Do not build or copy a full identity-server-style platform.
 - return current-user information to the frontend
 
 ## Recommended Route Shape
+- Keep identity routes under the gateway-forwarded groups:
 - `POST /api/auth/google/start`
 - `GET /api/auth/google/callback`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
+- `GET /api/users/profile`
+- `PUT /api/users/profile`
+- `GET /api/users/documents`
+- `POST /api/users/documents`
 
-The exact route names can change, but keep the surface small.
+The exact route names can change, but keep the surface small and aligned with the gateway route groups.
 
 ## Recommended Project Shape
 

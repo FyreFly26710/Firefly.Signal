@@ -40,6 +40,11 @@ const AppJobDetailPage = lazy(() =>
     default: module.AppJobDetailPage
   }))
 );
+const AppProfilePage = lazy(() =>
+  import("@/routes/AppProfilePage").then((module) => ({
+    default: module.AppProfilePage
+  }))
+);
 
 function withRouteFallback(page: React.ReactNode) {
   return <Suspense fallback={<RouteLoadingScreen />}>{page}</Suspense>;
@@ -67,6 +72,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         {withRouteFallback(<AppHomePage />)}
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: "/app/profile",
+    element: (
+      <ProtectedRoute>
+        {withRouteFallback(<AppProfilePage />)}
       </ProtectedRoute>
     )
   },
