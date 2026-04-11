@@ -96,6 +96,7 @@ To avoid burning Adzuna rate limits during routine development:
 - Firefly Signal uses a mock Adzuna provider by default
 - live Adzuna calls are opt-in through configuration
 - backend unit and functional tests do not call the real Adzuna API
+- admin-triggered provider import flows should continue to work against the mock provider in local development
 
 Current configuration behavior:
 

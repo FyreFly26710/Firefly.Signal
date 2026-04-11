@@ -1,10 +1,21 @@
-import { deleteJson, deleteRequest, getJson, postJson, putJson } from "@/lib/http/client";
+import {
+  deleteJson,
+  deleteRequest,
+  getBlob,
+  getJson,
+  postFormData,
+  postJson,
+  putJson
+} from "@/lib/http/client";
 import type {
   CreateJobRequestDto,
   DeleteJobsResponseDto,
+  ExportJobsResponseDto,
   GetJobsPageQueryDto,
   HideJobsResponseDto,
   IdBatchRequestDto,
+  ImportJobsFromProviderRequestDto,
+  ImportJobsResponseDto,
   JobDetailsResponseDto,
   JobsPageResponseDto,
   UpdateJobRequestDto
@@ -67,6 +78,40 @@ export async function deleteJob(jobId: number): Promise<void> {
 
 export async function deleteJobs(ids: number[]): Promise<DeleteJobsResponseDto> {
   return deleteJson<DeleteJobsResponseDto, IdBatchRequestDto>("/api/job-search/jobs", { ids });
+}
+
+export async function importJobsFromProvider(
+  request: ImportJobsFromProviderRequestDto
+): Promise<ImportJobsResponseDto> {
+  return postJson<ImportJobsResponseDto, ImportJobsFromProviderRequestDto>(
+    "/api/job-search/jobs/import/provider",
+    request
+  );
+}
+
+export async function importJobsFromJson(file: File): Promise<ImportJobsResponseDto> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return postFormData<ImportJobsResponseDto>("/api/job-search/jobs/import/json", formData);
+}
+
+export async function exportJobs(query: GetJobsPageQueryDto): Promise<ExportJobsResponseDto> {
+  const searchParams = new URLSearchParams();
+
+  appendOptional(searchParams, "keyword", query.keyword);
+  appendOptional(searchParams, "company", query.company);
+  appendOptional(searchParams, "postcode", query.postcode);
+  appendOptional(searchParams, "location", query.location);
+  appendOptional(searchParams, "sourceName", query.sourceName);
+  appendOptional(searchParams, "categoryTag", query.categoryTag);
+
+  if (query.isHidden !== undefined) {
+    searchParams.set("isHidden", String(query.isHidden));
+  }
+
+  const blob = await getBlob(`/api/job-search/jobs/export?${searchParams.toString()}`);
+  return JSON.parse(await blob.text()) as ExportJobsResponseDto;
 }
 
 function appendOptional(params: URLSearchParams, key: string, value: string | undefined) {

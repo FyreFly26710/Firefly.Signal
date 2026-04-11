@@ -1,8 +1,10 @@
 using Firefly.Signal.JobSearch.Application;
+using Firefly.Signal.JobSearch.Infrastructure.External;
 using Firefly.Signal.SharedKernel.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace Firefly.Signal.JobSearch.Endpoints;
 
@@ -22,6 +24,10 @@ public static class JobSearchEndpoints
         adminGroup.MapDelete("/", DeleteManyAsync);
         adminGroup.MapPost("/{id:long}/hide", HideByIdAsync);
         adminGroup.MapPost("/hide", HideManyAsync);
+        adminGroup.MapPost("/import/provider", ImportFromProviderAsync);
+        adminGroup.MapPost("/import/json", ImportFromJsonAsync)
+            .DisableAntiforgery();
+        adminGroup.MapGet("/export", ExportAsync);
 
         return endpoints;
     }
@@ -131,4 +137,102 @@ public static class JobSearchEndpoints
         [FromServices] IJobSearchService service,
         CancellationToken cancellationToken)
         => TypedResults.Ok(await service.HideAsync(request.Ids, cancellationToken));
+
+    private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromProviderAsync(
+        [FromBody] ImportJobsFromProviderRequest request,
+        [FromServices] IJobSearchService service,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return TypedResults.Ok(await service.ImportFromProviderAsync(request, cancellationToken));
+        }
+        catch (JobSearchProviderException exception)
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "Provider import failed",
+                Detail = exception.Message
+            });
+        }
+    }
+
+    private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromJsonAsync(
+        IFormFile? file,
+        [FromServices] IJobSearchService service,
+        CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "JSON file is required",
+                Detail = "Upload a non-empty JSON file containing exported jobs."
+            });
+        }
+
+        if (!file.FileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "JSON file is required",
+                Detail = "The uploaded file must use a .json extension."
+            });
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            return TypedResults.Ok(await service.ImportFromJsonAsync(stream, file.FileName, cancellationToken));
+        }
+        catch (InvalidDataException exception)
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "JSON import failed",
+                Detail = exception.Message
+            });
+        }
+        catch (JsonException)
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "JSON import failed",
+                Detail = "The uploaded file is not valid job export JSON."
+            });
+        }
+    }
+
+    private static async Task<FileContentHttpResult> ExportAsync(
+        [FromQuery] string? keyword,
+        [FromQuery] string? company,
+        [FromQuery] string? postcode,
+        [FromQuery] string? location,
+        [FromQuery] string? sourceName,
+        [FromQuery] string? categoryTag,
+        [FromQuery] bool? isHidden,
+        [FromServices] IJobSearchService service,
+        CancellationToken cancellationToken)
+    {
+        var export = await service.ExportAsync(
+            new ExportJobsRequest(
+                keyword,
+                company,
+                postcode,
+                location,
+                sourceName,
+                categoryTag,
+                isHidden),
+            cancellationToken);
+
+        var content = JsonSerializer.SerializeToUtf8Bytes(export, new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true
+        });
+
+        return TypedResults.File(
+            content,
+            "application/json",
+            $"jobs-export-{DateTime.UtcNow:yyyyMMdd-HHmmss}.json");
+    }
 }

@@ -1,5 +1,6 @@
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.JobSearch.Domain;
+using Firefly.Signal.JobSearch.Infrastructure.External;
 using Firefly.Signal.JobSearch.Infrastructure.Persistence;
 using Firefly.Signal.JobSearch.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -87,7 +88,7 @@ public class JobSearchServiceTests
             rawPayloadJson: "{}"));
         await dbContext.SaveChangesAsync();
 
-        var service = new DbJobSearchService(dbContext);
+        var service = new DbJobSearchService(dbContext, new NoOpJobSearchProvider());
 
         var result = await service.GetPageAsync(new GetJobsPageRequest(0, 20));
 
@@ -112,7 +113,7 @@ public class JobSearchServiceTests
         dbContext.Jobs.Add(job);
         await dbContext.SaveChangesAsync();
 
-        var service = new DbJobSearchService(dbContext);
+        var service = new DbJobSearchService(dbContext, new NoOpJobSearchProvider());
 
         var result = await service.DeleteAsync([job.Id]);
 
@@ -127,5 +128,13 @@ public class JobSearchServiceTests
             .Options;
 
         return new JobSearchDbContext(options);
+    }
+
+    private sealed class NoOpJobSearchProvider : IJobSearchProvider
+    {
+        public JobSearchProviderKind Provider => JobSearchProviderKind.Adzuna;
+
+        public Task<PublicJobSearchResult> SearchAsync(SearchJobsRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult(new PublicJobSearchResult(0, []));
     }
 }

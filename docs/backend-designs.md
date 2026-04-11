@@ -144,6 +144,7 @@ Do not force async workflows into the first implementation if synchronous reques
 - Normalize provider-specific quirks before they reach the frontend.
 - Keep search, workflow, profile, and AI contracts explicit and typed.
 - Design bulk admin and AI-selection workflows carefully so they remain reviewable and auditable.
+- Keep admin job-catalog operations under `/api/job-search/jobs/...`, including CRUD, moderation, provider import, JSON import, and JSON export endpoints.
 
 ## Operational Guidance
 - Use Docker Compose locally for PostgreSQL, pgweb, RabbitMQ, Redis, and service containers when they exist.

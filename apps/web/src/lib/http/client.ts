@@ -36,6 +36,30 @@ export async function putJson<TResponse, TBody>(
   });
 }
 
+export async function postFormData<TResponse>(
+  path: string,
+  body: FormData,
+  init?: Omit<RequestInit, "method" | "body">
+): Promise<TResponse> {
+  return requestJson<TResponse>(path, {
+    ...init,
+    method: "POST",
+    body
+  });
+}
+
+export async function getBlob(
+  path: string,
+  init?: Omit<RequestInit, "method">
+): Promise<Blob> {
+  const response = await request(path, {
+    ...init,
+    method: "GET"
+  });
+
+  return response.blob();
+}
+
 export async function deleteRequest(
   path: string,
   init?: Omit<RequestInit, "method">
@@ -74,7 +98,7 @@ async function request(path: string, init: RequestInit): Promise<Response> {
     ...init,
     headers: {
       Accept: "application/json",
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...(init.body && !(init.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...init?.headers
     }
