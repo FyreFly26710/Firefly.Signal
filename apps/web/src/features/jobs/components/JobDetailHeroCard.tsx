@@ -1,10 +1,10 @@
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import { Button } from "@mui/material";
 import { SectionCard } from "@/components/SectionCard";
-import type { MockJob } from "@/features/jobs/types/job.types";
+import type { JobDetailModel } from "@/features/jobs/types/job.types";
 
 type JobDetailHeroCardProps = {
-  job: MockJob;
+  job: JobDetailModel;
 };
 
 export function JobDetailHeroCard({ job }: JobDetailHeroCardProps) {

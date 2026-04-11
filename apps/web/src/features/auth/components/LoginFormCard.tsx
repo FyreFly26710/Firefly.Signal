@@ -25,14 +25,8 @@ export function LoginFormCard({
       <p className="font-mono text-xs tracking-[0.18em] text-metadata">SIGN IN</p>
       <h2 className="mt-3 font-serif text-3xl font-semibold text-foreground">Open the workspace.</h2>
       <p className="mt-3 text-sm leading-7 text-foreground-secondary">
-        Use one of the seeded backend users to request a real JWT and enter the protected mock-data experience.
+        Sign in with your account to continue into the protected workspace.
       </p>
-
-      <div className="mt-5 rounded-md bg-accent-secondary p-4 text-sm text-accent-secondary-foreground">
-        <p className="font-medium">Seeded credentials</p>
-        <p className="mt-2"><code>admin</code> / <code>Admin123!</code></p>
-        <p><code>analyst</code> / <code>Analyst123!</code></p>
-      </div>
 
       <form className="mt-6 flex flex-col gap-4" onSubmit={(event) => void onSubmit(event)}>
         <TextField
