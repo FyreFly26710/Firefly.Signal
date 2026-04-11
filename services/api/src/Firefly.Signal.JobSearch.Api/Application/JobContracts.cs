@@ -51,6 +51,38 @@ public sealed record GetJobsPageRequest(
     string? CategoryTag = null,
     bool? IsHidden = false);
 
+public sealed record ExportJobsRequest(
+    string? Keyword = null,
+    string? Company = null,
+    string? Postcode = null,
+    string? Location = null,
+    string? SourceName = null,
+    string? CategoryTag = null,
+    bool? IsHidden = null);
+
+public sealed record ImportJobsFromProviderRequest(
+    string Postcode,
+    string Keyword,
+    int PageIndex = 0,
+    int PageSize = 20,
+    JobSearchProviderKind Provider = JobSearchProviderKind.Adzuna,
+    string? ExcludedKeyword = null,
+    int? DistanceKilometers = null,
+    string? Category = null,
+    decimal? SalaryMin = null,
+    decimal? SalaryMax = null,
+    bool? FullTime = null,
+    bool? PartTime = null,
+    bool? Permanent = null,
+    bool? Contract = null,
+    string? SortBy = null,
+    int? MaxDaysOld = null,
+    string? Company = null,
+    bool TitleOnly = false,
+    string? Location0 = null,
+    string? Location1 = null,
+    string? Location2 = null);
+
 public sealed record CreateJobRequest(
     long? JobRefreshRunId,
     string SourceName,
@@ -135,3 +167,14 @@ public sealed record DeleteJobsResponse(
     IReadOnlyList<long> DeletedIds,
     IReadOnlyList<long> MissingIds,
     IReadOnlyList<long> NotHiddenIds);
+
+public sealed record ImportJobsResponse(
+    long JobRefreshRunId,
+    string Source,
+    int ImportedCount,
+    int FailedCount);
+
+public sealed record ExportJobsResponse(
+    DateTime ExportedAtUtc,
+    int Count,
+    IReadOnlyList<JobDetailsResponse> Jobs);

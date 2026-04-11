@@ -1,9 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Net;
 using System.Net.Http.Headers;
+using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.JobSearch.Domain;
 using Firefly.Signal.JobSearch.Infrastructure.Persistence;
@@ -74,6 +75,70 @@ public class JobSearchApiTests
 
         var getResponse = await client.GetAsync($"/api/job-search/jobs/{jobId}");
         Assert.AreEqual(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Provider_import_persists_jobs_for_admin()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateAccessToken());
+
+        var response = await client.PostAsJsonAsync("/api/job-search/jobs/import/provider", new
+        {
+            postcode = "SW1A 1AA",
+            keyword = "platform",
+            pageSize = 20
+        });
+
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<ImportJobsResponse>();
+        Assert.IsNotNull(payload);
+        Assert.AreEqual(2, payload.ImportedCount);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<JobSearchDbContext>();
+        Assert.AreEqual(2, await dbContext.Jobs.CountAsync());
+        Assert.AreEqual(1, await dbContext.JobRefreshRuns.CountAsync());
+    }
+
+    [TestMethod]
+    public async Task Export_returns_json_file_for_admin()
+    {
+        await using var factory = CreateFactory();
+        await SeedJobAsync(factory.Services);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateAccessToken());
+
+        var response = await client.GetAsync("/api/job-search/jobs/export");
+
+        response.EnsureSuccessStatusCode();
+        Assert.AreEqual("application/json", response.Content.Headers.ContentType?.MediaType);
+
+        var body = await response.Content.ReadAsStringAsync();
+        var payload = JsonSerializer.Deserialize<ExportJobsResponse>(body, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.IsNotNull(payload);
+        Assert.AreEqual(1, payload.Count);
+        Assert.AreEqual(".NET Backend Developer", payload.Jobs[0].Title);
+    }
+
+    [TestMethod]
+    public async Task Json_import_rejects_invalid_payload()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateAccessToken());
+
+        using var content = new MultipartFormDataContent();
+        using var fileContent = new ByteArrayContent(Encoding.UTF8.GetBytes("{not-json"));
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        content.Add(fileContent, "file", "jobs.json");
+
+        var response = await client.PostAsync("/api/job-search/jobs/import/json", content);
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        var payload = await response.Content.ReadAsStringAsync();
+        StringAssert.Contains(payload, "JSON import failed");
     }
 
     private static WebApplicationFactory<Firefly.Signal.JobSearch.Api.Program> CreateFactory()
