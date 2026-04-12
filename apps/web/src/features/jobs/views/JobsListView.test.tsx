@@ -134,8 +134,47 @@ describe("JobsListView", () => {
     vi.mocked(getJobsPage).mockResolvedValue({
       pageIndex: 0,
       pageSize: 20,
-      totalCount: 0,
-      items: []
+      totalCount: 1,
+      items: [
+        {
+          id: 99,
+          jobRefreshRunId: null,
+          sourceName: "Adzuna",
+          sourceJobId: "adz-99",
+          sourceAdReference: null,
+          title: "Export Test Job",
+          description: "desc",
+          summary: "summary",
+          url: "https://example.com/jobs/99",
+          company: "Acme",
+          companyDisplayName: null,
+          companyCanonicalName: null,
+          postcode: "EC1A 1BB",
+          locationName: "London",
+          locationDisplayName: null,
+          locationAreaJson: null,
+          latitude: null,
+          longitude: null,
+          categoryTag: null,
+          categoryLabel: null,
+          salaryMin: null,
+          salaryMax: null,
+          salaryCurrency: null,
+          salaryIsPredicted: null,
+          contractTime: null,
+          contractType: null,
+          isFullTime: true,
+          isPartTime: false,
+          isPermanent: true,
+          isContract: false,
+          isRemote: false,
+          postedAtUtc: "2025-04-03T10:00:00Z",
+          importedAtUtc: "2025-04-03T12:00:00Z",
+          lastSeenAtUtc: "2025-04-03T12:00:00Z",
+          isHidden: false,
+          rawPayloadJson: "{}"
+        }
+      ]
     });
 
     vi.mocked(importJobsFromProvider).mockResolvedValue({
@@ -200,10 +239,11 @@ describe("JobsListView", () => {
       expect(importJobsFromJson).toHaveBeenCalledWith(file);
     });
 
+    await user.click(screen.getByRole("checkbox", { name: "Select job 99" }));
     await user.click(screen.getByRole("button", { name: "Export JSON" }));
 
     await waitFor(() => {
-      expect(exportJobs).toHaveBeenCalled();
+      expect(exportJobs).toHaveBeenCalledWith({ jobIds: [99] });
       expect(clickSpy).toHaveBeenCalled();
     });
 
