@@ -52,6 +52,7 @@ public sealed record GetJobsPageRequest(
     bool? IsHidden = false);
 
 public sealed record ExportJobsRequest(
+    IReadOnlyList<long>? JobIds = null,
     string? Keyword = null,
     string? Company = null,
     string? Postcode = null,
@@ -177,4 +178,4 @@ public sealed record ImportJobsResponse(
 public sealed record ExportJobsResponse(
     DateTime ExportedAtUtc,
     int Count,
-    IReadOnlyList<JobDetailsResponse> Jobs);
+    IReadOnlyList<CreateJobRequest> Jobs);

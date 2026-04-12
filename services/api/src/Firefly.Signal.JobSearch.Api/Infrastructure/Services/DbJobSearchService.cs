@@ -46,7 +46,16 @@ public sealed class DbJobSearchService(
 
     public async Task<ExportJobsResponse> ExportAsync(ExportJobsRequest request, CancellationToken cancellationToken = default)
     {
-        var jobs = await ApplyFilters(dbContext.Jobs.AsNoTracking(), new GetJobsPageRequest(
+        IQueryable<JobPosting> query;
+
+        if (request.JobIds is { Count: > 0 })
+        {
+            var ids = request.JobIds.Distinct().ToArray();
+            query = dbContext.Jobs.AsNoTracking().Where(x => ids.Contains(x.Id));
+        }
+        else
+        {
+            query = ApplyFilters(dbContext.Jobs.AsNoTracking(), new GetJobsPageRequest(
                 0,
                 int.MaxValue,
                 request.Keyword,
@@ -55,10 +64,13 @@ public sealed class DbJobSearchService(
                 request.Location,
                 request.SourceName,
                 request.CategoryTag,
-                request.IsHidden))
+                request.IsHidden));
+        }
+
+        var jobs = await query
             .OrderByDescending(x => x.PostedAtUtc)
             .ThenByDescending(x => x.Id)
-            .Select(ToResponse())
+            .Select(ToExportEntry())
             .ToListAsync(cancellationToken);
 
         return new ExportJobsResponse(DateTime.UtcNow, jobs.Count, jobs);
@@ -465,6 +477,44 @@ public sealed class DbJobSearchService(
             request.LastSeenAtUtc == default ? DateTime.UtcNow : request.LastSeenAtUtc,
             request.IsHidden,
             request.RawPayloadJson);
+
+    private static Expression<Func<JobPosting, CreateJobRequest>> ToExportEntry()
+        => job => new CreateJobRequest(
+            job.JobRefreshRunId,
+            job.SourceName,
+            job.SourceJobId,
+            job.SourceAdReference,
+            job.Title,
+            job.Description,
+            job.Summary,
+            job.Url,
+            job.Company,
+            job.CompanyDisplayName,
+            job.CompanyCanonicalName,
+            job.Postcode,
+            job.LocationName,
+            job.LocationDisplayName,
+            job.LocationAreaJson,
+            job.Latitude,
+            job.Longitude,
+            job.CategoryTag,
+            job.CategoryLabel,
+            job.SalaryMin,
+            job.SalaryMax,
+            job.SalaryCurrency,
+            job.SalaryIsPredicted,
+            job.ContractTime,
+            job.ContractType,
+            job.IsFullTime,
+            job.IsPartTime,
+            job.IsPermanent,
+            job.IsContract,
+            job.IsRemote,
+            job.PostedAtUtc,
+            job.ImportedAtUtc,
+            job.LastSeenAtUtc,
+            job.IsHidden,
+            job.RawPayloadJson);
 
     private static Expression<Func<JobPosting, JobDetailsResponse>> ToResponse()
         => job => new JobDetailsResponse(

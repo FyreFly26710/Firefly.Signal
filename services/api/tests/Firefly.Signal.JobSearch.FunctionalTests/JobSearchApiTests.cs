@@ -110,7 +110,7 @@ public class JobSearchApiTests
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateAccessToken());
 
-        var response = await client.GetAsync("/api/job-search/jobs/export");
+        var response = await client.PostAsJsonAsync("/api/job-search/jobs/export", new ExportJobsRequest());
 
         response.EnsureSuccessStatusCode();
         Assert.AreEqual("application/json", response.Content.Headers.ContentType?.MediaType);

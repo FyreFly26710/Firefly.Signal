@@ -145,8 +145,12 @@ export type ImportJobsResponseDto = {
   failedCount: number;
 };
 
+export type ExportJobsRequestDto = {
+  jobIds: number[];
+};
+
 export type ExportJobsResponseDto = {
   exportedAtUtc: string;
   count: number;
-  jobs: JobDetailsResponseDto[];
+  jobs: JobWriteRequestDto[];
 };

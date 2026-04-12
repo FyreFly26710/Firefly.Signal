@@ -222,7 +222,7 @@ export function JobsListView() {
   }
 
   async function handleExport() {
-    if (!isAdmin) {
+    if (!isAdmin || selectedIds.length === 0) {
       return;
     }
 
@@ -231,17 +231,7 @@ export function JobsListView() {
     setActionError(null);
 
     try {
-      const exportResult = await exportJobs({
-        pageIndex,
-        pageSize,
-        keyword: normalizeText(filters.keyword),
-        company: normalizeText(filters.company),
-        postcode: normalizeText(filters.postcode),
-        location: normalizeText(filters.location),
-        sourceName: normalizeText(filters.sourceName),
-        categoryTag: normalizeText(filters.categoryTag),
-        isHidden: mapVisibilityToHiddenFlag(filters.visibility)
-      });
+      const exportResult = await exportJobs({ jobIds: selectedIds });
 
       const blob = new Blob([JSON.stringify(exportResult, null, 2)], {
         type: "application/json"
@@ -272,6 +262,7 @@ export function JobsListView() {
           <>
             <JobsImportPanel
               isProcessing={isProcessing}
+              canExport={selectedIds.length > 0}
               onCreateJob={() => void navigate("/admin/manage-jobs/new")}
               onExportJson={() => void handleExport()}
               onImportJson={() => fileInputRef.current?.click()}
