@@ -6,6 +6,7 @@ import { Button } from "@mui/material";
 
 type JobsImportPanelProps = {
   isProcessing: boolean;
+  canExport: boolean;
   onCreateJob: () => void;
   onImportProvider: () => void;
   onImportJson: () => void;
@@ -14,6 +15,7 @@ type JobsImportPanelProps = {
 
 export function JobsImportPanel({
   isProcessing,
+  canExport,
   onCreateJob,
   onImportProvider,
   onImportJson,
@@ -32,7 +34,7 @@ export function JobsImportPanel({
             </h2>
             <p className="mt-2 max-w-3xl text-sm text-foreground-secondary">
               Create a manual job, trigger a provider import into PostgreSQL, upload a JSON export
-              back into the catalog, or export the currently filtered stored jobs to JSON.
+              back into the catalog, or select jobs from the list below and export them to JSON.
             </p>
           </div>
 
@@ -50,8 +52,9 @@ export function JobsImportPanel({
               variant="outlined"
               color="inherit"
               startIcon={<DownloadRoundedIcon />}
-              disabled={isProcessing}
+              disabled={isProcessing || !canExport}
               onClick={onExportJson}
+              title={!canExport ? "Select jobs to export" : undefined}
             >
               {isProcessing ? "Working..." : "Export JSON"}
             </Button>

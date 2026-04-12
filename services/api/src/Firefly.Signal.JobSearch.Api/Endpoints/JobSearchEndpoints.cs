@@ -27,7 +27,7 @@ public static class JobSearchEndpoints
         adminGroup.MapPost("/import/provider", ImportFromProviderAsync);
         adminGroup.MapPost("/import/json", ImportFromJsonAsync)
             .DisableAntiforgery();
-        adminGroup.MapGet("/export", ExportAsync);
+        adminGroup.MapPost("/export", ExportAsync);
 
         return endpoints;
     }
@@ -204,26 +204,11 @@ public static class JobSearchEndpoints
     }
 
     private static async Task<FileContentHttpResult> ExportAsync(
-        [FromQuery] string? keyword,
-        [FromQuery] string? company,
-        [FromQuery] string? postcode,
-        [FromQuery] string? location,
-        [FromQuery] string? sourceName,
-        [FromQuery] string? categoryTag,
-        [FromQuery] bool? isHidden,
+        [FromBody] ExportJobsRequest request,
         [FromServices] IJobSearchService service,
         CancellationToken cancellationToken)
     {
-        var export = await service.ExportAsync(
-            new ExportJobsRequest(
-                keyword,
-                company,
-                postcode,
-                location,
-                sourceName,
-                categoryTag,
-                isHidden),
-            cancellationToken);
+        var export = await service.ExportAsync(request, cancellationToken);
 
         var content = JsonSerializer.SerializeToUtf8Bytes(export, new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
