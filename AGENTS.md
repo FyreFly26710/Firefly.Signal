@@ -194,3 +194,275 @@ Issue mode guidance:
 - Over-engineered event choreography
 - Premature AI orchestration layers
 - Broad shared libraries before repetition proves they are needed
+
+## Skills
+
+Skills define how an AI agent should approach a specific type of work in this repo. Both Claude Code and Codex use these. Codex resolves skills by name via `.codex/skills/`; Claude Code reads this section directly.
+
+---
+
+### firefly-planning
+
+> Plan work in the Firefly Signal repository. Use when turning product ideas, architecture decisions, or issue outlines into concrete documentation, phased delivery plans, or implementation sequencing.
+
+Read `AGENTS.md`, `docs/plans.md`, and the relevant design document before proposing substantial work.
+
+Keep planning output practical:
+- prefer phased delivery over exhaustive speculation
+- tie architecture choices back to the personal-use MVP
+- preserve room for later mobile expansion without designing a mobile platform now
+
+When planning backend work:
+- keep the gateway plus job-search-service start point in mind
+- avoid introducing RabbitMQ or Redis without a concrete flow that needs them
+- prefer local Docker development and simple Mac mini deployment assumptions
+
+When planning frontend work:
+- keep the first release centered on a single search flow
+- preserve React 18, TypeScript, Vite, Zustand, MUI, and Tailwind as the intended stack
+- prioritize loading, error, and empty states
+
+When planning implementation:
+- propose small GitHub issues that fit into one branch and one reviewable PR
+- call out assumptions and unresolved questions explicitly
+- update docs if the recommendation materially changes repository direction
+
+---
+
+### firefly-delivery
+
+> Deliver direct implementation work in this repo. Use for coding tasks not primarily driven by a GitHub issue workflow. For issue-driven work use `firefly-github-delivery` instead.
+
+Start by reading:
+- `AGENTS.md`
+- `docs/plans.md`
+- the relevant design document for the touched area
+
+When implementing:
+- keep changes focused on the requested task
+- do not broaden scope into unrelated platform work
+- follow existing repo patterns before introducing new abstractions
+- keep the codebase understandable for a single maintainer
+
+For frontend tasks:
+- preserve the intended stack: React 18, TypeScript, Vite, Zustand, MUI, Tailwind
+- keep API calls behind a small client boundary
+- treat loading, empty, and error states as required behavior
+
+For backend tasks:
+- preserve the gateway and service boundary
+- prefer explicit contracts and vertical slices
+- avoid adding distributed complexity unless the issue needs it
+
+Before finishing:
+- run the relevant checks that exist
+- summarize assumptions
+- note any docs that should be updated with the change
+- keep summaries readable for a human reviewer scanning quickly
+
+---
+
+### firefly-github-delivery
+
+> Orchestrate GitHub issue-driven delivery. Use when reading a GitHub issue, planning the work, creating the issue branch, coordinating implementation, validating changes, and preparing the pull request.
+
+Read these before acting:
+- `AGENTS.md`
+- `docs/plans.md`
+- `docs/github-delivery/overview.md`
+- `docs/github-delivery/naming-conventions.md`
+- `docs/github-delivery/templates-and-management.md`
+- `docs/github-delivery/manual-codex-flow.md`
+
+The GitHub issue is the source of truth for the requested change. Prefer the connected GitHub app/tools first for issue, PR, and metadata access. Use local `gh` commands as a helper or fallback.
+
+**Orchestration rules:**
+- Start by reading the issue carefully and restating its goal, scope, acceptance criteria, constraints, and useful context.
+- Read the relevant repo docs for the touched area before proposing implementation.
+- Treat ambiguity in the issue as a blocker to clarify, not an invitation to invent scope.
+- When picked up, do not begin coding in the same turn. Return a refinement summary that narrows the issue into concrete `Goal`, `Scope`, and `Acceptance Criteria`.
+- Use issue comments for the refinement discussion when GitHub updates are part of the workflow.
+- Once the developer agrees on the refinement, update the issue body so it remains the source of truth.
+- Before substantive implementation, post a status comment (picked up, branch name, `in progress`) and apply labels `codex`, `co-op`, `in-progress`; remove `blocked` or `ready-for-review` if present.
+- Use `firefly-planning` when the issue needs refinement or decomposition before coding.
+- Use `firefly-frontend-delivery` or `firefly-backend-delivery` for area-specific implementation.
+- Keep one issue mapped to one focused branch and one reviewable PR.
+- When blocked, post a comment marking the issue `blocked` and update labels accordingly.
+- Before handing back for review, post a comment marking `ready for review` and summarize validation, assumptions, and risks. Update labels to `ready-for-review`.
+
+**Issue status transitions:**
+- `in progress` — when active work starts
+- `blocked` — when progress stops on an unresolved dependency
+- `ready for review` — when implementation and validation are complete
+- Keep `in-progress`, `blocked`, and `ready-for-review` mutually exclusive.
+
+**Naming rules:**
+- Branch: `issue-<number>-<descriptive-title>` (lowercase kebab-case)
+- PR title: `<type>(<scope>): <description> (#<issue-number>)`
+- PR body: must include `Closes #<issue-number>`
+- Never use the PR number in place of the issue number
+- PR types: `feat`, `fix`, `refactor`, `test`, `chore`, `agent`
+
+**Before opening the PR:**
+- confirm branch name matches issue number and title
+- confirm PR title and body formats
+- confirm commit messages use the issue number, not the PR number
+- summarize validation, assumptions, and risks for human review
+
+---
+
+### firefly-frontend-architecture
+
+> Design or refine frontend architecture. Use when planning React app structure, feature boundaries, state strategy, routing, styling, testing, or future mobile-friendly frontend conventions.
+
+Read these files before making recommendations:
+- `AGENTS.md`
+- `docs/plans.md`
+- `docs/frontend-designs.md`
+- `docs/frontend-designs/architecture.md`
+- `docs/frontend-designs/overview.md`
+- `docs/frontend-designs/solution-structure.md`
+- `docs/frontend-designs/state-routing-and-api.md`
+- `docs/frontend-designs/styling-and-design-system.md`
+
+Preserve the repo's frontend direction:
+- React 18, TypeScript, Vite, client-side rendered
+- feature-based structure
+- Zustand only for genuinely shared client state
+- MUI for accessible primitives
+- Tailwind CSS for layout, spacing, and token-driven styling
+- web first, with a future path to Android and iOS
+
+When proposing structure:
+- keep route files thin
+- keep implementation inside feature folders
+- keep API access behind small typed client modules
+- prefer local state before introducing global stores
+- preserve explicit loading, empty, error, and success UI states
+
+When proposing issue breakdowns:
+- keep issues vertical and reviewable
+- separate app shell, search feature, auth, styling, and quality concerns cleanly
+- call out assumptions and out-of-scope abstractions
+
+---
+
+### firefly-frontend-delivery
+
+> Implement frontend changes. Use when editing the React web app, frontend tests, styling, routing, state, or frontend build configuration.
+
+Start by reading:
+- `AGENTS.md`
+- `docs/plans.md`
+- `docs/frontend-designs.md`
+- `docs/frontend-designs/architecture.md`
+- the relevant file in `docs/frontend-designs/`
+
+Implementation rules:
+- keep route files thin
+- keep feature behavior inside feature folders
+- prefer local state before Zustand
+- keep API modules small and typed
+- use MUI for accessible primitives
+- use Tailwind for layout, spacing, and tokens
+- keep loading, empty, error, and success states explicit
+
+When touching styling:
+- preserve token-driven styling
+- avoid default-library-looking screens
+- keep responsive behavior intentional and mobile-safe
+
+When touching tests:
+- prefer behavior-focused tests
+- keep unit and component tests close to the feature that owns the behavior
+- avoid low-signal snapshot sprawl
+
+Before finishing:
+- run the relevant frontend checks that exist
+- summarize assumptions
+- note any frontend design docs that changed or should change
+
+---
+
+### firefly-backend-architecture
+
+> Design or refine backend architecture. Use when planning backend service boundaries, solution structure, messaging, migrations, identity, Docker, testing, or .NET project organization.
+
+Read these files before making recommendations:
+- `AGENTS.md`
+- `docs/plans.md`
+- `docs/backend-designs.md`
+- `docs/backend-designs/overview.md`
+- `docs/backend-designs/solution-structure.md`
+- `docs/backend-designs/messaging-migrations-and-outbox.md`
+- `docs/backend-designs/identity-api-direction.md`
+
+Preserve the repo's backend direction:
+- `.NET 10`, `.slnx` only — no `.slnf`, no Aspire
+- thin gateway
+- custom identity API with Google OAuth and JWT
+- PostgreSQL with EF Core
+- RabbitMQ for async integration when justified
+- Redis only when it clearly adds value
+- Dockerfiles per API, Docker Compose for local infrastructure
+
+When proposing structure:
+- keep project counts low until a boundary is real
+- prefer explicit startup and DI wiring
+- keep shared code limited to stable cross-service infrastructure
+- preserve the shared migration helper and the repo's explicit event bus pattern
+
+Messaging expectations:
+- prefer HTTP for synchronous API-to-API calls
+- use RabbitMQ for asynchronous follow-up work
+- preserve the repo-owned `EventBus` and `EventBusRabbitMQ` projects
+- keep explicit `AddRabbitMqEventBus("service-name").AddSubscription<TEvent, THandler>()` registration
+
+When proposing issue breakdowns:
+- keep backend issues vertical and reviewable
+- separate gateway, identity, job-search, messaging, and Docker concerns cleanly
+- call out assumptions and what should stay out of scope
+
+---
+
+### firefly-backend-delivery
+
+> Implement backend changes. Use when editing .NET APIs, shared backend libraries, Docker files, Compose files, backend tests, or backend build configuration.
+
+Start by reading:
+- `AGENTS.md`
+- `docs/plans.md`
+- `docs/backend-designs.md`
+- the relevant file in `docs/backend-designs/`
+
+Implementation rules:
+- keep `Program.cs` thin; push DI into extension methods
+- use minimal APIs with explicit route groups
+- keep DTOs and typed results explicit
+- centralize backend package and build conventions with `Directory.Build.*`
+- preserve `.slnx` usage — do not introduce `.slnf` or Aspire
+
+When touching persistence:
+- keep migrations with the owning DbContext
+- preserve the shared migration helper pattern
+- keep seeders idempotent
+
+When touching messaging:
+- preserve `EventBus`, `EventBusRabbitMQ`, and integration event log layering
+- preserve the explicit subscription model and queue-per-consuming-service shape
+- add RabbitMQ only where the feature really needs async boundaries
+
+When touching identity:
+- keep the identity API lightweight
+- use Google OAuth and JWT assumptions from repo docs
+- avoid identity-server-style platform abstractions
+
+When touching tests:
+- keep MSTest and NSubstitute
+- keep `Program.Testing.cs` and `InternalsVisibleTo`
+- prefer `WebApplicationFactory` plus container-backed dependencies
+
+Before finishing:
+- run the relevant backend checks that exist
+- summarize assumptions
+- note any backend design docs that changed or should change
