@@ -90,7 +90,7 @@ public class JobSearchServiceTests
 
         var service = new DbJobSearchService(dbContext, new NoOpJobSearchProvider());
 
-        var result = await service.GetPageAsync(new GetJobsPageRequest(0, 20));
+        var result = await service.SearchPageAsync(new GetJobsPageRequest(0, 20), userId: null);
 
         Assert.AreEqual(1L, result.TotalCount);
         Assert.AreEqual("Backend .NET Developer", result.Items[0].Title);

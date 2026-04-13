@@ -10,41 +10,29 @@ describe("mapSearchResponse", () => {
       items: [
         {
           id: 42,
-          jobRefreshRunId: null,
           sourceJobId: "reed-42",
-          sourceAdReference: null,
           title: "Senior Product Designer",
-          description: "Lead product design across the platform.",
-          company: "Firefly Labs",
-          companyDisplayName: "Firefly Labs",
-          companyCanonicalName: "firefly-labs",
-          postcode: "EC2A",
-          locationName: "London",
-          locationDisplayName: "London",
-          locationAreaJson: null,
-          latitude: null,
-          longitude: null,
-          categoryTag: null,
-          categoryLabel: null,
           summary: "Lead product design across the platform.",
           url: "https://example.com/jobs/42",
-          sourceName: "Reed",
+          company: "Firefly Labs",
+          companyDisplayName: "Firefly Labs",
+          locationName: "London",
+          locationDisplayName: "London",
+          isRemote: true,
+          isHidden: false,
           salaryMin: 80000,
           salaryMax: 95000,
           salaryCurrency: "GBP",
-          salaryIsPredicted: false,
           contractTime: "full_time",
           contractType: "permanent",
           isFullTime: true,
           isPartTime: false,
           isPermanent: true,
           isContract: false,
-          isRemote: true,
+          sourceName: "Reed",
           postedAtUtc: "2025-01-02T09:00:00.000Z",
-          importedAtUtc: "2025-01-02T10:00:00.000Z",
-          lastSeenAtUtc: "2025-01-02T11:00:00.000Z",
-          isHidden: false,
-          rawPayloadJson: "{}"
+          isSaved: false,
+          isUserHidden: false
         }
       ]
     }, {
@@ -69,7 +57,9 @@ describe("mapSearchResponse", () => {
           source: "Reed",
           postedDate: "2 Jan 2025",
           salary: "£80,000 - £95,000",
-          type: "permanent"
+          type: "permanent",
+          isSaved: false,
+          isHidden: false
         }
       ]
     });
@@ -83,41 +73,29 @@ describe("mapSearchResponse", () => {
       items: [
         {
           id: 99,
-          jobRefreshRunId: null,
           sourceJobId: "linkedin-abc",
-          sourceAdReference: null,
           title: "Platform Engineer",
-          description: "Build internal tooling.",
-          company: "Signal",
-          companyDisplayName: null,
-          companyCanonicalName: null,
-          postcode: "M1",
-          locationName: "Manchester",
-          locationDisplayName: null,
-          locationAreaJson: null,
-          latitude: null,
-          longitude: null,
-          categoryTag: null,
-          categoryLabel: null,
           summary: "Build internal tooling.",
           url: "https://example.com/jobs/abc",
-          sourceName: "LinkedIn",
+          company: "Signal",
+          companyDisplayName: null,
+          locationName: "Manchester",
+          locationDisplayName: null,
+          isRemote: false,
+          isHidden: false,
           salaryMin: null,
           salaryMax: null,
           salaryCurrency: null,
-          salaryIsPredicted: null,
           contractTime: null,
           contractType: null,
           isFullTime: false,
           isPartTime: false,
           isPermanent: false,
           isContract: false,
-          isRemote: false,
+          sourceName: "LinkedIn",
           postedAtUtc: "not-a-date",
-          importedAtUtc: "2025-01-02T10:00:00.000Z",
-          lastSeenAtUtc: "2025-01-02T11:00:00.000Z",
-          isHidden: false,
-          rawPayloadJson: "{}"
+          isSaved: false,
+          isUserHidden: false
         }
       ]
     }, {

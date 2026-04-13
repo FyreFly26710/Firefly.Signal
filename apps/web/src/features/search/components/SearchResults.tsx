@@ -7,14 +7,17 @@ import type { JobCardModel } from "@/features/jobs/types/job.types";
 import { useJobState } from "@/features/search/hooks/useJobState";
 
 function JobCardWithState({ job }: { job: JobCardModel }) {
-  const { isSaved, isHidden, toggleSave, toggleHide } = useJobState(job.id);
+  const { isSaved, isHidden, toggleSave, toggleHide } = useJobState(job.id, {
+    isSaved: job.isSaved,
+    isHidden: job.isHidden
+  });
   return (
     <JobCard
       job={job}
       isSaved={isSaved}
       isHidden={isHidden}
-      onToggleSave={toggleSave}
-      onToggleHide={toggleHide}
+      onToggleSave={() => { void toggleSave(); }}
+      onToggleHide={() => { void toggleHide(); }}
     />
   );
 }

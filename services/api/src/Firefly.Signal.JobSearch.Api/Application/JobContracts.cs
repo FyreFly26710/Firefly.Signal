@@ -40,6 +40,36 @@ public sealed record JobDetailsResponse(
     bool IsHidden,
     string RawPayloadJson);
 
+/// <summary>
+/// Response for the job list/search page. Contains only the fields needed by list views,
+/// plus per-user save and hide state (defaulting to false when the caller is unauthenticated).
+/// </summary>
+public sealed record JobSearchResultResponse(
+    long Id,
+    string SourceJobId,
+    string Title,
+    string Summary,
+    string Url,
+    string Company,
+    string? CompanyDisplayName,
+    string LocationName,
+    string? LocationDisplayName,
+    bool IsRemote,
+    bool IsHidden,          // catalog hide status
+    decimal? SalaryMin,
+    decimal? SalaryMax,
+    string? SalaryCurrency,
+    string? ContractType,
+    string? ContractTime,
+    bool IsFullTime,
+    bool IsPartTime,
+    bool IsPermanent,
+    bool IsContract,
+    string SourceName,
+    DateTime PostedAtUtc,
+    bool IsSaved,           // user's saved state
+    bool IsUserHidden);     // user's personal hide state
+
 public sealed record GetJobsPageRequest(
     int PageIndex = 0,
     int PageSize = 20,

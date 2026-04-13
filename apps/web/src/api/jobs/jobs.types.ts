@@ -1,3 +1,32 @@
+/// Response for job list pages — a focused projection of job fields
+/// plus per-user save/hide state (defaults to false when unauthenticated).
+export type JobSearchResultDto = {
+  id: number;
+  sourceJobId: string;
+  title: string;
+  summary: string;
+  url: string;
+  company: string;
+  companyDisplayName: string | null;
+  locationName: string;
+  locationDisplayName: string | null;
+  isRemote: boolean;
+  isHidden: boolean;          // catalog hide status
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryCurrency: string | null;
+  contractType: string | null;
+  contractTime: string | null;
+  isFullTime: boolean;
+  isPartTime: boolean;
+  isPermanent: boolean;
+  isContract: boolean;
+  sourceName: string;
+  postedAtUtc: string;
+  isSaved: boolean;           // user's saved state
+  isUserHidden: boolean;      // user's personal hide state
+};
+
 export type JobDetailsResponseDto = {
   id: number;
   jobRefreshRunId: number | null;
@@ -41,7 +70,7 @@ export type JobsPageResponseDto = {
   pageIndex: number;
   pageSize: number;
   totalCount: number;
-  items: JobDetailsResponseDto[];
+  items: JobSearchResultDto[];
 };
 
 export type GetJobsPageQueryDto = {

@@ -1,8 +1,8 @@
 import { Checkbox, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow } from "@mui/material";
-import type { JobDetailsResponseDto } from "@/api/jobs/jobs.types";
+import type { JobSearchResultDto } from "@/api/jobs/jobs.types";
 
 type JobsManagementTableProps = {
-  jobs: JobDetailsResponseDto[];
+  jobs: JobSearchResultDto[];
   pageIndex: number;
   pageSize: number;
   selectedIds: number[];
@@ -138,7 +138,7 @@ function formatDate(value: string): string {
   }).format(date);
 }
 
-function formatSalary(job: JobDetailsResponseDto): string {
+function formatSalary(job: JobSearchResultDto): string {
   if (job.salaryMin === null && job.salaryMax === null) {
     return "N/A";
   }
@@ -156,7 +156,7 @@ function formatSalary(job: JobDetailsResponseDto): string {
   return formatter.format(job.salaryMin ?? job.salaryMax ?? 0);
 }
 
-function formatJobType(job: JobDetailsResponseDto): string {
+function formatJobType(job: JobSearchResultDto): string {
   if (job.contractType) {
     return job.contractType.replaceAll("_", " ");
   }

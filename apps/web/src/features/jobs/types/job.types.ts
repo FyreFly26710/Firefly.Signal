@@ -13,6 +13,8 @@ export type JobCardModel = {
   url: string;
   salary?: string;
   type?: string;
+  isSaved?: boolean;
+  isHidden?: boolean;
 };
 
 export type JobDetailModel = JobCardModel & {
