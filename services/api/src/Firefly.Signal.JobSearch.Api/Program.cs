@@ -49,6 +49,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IJobSearchService, DbJobSearchService>();
+builder.Services.AddScoped<IJobApplicationService, DbJobApplicationService>();
 builder.Services.AddSingleton<AdzunaJobSearchRequestMapper>();
 builder.Services.AddSingleton<AdzunaJobSearchResponseMapper>();
 builder.Services.AddSingleton<MockAdzunaJobSearchProvider>();
@@ -86,6 +87,7 @@ app.MapGet("/", () => Results.Ok(new
 }));
 
 app.MapJobSearchEndpoints();
+app.MapJobApplicationEndpoints();
 
 app.UseDefaultOpenApi();
 app.Run();
