@@ -1,14 +1,20 @@
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import BookmarkBorderRoundedIcon from "@mui/icons-material/BookmarkBorderRounded";
+import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded";
 import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
-import { IconButton } from "@mui/material";
+import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
+import { IconButton, Tooltip } from "@mui/material";
 import { Link } from "react-router-dom";
 import type { JobCardModel } from "@/features/jobs/types/job.types";
 
 type JobCardProps = {
   job: JobCardModel;
+  isSaved?: boolean;
+  isHidden?: boolean;
+  onToggleSave?: () => void;
+  onToggleHide?: () => void;
 };
 
 const freshnessStyles = {
@@ -23,7 +29,9 @@ const freshnessLabels = {
   older: ""
 } as const;
 
-export function JobCard({ job }: JobCardProps) {
+export function JobCard({ job, isSaved = false, isHidden = false, onToggleSave, onToggleHide }: JobCardProps) {
+  if (isHidden) return null;
+
   const freshnessLabel = job.freshness ? freshnessLabels[job.freshness] : "";
   const freshnessClassName = job.freshness ? freshnessStyles[job.freshness] : "";
 
@@ -36,6 +44,9 @@ export function JobCard({ job }: JobCardProps) {
           freshnessLabel={freshnessLabel}
           freshnessClassName={freshnessClassName}
           featured={Boolean(job.featured)}
+          isSaved={isSaved}
+          onToggleSave={onToggleSave}
+          onToggleHide={onToggleHide}
         />
         <JobCardTitle jobId={job.id} title={job.title} />
         <JobCardMeta
@@ -56,13 +67,19 @@ function JobCardHeader({
   postedDate,
   freshnessLabel,
   freshnessClassName,
-  featured
+  featured,
+  isSaved,
+  onToggleSave,
+  onToggleHide
 }: {
   source: string;
   postedDate: string;
   freshnessLabel: string;
   freshnessClassName: string;
   featured: boolean;
+  isSaved: boolean;
+  onToggleSave?: () => void;
+  onToggleHide?: () => void;
 }) {
   return (
     <div className="mb-3 flex items-start justify-between gap-4">
@@ -91,9 +108,34 @@ function JobCardHeader({
         ) : null}
       </div>
 
-      <IconButton size="small" sx={{ color: "var(--color-foreground-tertiary)" }}>
-        <BookmarkBorderRoundedIcon fontSize="small" />
-      </IconButton>
+      <div className="flex items-center gap-1">
+        {onToggleSave && (
+          <Tooltip title={isSaved ? "Unsave job" : "Save job"}>
+            <IconButton
+              size="small"
+              onClick={onToggleSave}
+              sx={{ color: isSaved ? "var(--color-accent-primary)" : "var(--color-foreground-tertiary)" }}
+            >
+              {isSaved ? (
+                <BookmarkRoundedIcon fontSize="small" />
+              ) : (
+                <BookmarkBorderRoundedIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
+        )}
+        {onToggleHide && (
+          <Tooltip title="Hide job">
+            <IconButton
+              size="small"
+              onClick={onToggleHide}
+              sx={{ color: "var(--color-foreground-tertiary)" }}
+            >
+              <VisibilityOffRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </div>
     </div>
   );
 }
