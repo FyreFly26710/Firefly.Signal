@@ -3,7 +3,8 @@ using Firefly.Signal.SharedKernel.Domain;
 namespace Firefly.Signal.JobSearch.Domain;
 
 /// <summary>
-/// Stores a user-specific workflow state for a job without mutating the shared job record.
+/// Stores a user-specific lightweight workflow state for a job.
+/// IsSaved and IsHidden are independent flags; application stage tracking lives on JobApplication.
 /// </summary>
 public sealed class UserJobState : AuditableEntity, IAggregateRoot
 {
@@ -13,56 +14,45 @@ public sealed class UserJobState : AuditableEntity, IAggregateRoot
 
     public long UserAccountId { get; private set; }
     public long JobPostingId { get; private set; }
-    public UserJobWorkflowState State { get; private set; }
-    public DateTime? SavedAtUtc { get; private set; }
-    public DateTime? AppliedAtUtc { get; private set; }
-    public DateTime? RejectedAtUtc { get; private set; }
-    /// <summary>
-    /// Explicit workflow timestamp kept separate from the shared audit fields for easier product-level state tracking.
-    /// </summary>
+    public bool IsSaved { get; private set; }
+    public bool IsHidden { get; private set; }
     public DateTime LastUpdatedAtUtc { get; private set; }
 
-    public static UserJobState Create(long userAccountId, long jobPostingId, UserJobWorkflowState state)
+    public static UserJobState Create(long userAccountId, long jobPostingId)
     {
-        var entity = new UserJobState
+        return new UserJobState
         {
             UserAccountId = userAccountId,
-            JobPostingId = jobPostingId
+            JobPostingId = jobPostingId,
+            LastUpdatedAtUtc = DateTime.UtcNow
         };
-
-        entity.SetState(state, DateTime.UtcNow);
-        return entity;
     }
 
-    public void MarkSaved() => SetState(UserJobWorkflowState.Saved, DateTime.UtcNow);
-
-    public void MarkApplied() => SetState(UserJobWorkflowState.Applied, DateTime.UtcNow);
-
-    public void MarkRejected() => SetState(UserJobWorkflowState.Rejected, DateTime.UtcNow);
-
-    private void SetState(UserJobWorkflowState state, DateTime timestampUtc)
+    public void MarkSaved()
     {
-        State = state;
+        IsSaved = true;
+        LastUpdatedAtUtc = DateTime.UtcNow;
+        Touch();
+    }
 
-        if (state == UserJobWorkflowState.Saved)
-        {
-            SavedAtUtc ??= timestampUtc;
-            AppliedAtUtc = null;
-            RejectedAtUtc = null;
-        }
-        else if (state == UserJobWorkflowState.Applied)
-        {
-            SavedAtUtc ??= timestampUtc;
-            AppliedAtUtc ??= timestampUtc;
-            RejectedAtUtc = null;
-        }
-        else if (state == UserJobWorkflowState.Rejected)
-        {
-            SavedAtUtc ??= timestampUtc;
-            RejectedAtUtc ??= timestampUtc;
-        }
+    public void Unsave()
+    {
+        IsSaved = false;
+        LastUpdatedAtUtc = DateTime.UtcNow;
+        Touch();
+    }
 
-        LastUpdatedAtUtc = timestampUtc;
+    public void Hide()
+    {
+        IsHidden = true;
+        LastUpdatedAtUtc = DateTime.UtcNow;
+        Touch();
+    }
+
+    public void Unhide()
+    {
+        IsHidden = false;
+        LastUpdatedAtUtc = DateTime.UtcNow;
         Touch();
     }
 }
