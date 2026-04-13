@@ -5,10 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { SectionCard } from "@/components/SectionCard";
 import {
+  catalogHideJob,
   createJob,
   deleteJob,
   getJobById,
-  hideJob,
   updateJob
 } from "@/api/jobs/jobs.api";
 import type {
@@ -164,7 +164,7 @@ export function ManageJobView({ jobId }: ManageJobViewProps) {
     setErrorMessage(null);
 
     try {
-      await hideJob(numericJobId);
+      await catalogHideJob(numericJobId);
       setFormValues((current) => ({ ...current, isHidden: true }));
       setSaveMessage("Job hidden successfully.");
     } catch (error) {

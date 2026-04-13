@@ -4,12 +4,6 @@ namespace Firefly.Signal.JobSearch.Application;
 
 public interface IJobApplicationService
 {
-    /// <summary>Returns null if the job does not exist.</summary>
-    Task<UserJobStateResponse?> SaveJobAsync(long jobId, long userAccountId, CancellationToken cancellationToken = default);
-
-    /// <summary>Returns null if the job does not exist.</summary>
-    Task<UserJobStateResponse?> UnsaveJobAsync(long jobId, long userAccountId, CancellationToken cancellationToken = default);
-
     /// <summary>
     /// Creates or returns the existing application for the user+job pair.
     /// Returns null if the job does not exist.

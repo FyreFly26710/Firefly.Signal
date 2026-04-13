@@ -22,8 +22,8 @@ public static class JobSearchEndpoints
         adminGroup.MapPut("/{id:long}", UpdateAsync);
         adminGroup.MapDelete("/{id:long}", DeleteByIdAsync);
         adminGroup.MapDelete("/", DeleteManyAsync);
-        adminGroup.MapPost("/{id:long}/hide", HideByIdAsync);
-        adminGroup.MapPost("/hide", HideManyAsync);
+        adminGroup.MapPost("/{id:long}/catalog-hide", HideByIdAsync);
+        adminGroup.MapPost("/catalog-hide", HideManyAsync);
         adminGroup.MapPost("/import/provider", ImportFromProviderAsync);
         adminGroup.MapPost("/import/json", ImportFromJsonAsync)
             .DisableAntiforgery();

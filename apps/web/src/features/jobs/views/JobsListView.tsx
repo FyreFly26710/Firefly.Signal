@@ -5,10 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { SectionCard } from "@/components/SectionCard";
 import {
+  catalogHideJobs,
   deleteJobs,
   exportJobs,
   getJobsPage,
-  hideJobs,
   importJobsFromJson,
   importJobsFromProvider
 } from "@/api/jobs/jobs.api";
@@ -133,7 +133,7 @@ export function JobsListView() {
     setActionError(null);
 
     try {
-      const result = await hideJobs(selectedIds);
+      const result = await catalogHideJobs(selectedIds);
       setActionMessage(buildHideSummary(result.hiddenCount, result.missingIds.length));
       setSelectedIds([]);
       await execute(pageIndex, pageSize, filters);

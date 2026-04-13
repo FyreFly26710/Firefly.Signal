@@ -4,15 +4,15 @@ import { ThemeProvider } from "@mui/material";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { theme } from "@/app/theme";
-import { deleteJob, getJobById, hideJob } from "@/api/jobs/jobs.api";
+import { catalogHideJob, deleteJob, getJobById } from "@/api/jobs/jobs.api";
 import { ManageJobView } from "@/features/jobs/views/ManageJobView";
 import { useSessionStore } from "@/store/session.store";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
+  catalogHideJob: vi.fn(),
   createJob: vi.fn(),
   deleteJob: vi.fn(),
   getJobById: vi.fn(),
-  hideJob: vi.fn(),
   updateJob: vi.fn()
 }));
 
@@ -75,7 +75,7 @@ describe("ManageJobView", () => {
     vi.mocked(deleteJob).mockRejectedValueOnce(
       new Error("Job 42 must be hidden before it can be deleted.")
     );
-    vi.mocked(hideJob).mockResolvedValueOnce({
+    vi.mocked(catalogHideJob).mockResolvedValueOnce({
       hiddenCount: 1,
       hiddenIds: [42],
       missingIds: []
@@ -109,7 +109,7 @@ describe("ManageJobView", () => {
 
     expect(confirmSpy).toHaveBeenCalled();
     expect(deleteJob).toHaveBeenCalledWith(42);
-    expect(hideJob).toHaveBeenCalledWith(42);
+    expect(catalogHideJob).toHaveBeenCalledWith(42);
 
     confirmSpy.mockRestore();
   }, 10000);

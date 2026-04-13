@@ -7,34 +7,6 @@ namespace Firefly.Signal.JobSearch.Infrastructure.Services;
 
 public sealed class DbJobApplicationService(JobSearchDbContext dbContext) : IJobApplicationService
 {
-    public async Task<UserJobStateResponse?> SaveJobAsync(
-        long jobId,
-        long userAccountId,
-        CancellationToken cancellationToken = default)
-    {
-        if (!await dbContext.Jobs.AnyAsync(x => x.Id == jobId, cancellationToken))
-            return null;
-
-        var state = await UpsertUserJobStateAsync(jobId, userAccountId, cancellationToken);
-        state.MarkSaved();
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ToStateResponse(state);
-    }
-
-    public async Task<UserJobStateResponse?> UnsaveJobAsync(
-        long jobId,
-        long userAccountId,
-        CancellationToken cancellationToken = default)
-    {
-        if (!await dbContext.Jobs.AnyAsync(x => x.Id == jobId, cancellationToken))
-            return null;
-
-        var state = await UpsertUserJobStateAsync(jobId, userAccountId, cancellationToken);
-        state.Unsave();
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ToStateResponse(state);
-    }
-
     public async Task<JobApplicationResponse?> ApplyJobAsync(
         long jobId,
         long userAccountId,
@@ -140,22 +112,6 @@ public sealed class DbJobApplicationService(JobSearchDbContext dbContext) : IJob
         }).ToList();
     }
 
-    private async Task<UserJobState> UpsertUserJobStateAsync(
-        long jobId,
-        long userAccountId,
-        CancellationToken cancellationToken)
-    {
-        var state = await dbContext.UserJobStates
-            .SingleOrDefaultAsync(x => x.UserAccountId == userAccountId && x.JobPostingId == jobId, cancellationToken);
-
-        if (state is not null)
-            return state;
-
-        state = UserJobState.Create(userAccountId, jobId);
-        dbContext.UserJobStates.Add(state);
-        return state;
-    }
-
     private async Task<JobApplicationResponse> BuildApplicationResponseAsync(
         long applicationId,
         long jobPostingId,
@@ -187,7 +143,4 @@ public sealed class DbJobApplicationService(JobSearchDbContext dbContext) : IJob
 
         return new JobApplicationResponse(applicationId, jobPostingId, note, currentStatus, history);
     }
-
-    private static UserJobStateResponse ToStateResponse(UserJobState state)
-        => new(state.JobPostingId, state.IsSaved, state.IsHidden);
 }

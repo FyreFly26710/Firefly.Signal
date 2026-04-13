@@ -5,9 +5,9 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { theme } from "@/app/theme";
 import {
+  catalogHideJobs,
   exportJobs,
   getJobsPage,
-  hideJobs,
   importJobsFromJson,
   importJobsFromProvider
 } from "@/api/jobs/jobs.api";
@@ -15,10 +15,10 @@ import { JobsListView } from "@/features/jobs/views/JobsListView";
 import { useSessionStore } from "@/store/session.store";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
+  catalogHideJobs: vi.fn(),
   deleteJobs: vi.fn(),
   exportJobs: vi.fn(),
   getJobsPage: vi.fn(),
-  hideJobs: vi.fn(),
   importJobsFromJson: vi.fn(),
   importJobsFromProvider: vi.fn()
 }));
@@ -102,7 +102,7 @@ describe("JobsListView", () => {
       expect(screen.getByText("Senior Frontend Engineer")).toBeInTheDocument();
     });
 
-    vi.mocked(hideJobs).mockResolvedValueOnce({
+    vi.mocked(catalogHideJobs).mockResolvedValueOnce({
       hiddenCount: 1,
       hiddenIds: [42],
       missingIds: []
@@ -117,7 +117,7 @@ describe("JobsListView", () => {
 
     expect(screen.getByText(/total jobs/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Manage jobs" })).toBeInTheDocument();
-    expect(hideJobs).toHaveBeenCalledWith([42]);
+    expect(catalogHideJobs).toHaveBeenCalledWith([42]);
     expect(getJobsPage).toHaveBeenCalledWith(
       expect.objectContaining({
         pageIndex: 0,

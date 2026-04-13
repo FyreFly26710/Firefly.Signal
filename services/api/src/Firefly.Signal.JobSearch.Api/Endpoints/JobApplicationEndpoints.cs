@@ -11,43 +11,15 @@ public static class JobApplicationEndpoints
 {
     public static IEndpointRouteBuilder MapJobApplicationEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/job-search/jobs").RequireAuthorization();
+        var jobsGroup = endpoints.MapGroup("/api/job-search/jobs").RequireAuthorization();
         var applicationsGroup = endpoints.MapGroup("/api/job-search/applications").RequireAuthorization();
 
-        group.MapPost("/{id:long}/save", SaveAsync);
-        group.MapDelete("/{id:long}/save", UnsaveAsync);
-        group.MapPost("/{id:long}/apply", ApplyAsync);
-        group.MapPut("/{id:long}/apply/status", AdvanceStatusAsync);
+        jobsGroup.MapPost("/{id:long}/apply", ApplyAsync);
+        jobsGroup.MapPut("/{id:long}/apply/status", AdvanceStatusAsync);
 
         applicationsGroup.MapGet("/", GetAppliedJobsAsync);
 
         return endpoints;
-    }
-
-    private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> SaveAsync(
-        long id,
-        ClaimsPrincipal claimsPrincipal,
-        IJobApplicationService service,
-        CancellationToken cancellationToken)
-    {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null) return TypedResults.Unauthorized();
-
-        var result = await service.SaveJobAsync(id, userId.Value, cancellationToken);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
-    }
-
-    private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> UnsaveAsync(
-        long id,
-        ClaimsPrincipal claimsPrincipal,
-        IJobApplicationService service,
-        CancellationToken cancellationToken)
-    {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null) return TypedResults.Unauthorized();
-
-        var result = await service.UnsaveJobAsync(id, userId.Value, cancellationToken);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     private static async Task<Results<Ok<JobApplicationResponse>, NotFound, UnauthorizedHttpResult>> ApplyAsync(
