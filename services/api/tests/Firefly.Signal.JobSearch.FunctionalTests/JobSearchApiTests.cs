@@ -67,7 +67,7 @@ public class JobSearchApiTests
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateAccessToken());
 
-        var hideResponse = await client.PostAsJsonAsync($"/api/job-search/jobs/{jobId}/hide", new { });
+        var hideResponse = await client.PostAsJsonAsync($"/api/job-search/jobs/{jobId}/catalog-hide", new { });
         hideResponse.EnsureSuccessStatusCode();
 
         var deleteResponse = await client.DeleteAsync($"/api/job-search/jobs/{jobId}");
