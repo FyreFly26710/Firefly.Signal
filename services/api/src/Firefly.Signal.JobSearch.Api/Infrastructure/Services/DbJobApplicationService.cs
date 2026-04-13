@@ -70,6 +70,24 @@ public sealed class DbJobApplicationService(JobSearchDbContext dbContext) : IJob
         return BuildApplicationResponse(application.Id, application.JobPostingId, application.Note, entries);
     }
 
+    public async Task<JobApplicationResponse?> UpdateApplicationNoteAsync(
+        long jobId,
+        long userAccountId,
+        string? note,
+        CancellationToken cancellationToken = default)
+    {
+        var application = await dbContext.JobApplications
+            .SingleOrDefaultAsync(x => x.UserAccountId == userAccountId && x.JobPostingId == jobId, cancellationToken);
+
+        if (application is null)
+            return null;
+
+        application.UpdateNote(note);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return await BuildApplicationResponseAsync(application.Id, application.JobPostingId, application.Note, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<AppliedJobSummaryResponse>> GetAppliedJobsAsync(
         long userAccountId,
         CancellationToken cancellationToken = default)

@@ -16,6 +16,7 @@ public static class JobApplicationEndpoints
 
         jobsGroup.MapPost("/{id:long}/apply", ApplyAsync);
         jobsGroup.MapPut("/{id:long}/apply/status", AdvanceStatusAsync);
+        jobsGroup.MapPut("/{id:long}/apply/note", UpdateNoteAsync);
 
         applicationsGroup.MapGet("/", GetAppliedJobsAsync);
 
@@ -68,6 +69,20 @@ public static class JobApplicationEndpoints
                 Detail = ex.Message
             });
         }
+    }
+
+    private static async Task<Results<Ok<JobApplicationResponse>, NotFound, UnauthorizedHttpResult>> UpdateNoteAsync(
+        long id,
+        UpdateApplicationNoteRequest request,
+        ClaimsPrincipal claimsPrincipal,
+        IJobApplicationService service,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId(claimsPrincipal);
+        if (userId is null) return TypedResults.Unauthorized();
+
+        var result = await service.UpdateApplicationNoteAsync(id, userId.Value, request.Note, cancellationToken);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     private static async Task<Results<Ok<IReadOnlyList<AppliedJobSummaryResponse>>, UnauthorizedHttpResult>> GetAppliedJobsAsync(

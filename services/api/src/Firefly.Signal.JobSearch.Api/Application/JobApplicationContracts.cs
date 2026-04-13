@@ -27,3 +27,5 @@ public sealed record AppliedJobSummaryResponse(
 public sealed record ApplyJobRequest(string? Note = null);
 
 public sealed record AdvanceApplicationStatusRequest(string Status);
+
+public sealed record UpdateApplicationNoteRequest(string? Note = null);

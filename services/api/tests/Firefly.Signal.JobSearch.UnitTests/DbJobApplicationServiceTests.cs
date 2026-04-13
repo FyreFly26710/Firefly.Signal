@@ -139,6 +139,53 @@ public class DbJobApplicationServiceTests
     }
 
     // ──────────────────────────────────────────────────────────
+    // UpdateApplicationNoteAsync
+    // ──────────────────────────────────────────────────────────
+
+    [TestMethod]
+    public async Task UpdateApplicationNoteAsync_returns_null_when_no_application_exists()
+    {
+        await using var db = CreateDbContext();
+        var service = new DbJobApplicationService(db);
+
+        var result = await service.UpdateApplicationNoteAsync(jobId: 999, userAccountId: 1, note: "note");
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public async Task UpdateApplicationNoteAsync_updates_note_on_existing_application()
+    {
+        await using var db = CreateDbContext();
+        var job = AddJob(db);
+        await db.SaveChangesAsync();
+
+        var service = new DbJobApplicationService(db);
+        await service.ApplyJobAsync(job.Id, userAccountId: 1, note: "original");
+
+        var result = await service.UpdateApplicationNoteAsync(job.Id, userAccountId: 1, note: "updated");
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("updated", result.Note);
+    }
+
+    [TestMethod]
+    public async Task UpdateApplicationNoteAsync_clears_note_when_null()
+    {
+        await using var db = CreateDbContext();
+        var job = AddJob(db);
+        await db.SaveChangesAsync();
+
+        var service = new DbJobApplicationService(db);
+        await service.ApplyJobAsync(job.Id, userAccountId: 1, note: "some note");
+
+        var result = await service.UpdateApplicationNoteAsync(job.Id, userAccountId: 1, note: null);
+
+        Assert.IsNotNull(result);
+        Assert.IsNull(result.Note);
+    }
+
+    // ──────────────────────────────────────────────────────────
     // GetAppliedJobsAsync
     // ──────────────────────────────────────────────────────────
 

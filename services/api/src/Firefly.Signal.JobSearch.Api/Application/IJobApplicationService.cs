@@ -16,5 +16,10 @@ public interface IJobApplicationService
     /// </summary>
     Task<JobApplicationResponse?> AdvanceApplicationStatusAsync(long jobId, long userAccountId, JobApplicationStatus newStatus, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Updates the note on an existing application. Returns null if no application exists.
+    /// </summary>
+    Task<JobApplicationResponse?> UpdateApplicationNoteAsync(long jobId, long userAccountId, string? note, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<AppliedJobSummaryResponse>> GetAppliedJobsAsync(long userAccountId, CancellationToken cancellationToken = default);
 }
