@@ -43,27 +43,17 @@ const emptyFilters: JobsListFilters = {
 
 const defaultPageSize = 20;
 const defaultImportForm: JobsImportProviderFormValues = {
-  postcode: "",
+  where: "london",
   keyword: "",
-  pageIndex: "0",
-  pageSize: "20",
+  pageIndex: "1",
+  pageSize: "50",
   provider: "Adzuna",
   excludedKeyword: "",
-  distanceKilometers: "",
-  category: "",
+  distanceKilometers: "5",
+  maxDaysOld: "30",
+  category: "it-jobs",
   salaryMin: "",
-  salaryMax: "",
-  fullTime: "",
-  partTime: "",
-  permanent: "",
-  contract: "",
-  sortBy: "",
-  maxDaysOld: "",
-  company: "",
-  titleOnly: false,
-  location0: "",
-  location1: "",
-  location2: ""
+  salaryMax: ""
 };
 
 export function JobsListView() {
@@ -174,11 +164,10 @@ export function JobsListView() {
       return;
     }
 
-    const keyword = importForm.keyword.trim();
-    const postcode = importForm.postcode.trim();
-    if (!keyword || !postcode) {
+    const where = importForm.where.trim();
+    if (!where) {
       setActionMessage(null);
-      setActionError("Enter both a keyword and postcode before importing from the provider.");
+      setActionError("Enter a location or postcode before importing from the provider.");
       return;
     }
 
@@ -187,7 +176,7 @@ export function JobsListView() {
     setActionError(null);
 
     try {
-      const result = await importJobsFromProvider(buildImportRequest(importForm, keyword, postcode));
+      const result = await importJobsFromProvider(buildImportRequest(importForm, where));
       setActionMessage(`Imported ${result.importedCount} jobs from ${result.source}.`);
       setIsImportDialogOpen(false);
       await execute(pageIndex, pageSize, filters);
@@ -400,41 +389,22 @@ function parseOptionalNumber(value: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function parseOptionalBoolean(value: "" | "true" | "false"): boolean | undefined {
-  if (value === "") {
-    return undefined;
-  }
-
-  return value === "true";
-}
-
 function buildImportRequest(
   values: JobsImportProviderFormValues,
-  keyword: string,
-  postcode: string
+  where: string
 ): ImportJobsFromProviderRequestDto {
   return {
-    postcode,
-    keyword,
-    pageIndex: parseOptionalNumber(values.pageIndex) ?? 0,
-    pageSize: parseOptionalNumber(values.pageSize) ?? 20,
+    pageIndex: parseOptionalNumber(values.pageIndex) ?? 1,
+    pageSize: parseOptionalNumber(values.pageSize) ?? 50,
+    where,
+    keyword: normalizeText(values.keyword),
+    distanceKilometers: parseOptionalNumber(values.distanceKilometers) ?? 5,
+    maxDaysOld: parseOptionalNumber(values.maxDaysOld) ?? 30,
+    category: normalizeText(values.category) ?? "it-jobs",
     provider: values.provider,
     excludedKeyword: normalizeText(values.excludedKeyword),
-    distanceKilometers: parseOptionalNumber(values.distanceKilometers),
-    category: normalizeText(values.category),
     salaryMin: parseOptionalNumber(values.salaryMin),
-    salaryMax: parseOptionalNumber(values.salaryMax),
-    fullTime: parseOptionalBoolean(values.fullTime),
-    partTime: parseOptionalBoolean(values.partTime),
-    permanent: parseOptionalBoolean(values.permanent),
-    contract: parseOptionalBoolean(values.contract),
-    sortBy: normalizeText(values.sortBy),
-    maxDaysOld: parseOptionalNumber(values.maxDaysOld),
-    company: normalizeText(values.company),
-    titleOnly: values.titleOnly,
-    location0: normalizeText(values.location0),
-    location1: normalizeText(values.location1),
-    location2: normalizeText(values.location2)
+    salaryMax: parseOptionalNumber(values.salaryMax)
   };
 }
 

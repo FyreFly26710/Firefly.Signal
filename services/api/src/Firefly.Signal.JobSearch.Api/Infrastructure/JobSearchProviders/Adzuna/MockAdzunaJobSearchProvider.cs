@@ -10,12 +10,14 @@ public sealed class MockAdzunaJobSearchProvider : IJobSearchProvider
 
     public Task<PublicJobSearchResult> SearchAsync(SearchJobsRequest request, CancellationToken cancellationToken = default)
     {
+        var keyword = string.IsNullOrWhiteSpace(request.Keyword) ? "Software" : request.Keyword.Trim();
+
         JobPosting[] jobs =
         [
             JobPosting.Create(
-                $"{request.Keyword} Developer",
+                $"{keyword} Developer",
                 "Mock North Star Tech",
-                request.Postcode,
+                request.Location,
                 "London",
                 "Mock Adzuna result for local development and rate-limit-safe testing.",
                 "https://example.com/jobs/mock-adzuna-1",
@@ -23,9 +25,9 @@ public sealed class MockAdzunaJobSearchProvider : IJobSearchProvider
                 false,
                 new DateTime(2026, 4, 1, 9, 0, 0, DateTimeKind.Utc)),
             JobPosting.Create(
-                $"{request.Keyword} Platform Engineer",
+                $"{keyword} Platform Engineer",
                 "Mock Cloud Rail",
-                request.Postcode,
+                request.Location,
                 "Manchester",
                 "Mock Adzuna result for provider wiring and UI verification.",
                 "https://example.com/jobs/mock-adzuna-2",

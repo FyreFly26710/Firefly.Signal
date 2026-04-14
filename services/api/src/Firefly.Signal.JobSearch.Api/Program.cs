@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.EventBus;
 using Firefly.Signal.EventBusRabbitMQ;
@@ -18,6 +19,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddFireflyServiceDefaults();
 builder.AddDefaultOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.Configure<AdzunaOptions>(builder.Configuration.GetSection(AdzunaOptions.SectionName));
 builder.Services.AddDbContext<JobSearchDbContext>(options =>

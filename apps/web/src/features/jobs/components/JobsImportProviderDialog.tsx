@@ -1,27 +1,17 @@
-import { Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Button, FormControlLabel, MenuItem, TextField } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from "@mui/material";
 
 export type JobsImportProviderFormValues = {
-  postcode: string;
+  where: string;
   keyword: string;
   pageIndex: string;
   pageSize: string;
   provider: "Adzuna";
   excludedKeyword: string;
   distanceKilometers: string;
+  maxDaysOld: string;
   category: string;
   salaryMin: string;
   salaryMax: string;
-  fullTime: "" | "true" | "false";
-  partTime: "" | "true" | "false";
-  permanent: "" | "true" | "false";
-  contract: "" | "true" | "false";
-  sortBy: string;
-  maxDaysOld: string;
-  company: string;
-  titleOnly: boolean;
-  location0: string;
-  location1: string;
-  location2: string;
 };
 
 type JobsImportProviderDialogProps = {
@@ -47,15 +37,15 @@ export function JobsImportProviderDialog({
       <DialogContent>
         <div className="grid gap-4 pt-2 md:grid-cols-2">
           <TextField
-            label="Postcode"
+            label="Where"
             required
             size="small"
-            value={values.postcode}
-            onChange={(event) => onChange({ ...values, postcode: event.target.value })}
+            helperText="Location or postcode, for example London or SW1A 1AA."
+            value={values.where}
+            onChange={(event) => onChange({ ...values, where: event.target.value })}
           />
           <TextField
             label="Keyword"
-            required
             size="small"
             value={values.keyword}
             onChange={(event) => onChange({ ...values, keyword: event.target.value })}
@@ -99,6 +89,13 @@ export function JobsImportProviderDialog({
             onChange={(event) => onChange({ ...values, distanceKilometers: event.target.value })}
           />
           <TextField
+            label="Max days old"
+            size="small"
+            type="number"
+            value={values.maxDaysOld}
+            onChange={(event) => onChange({ ...values, maxDaysOld: event.target.value })}
+          />
+          <TextField
             label="Category"
             size="small"
             value={values.category}
@@ -118,99 +115,7 @@ export function JobsImportProviderDialog({
             value={values.salaryMax}
             onChange={(event) => onChange({ ...values, salaryMax: event.target.value })}
           />
-          <TextField
-            select
-            label="Full time"
-            size="small"
-            value={values.fullTime}
-            onChange={(event) => onChange({ ...values, fullTime: event.target.value as JobsImportProviderFormValues["fullTime"] })}
-          >
-            <MenuItem value="">Any</MenuItem>
-            <MenuItem value="true">Yes</MenuItem>
-            <MenuItem value="false">No</MenuItem>
-          </TextField>
-          <TextField
-            select
-            label="Part time"
-            size="small"
-            value={values.partTime}
-            onChange={(event) => onChange({ ...values, partTime: event.target.value as JobsImportProviderFormValues["partTime"] })}
-          >
-            <MenuItem value="">Any</MenuItem>
-            <MenuItem value="true">Yes</MenuItem>
-            <MenuItem value="false">No</MenuItem>
-          </TextField>
-          <TextField
-            select
-            label="Permanent"
-            size="small"
-            value={values.permanent}
-            onChange={(event) => onChange({ ...values, permanent: event.target.value as JobsImportProviderFormValues["permanent"] })}
-          >
-            <MenuItem value="">Any</MenuItem>
-            <MenuItem value="true">Yes</MenuItem>
-            <MenuItem value="false">No</MenuItem>
-          </TextField>
-          <TextField
-            select
-            label="Contract"
-            size="small"
-            value={values.contract}
-            onChange={(event) => onChange({ ...values, contract: event.target.value as JobsImportProviderFormValues["contract"] })}
-          >
-            <MenuItem value="">Any</MenuItem>
-            <MenuItem value="true">Yes</MenuItem>
-            <MenuItem value="false">No</MenuItem>
-          </TextField>
-          <TextField
-            label="Sort by"
-            size="small"
-            value={values.sortBy}
-            onChange={(event) => onChange({ ...values, sortBy: event.target.value })}
-          />
-          <TextField
-            label="Max days old"
-            size="small"
-            type="number"
-            value={values.maxDaysOld}
-            onChange={(event) => onChange({ ...values, maxDaysOld: event.target.value })}
-          />
-          <TextField
-            label="Company"
-            size="small"
-            value={values.company}
-            onChange={(event) => onChange({ ...values, company: event.target.value })}
-          />
-          <TextField
-            label="Location 0"
-            size="small"
-            value={values.location0}
-            onChange={(event) => onChange({ ...values, location0: event.target.value })}
-          />
-          <TextField
-            label="Location 1"
-            size="small"
-            value={values.location1}
-            onChange={(event) => onChange({ ...values, location1: event.target.value })}
-          />
-          <TextField
-            label="Location 2"
-            size="small"
-            value={values.location2}
-            onChange={(event) => onChange({ ...values, location2: event.target.value })}
-          />
         </div>
-
-        <FormControlLabel
-          className="mt-4"
-          control={
-            <Checkbox
-              checked={values.titleOnly}
-              onChange={(event) => onChange({ ...values, titleOnly: event.target.checked })}
-            />
-          }
-          label="Search title only"
-        />
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button onClick={onClose} color="inherit" disabled={isSubmitting}>

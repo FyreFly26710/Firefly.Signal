@@ -175,7 +175,7 @@ public sealed class DbJobSearchService(
         CancellationToken cancellationToken = default)
     {
         var providerRequest = new SearchJobsRequest(
-            request.Postcode,
+            request.Where,
             request.Keyword,
             request.PageIndex,
             request.PageSize,
@@ -185,17 +185,7 @@ public sealed class DbJobSearchService(
             request.Category,
             request.SalaryMin,
             request.SalaryMax,
-            request.FullTime,
-            request.PartTime,
-            request.Permanent,
-            request.Contract,
-            request.SortBy,
-            request.MaxDaysOld,
-            request.Company,
-            request.TitleOnly,
-            request.Location0,
-            request.Location1,
-            request.Location2);
+            MaxDaysOld: request.MaxDaysOld);
 
         var filtersJson = JsonSerializer.Serialize(request, JsonOptions);
         var refreshRun = JobRefreshRun.Start(
