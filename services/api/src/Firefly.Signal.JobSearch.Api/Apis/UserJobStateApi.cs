@@ -1,5 +1,5 @@
 using Firefly.Signal.JobSearch.Application;
-using Firefly.Signal.JobSearch.Infrastructure.Services;
+using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Firefly.Signal.JobSearch.Api.Apis;
@@ -20,11 +20,11 @@ public static class UserJobStateApi
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> SaveAsync(
         long id,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IUserJobStateService service,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -36,11 +36,11 @@ public static class UserJobStateApi
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> UnsaveAsync(
         long id,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IUserJobStateService service,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -52,11 +52,11 @@ public static class UserJobStateApi
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> HideAsync(
         long id,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IUserJobStateService service,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -68,11 +68,11 @@ public static class UserJobStateApi
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> UnhideAsync(
         long id,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IUserJobStateService service,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();

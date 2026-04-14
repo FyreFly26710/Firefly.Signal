@@ -2,8 +2,8 @@ using System.Security.Cryptography;
 using Firefly.Signal.Identity.Application;
 using Firefly.Signal.Identity.Domain;
 using Firefly.Signal.Identity.Infrastructure.Persistence;
-using Firefly.Signal.Identity.Infrastructure.Services;
 using Firefly.Signal.Identity.Infrastructure.Storage;
+using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,11 +29,11 @@ public static class UserDocumentApi
     }
 
     private static async Task<Results<Ok<IReadOnlyList<UserDocumentResponse>>, UnauthorizedHttpResult>> ListAsync(
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -43,7 +43,7 @@ public static class UserDocumentApi
             .Where(x => x.UserAccountId == userId.Value)
             .OrderByDescending(x => x.IsDefault)
             .ThenByDescending(x => x.UploadedAtUtc)
-            .Select(x => x.ToResponse())
+            .Select(UserDocumentMapper.ToUserDocumentResponse)
             .ToListAsync(cancellationToken);
 
         return TypedResults.Ok<IReadOnlyList<UserDocumentResponse>>(documents);
@@ -51,11 +51,11 @@ public static class UserDocumentApi
 
     private static async Task<Results<Ok<UserDocumentResponse>, NotFound, UnauthorizedHttpResult>> GetByIdAsync(
         long id,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -66,18 +66,18 @@ public static class UserDocumentApi
 
         return document is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(document.ToResponse());
+            : TypedResults.Ok(UserDocumentMapper.ToUserDocumentResponse(document));
     }
 
     private static async Task<Results<Created<UserDocumentResponse>, BadRequest<ProblemDetails>, ValidationProblem, UnauthorizedHttpResult>> UploadAsync(
         [FromForm] UploadUserDocumentRequest request,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IdentityDbContext dbContext,
         IUserDocumentStorage documentStorage,
         IOptions<UserDocumentStorageOptions> storageOptions,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -89,7 +89,7 @@ public static class UserDocumentApi
             return TypedResults.ValidationProblem(validationErrors);
         }
 
-        if (!UserDocumentContractMappings.TryParseDocumentType(request.DocumentType, out var documentType))
+        if (!UserDocumentMapper.TryToUserDocumentType(request.DocumentType, out var documentType))
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
@@ -112,7 +112,7 @@ public static class UserDocumentApi
             ? Path.GetFileNameWithoutExtension(originalFileName)
             : request.DisplayName.Trim();
 
-        var supportsDefaultSelection = UserDocumentContractMappings.SupportsDefaultSelection(documentType);
+        var supportsDefaultSelection = UserDocumentMapper.ToSupportsDefaultSelection(documentType);
         if (request.IsDefault && !supportsDefaultSelection)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
@@ -160,7 +160,7 @@ public static class UserDocumentApi
             dbContext.UserDocuments.Add(document);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return TypedResults.Created($"/api/users/documents/{document.Id}", document.ToResponse());
+            return TypedResults.Created($"/api/users/documents/{document.Id}", UserDocumentMapper.ToUserDocumentResponse(document));
         }
         catch
         {
@@ -171,11 +171,11 @@ public static class UserDocumentApi
 
     private static async Task<Results<Ok<UserDocumentResponse>, NotFound, ValidationProblem, UnauthorizedHttpResult>> SetDefaultAsync(
         long id,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -189,7 +189,7 @@ public static class UserDocumentApi
             return TypedResults.NotFound();
         }
 
-        if (!UserDocumentContractMappings.SupportsDefaultSelection(document.DocumentType))
+        if (!UserDocumentMapper.ToSupportsDefaultSelection(document.DocumentType))
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
@@ -201,17 +201,17 @@ public static class UserDocumentApi
         document.MarkDefault();
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Ok(document.ToResponse());
+        return TypedResults.Ok(UserDocumentMapper.ToUserDocumentResponse(document));
     }
 
     private static async Task<Results<NoContent, NotFound, UnauthorizedHttpResult>> DeleteAsync(
         long id,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IdentityDbContext dbContext,
         IUserDocumentStorage documentStorage,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -233,7 +233,7 @@ public static class UserDocumentApi
         document.MarkDeleted();
         document.ClearDefault();
 
-        if (wasDefault && UserDocumentContractMappings.SupportsDefaultSelection(documentType))
+        if (wasDefault && UserDocumentMapper.ToSupportsDefaultSelection(documentType))
         {
             var replacementDocument = await dbContext.UserDocuments
                 .Where(x => x.UserAccountId == userId.Value && x.DocumentType == documentType && x.Id != document.Id)

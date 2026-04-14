@@ -13,7 +13,6 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 app.MapAiApi();
-app.MapAiStatusApi();
 
 app.UseDefaultOpenApi();
 app.Run();

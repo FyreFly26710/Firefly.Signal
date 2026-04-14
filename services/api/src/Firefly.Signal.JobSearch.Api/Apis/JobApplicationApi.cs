@@ -1,6 +1,6 @@
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.JobSearch.Domain;
-using Firefly.Signal.JobSearch.Infrastructure.Services;
+using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,11 +24,11 @@ public static class JobApplicationApi
     private static async Task<Results<Ok<JobApplicationResponse>, NotFound, UnauthorizedHttpResult>> ApplyAsync(
         long id,
         ApplyJobRequest request,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IJobApplicationService service,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -41,11 +41,11 @@ public static class JobApplicationApi
     private static async Task<Results<Ok<JobApplicationResponse>, NotFound, BadRequest<ProblemDetails>, UnauthorizedHttpResult>> AdvanceStatusAsync(
         long id,
         AdvanceApplicationStatusRequest request,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IJobApplicationService service,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -78,11 +78,11 @@ public static class JobApplicationApi
     private static async Task<Results<Ok<JobApplicationResponse>, NotFound, UnauthorizedHttpResult>> UpdateNoteAsync(
         long id,
         UpdateApplicationNoteRequest request,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IJobApplicationService service,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -93,11 +93,11 @@ public static class JobApplicationApi
     }
 
     private static async Task<Results<Ok<IReadOnlyList<AppliedJobSummaryResponse>>, UnauthorizedHttpResult>> GetAppliedJobsAsync(
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IJobApplicationService service,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();

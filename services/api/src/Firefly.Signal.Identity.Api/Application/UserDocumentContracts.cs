@@ -26,9 +26,9 @@ public sealed record UserDocumentResponse(
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc);
 
-public static class UserDocumentContractMappings
+public static class UserDocumentMapper
 {
-    public static UserDocumentResponse ToResponse(this UserDocument document)
+    public static UserDocumentResponse ToUserDocumentResponse(UserDocument document)
         => new(
             document.Id,
             ToApiDocumentType(document.DocumentType),
@@ -44,7 +44,7 @@ public static class UserDocumentContractMappings
             document.CreatedAtUtc,
             document.UpdatedAtUtc);
 
-    public static bool TryParseDocumentType(string? value, out UserDocumentType documentType)
+    public static bool TryToUserDocumentType(string? value, out UserDocumentType documentType)
     {
         switch (value?.Trim().ToLowerInvariant())
         {
@@ -66,7 +66,7 @@ public static class UserDocumentContractMappings
         }
     }
 
-    public static bool SupportsDefaultSelection(UserDocumentType documentType)
+    public static bool ToSupportsDefaultSelection(UserDocumentType documentType)
         => documentType is UserDocumentType.Cv or UserDocumentType.CoverLetter;
 
     private static string ToApiDocumentType(UserDocumentType documentType)

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.IdentityModel.Tokens;
+using Firefly.Signal.SharedKernel.Services;
 
 namespace Firefly.Signal.JobSearch.Api.Extensions;
 
@@ -28,7 +29,7 @@ internal static class ApplicationServiceExtensions
         services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
         services.Configure<AdzunaOptions>(builder.Configuration.GetSection(AdzunaOptions.SectionName));
         services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();
+        services.AddScoped<IIdentityService, HttpContextIdentityService>();
         services.AddScoped<IJobSearchService, DbJobSearchService>();
         services.AddScoped<IUserJobStateService, DbUserJobStateService>();
         services.AddScoped<IJobApplicationService, DbJobApplicationService>();

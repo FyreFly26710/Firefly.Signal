@@ -2,6 +2,7 @@ using Firefly.Signal.Identity.Application;
 using Firefly.Signal.Identity.Domain;
 using Firefly.Signal.Identity.Infrastructure.Persistence;
 using Firefly.Signal.Identity.Infrastructure.Services;
+using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -42,15 +43,15 @@ public static class AuthApi
         }
 
         var token = jwtTokenService.CreateToken(user);
-        return TypedResults.Ok(new LoginResponse(token.AccessToken, "Bearer", token.ExpiresAtUtc, ToResponse(user)));
+        return TypedResults.Ok(IdentityMapper.ToLoginResponse(token, user));
     }
 
     private static async Task<Results<Ok<AuthenticatedUserResponse>, NotFound, UnauthorizedHttpResult>> GetCurrentUserAsync(
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -59,9 +60,6 @@ public static class AuthApi
         var user = await dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId.Value, cancellationToken);
         return user is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(ToResponse(user));
+            : TypedResults.Ok(IdentityMapper.ToAuthenticatedUserResponse(user));
     }
-
-    private static AuthenticatedUserResponse ToResponse(UserAccount user)
-        => new(user.Id, user.UserAccountName, user.DisplayName, user.Email, user.Role);
 }

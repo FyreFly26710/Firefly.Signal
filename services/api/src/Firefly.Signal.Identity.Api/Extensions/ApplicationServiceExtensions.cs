@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.IdentityModel.Tokens;
+using Firefly.Signal.SharedKernel.Services;
 
 namespace Firefly.Signal.Identity.Api.Extensions;
 
@@ -20,7 +21,7 @@ internal static class ApplicationServiceExtensions
         services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
         services.AddUserDocumentStorage(builder.Configuration, builder.Environment);
         services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();
+        services.AddScoped<IIdentityService, HttpContextIdentityService>();
         services.AddScoped<IPasswordHasher<UserAccount>, PasswordHasher<UserAccount>>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 

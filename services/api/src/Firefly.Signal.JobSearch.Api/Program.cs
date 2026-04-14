@@ -14,7 +14,6 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapJobSearchStatusApi();
 app.MapJobSearchApi();
 app.MapUserJobStateApi();
 app.MapJobApplicationApi();

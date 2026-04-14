@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.JobSearch.Infrastructure.External;
-using Firefly.Signal.JobSearch.Infrastructure.Services;
 using Firefly.Signal.SharedKernel.Models;
+using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -42,11 +42,11 @@ public static class JobSearchApi
         [FromQuery] string? sourceName,
         [FromQuery] string? categoryTag,
         [FromQuery] bool? isHidden,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IJobSearchService service,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         var result = await service.SearchPageAsync(
             new GetJobsPageRequest(
                 Math.Max(pageIndex, 0),

@@ -43,7 +43,7 @@ public static class UserApi
         var user = await dbContext.Users.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         return user is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(new AuthenticatedUserResponse(user.Id, user.UserAccountName, user.DisplayName, user.Email, user.Role));
+            : TypedResults.Ok(IdentityMapper.ToAuthenticatedUserResponse(user));
     }
 
     private static async Task<Results<Created<AuthenticatedUserResponse>, Conflict<ProblemDetails>>> CreateAsync(
@@ -63,7 +63,7 @@ public static class UserApi
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = new AuthenticatedUserResponse(user.Id, user.UserAccountName, user.DisplayName, user.Email, user.Role);
+        var response = IdentityMapper.ToAuthenticatedUserResponse(user);
         return TypedResults.Created($"/api/users/{user.Id}", response);
     }
 
@@ -82,7 +82,7 @@ public static class UserApi
         user.UpdateProfile(request.Email, request.DisplayName, request.Role);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Ok(new AuthenticatedUserResponse(user.Id, user.UserAccountName, user.DisplayName, user.Email, user.Role));
+        return TypedResults.Ok(IdentityMapper.ToAuthenticatedUserResponse(user));
     }
 
     private static async Task<Results<NoContent, NotFound>> DeleteAsync(

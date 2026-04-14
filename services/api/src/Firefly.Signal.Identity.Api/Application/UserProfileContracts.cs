@@ -30,9 +30,9 @@ public sealed record UserProfileResponse(
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc);
 
-public static class UserProfileContractMappings
+public static class UserProfileMapper
 {
-    public static UserProfileResponse ToResponse(this UserProfile profile)
+    public static UserProfileResponse ToUserProfileResponse(UserProfile profile)
         => new(
             profile.Id,
             profile.UserAccountId,

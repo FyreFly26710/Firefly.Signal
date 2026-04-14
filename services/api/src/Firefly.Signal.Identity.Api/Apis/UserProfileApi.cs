@@ -1,7 +1,7 @@
 using Firefly.Signal.Identity.Application;
 using Firefly.Signal.Identity.Domain;
 using Firefly.Signal.Identity.Infrastructure.Persistence;
-using Firefly.Signal.Identity.Infrastructure.Services;
+using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,11 +20,11 @@ public static class UserProfileApi
     }
 
     private static async Task<Results<Ok<UserProfileResponse>, NotFound, UnauthorizedHttpResult>> GetCurrentAsync(
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -35,16 +35,16 @@ public static class UserProfileApi
 
         return profile is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(profile.ToResponse());
+            : TypedResults.Ok(UserProfileMapper.ToUserProfileResponse(profile));
     }
 
     private static async Task<Results<Created<UserProfileResponse>, Ok<UserProfileResponse>, UnauthorizedHttpResult>> UpsertCurrentAsync(
         UserProfileRequest request,
-        ICurrentUserContext currentUserContext,
+        IIdentityService identityService,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserContext.GetUserId();
+        var userId = identityService.GetUserId();
         if (!userId.HasValue)
         {
             return TypedResults.Unauthorized();
@@ -75,7 +75,7 @@ public static class UserProfileApi
 
             dbContext.UserProfiles.Add(profile);
             await dbContext.SaveChangesAsync(cancellationToken);
-            return TypedResults.Created("/api/users/profile", profile.ToResponse());
+            return TypedResults.Created("/api/users/profile", UserProfileMapper.ToUserProfileResponse(profile));
         }
 
         profile.Update(
@@ -91,6 +91,6 @@ public static class UserProfileApi
             request.PreferencesJson);
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return TypedResults.Ok(profile.ToResponse());
+        return TypedResults.Ok(UserProfileMapper.ToUserProfileResponse(profile));
     }
 }
