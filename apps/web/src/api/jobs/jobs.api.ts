@@ -59,15 +59,15 @@ export async function updateJob(
   );
 }
 
-export async function hideJob(jobId: number): Promise<HideJobsResponseDto> {
+export async function catalogHideJob(jobId: number): Promise<HideJobsResponseDto> {
   return postJson<HideJobsResponseDto, Record<string, never>>(
-    `/api/job-search/jobs/${jobId}/hide`,
+    `/api/job-search/jobs/${jobId}/catalog-hide`,
     {}
   );
 }
 
-export async function hideJobs(ids: number[]): Promise<HideJobsResponseDto> {
-  return postJson<HideJobsResponseDto, IdBatchRequestDto>("/api/job-search/jobs/hide", {
+export async function catalogHideJobs(ids: number[]): Promise<HideJobsResponseDto> {
+  return postJson<HideJobsResponseDto, IdBatchRequestDto>("/api/job-search/jobs/catalog-hide", {
     ids
   });
 }

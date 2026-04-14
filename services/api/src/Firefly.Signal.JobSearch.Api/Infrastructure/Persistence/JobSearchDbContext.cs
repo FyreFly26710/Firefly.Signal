@@ -13,7 +13,7 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
     public DbSet<PostcodeLookup> PostcodeLookups => Set<PostcodeLookup>();
     public DbSet<UserJobState> UserJobStates => Set<UserJobState>();
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
-    public DbSet<ApplicationNote> ApplicationNotes => Set<ApplicationNote>();
+    public DbSet<JobApplicationStatusEntry> JobApplicationStatusEntries => Set<JobApplicationStatusEntry>();
     public DbSet<ApplicationDocumentLink> ApplicationDocumentLinks => Set<ApplicationDocumentLink>();
     public DbSet<UserJobAiInsight> UserJobAiInsights => Set<UserJobAiInsight>();
     public DbSet<AiAnalysisRun> AiAnalysisRuns => Set<AiAnalysisRun>();
@@ -103,15 +103,14 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
             entity.Property(x => x.Id).ValueGeneratedNever();
             entity.Property(x => x.UserAccountId).IsRequired();
             entity.Property(x => x.JobPostingId).IsRequired();
-            entity.Property(x => x.State).HasConversion<string>().HasMaxLength(32).IsRequired();
-            entity.Property(x => x.SavedAtUtc);
-            entity.Property(x => x.AppliedAtUtc);
-            entity.Property(x => x.RejectedAtUtc);
+            entity.Property(x => x.IsSaved).IsRequired();
+            entity.Property(x => x.IsHidden).IsRequired();
             entity.Property(x => x.LastUpdatedAtUtc).IsRequired();
             entity.Property(x => x.CreatedAtUtc).IsRequired();
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
             entity.HasIndex(x => new { x.UserAccountId, x.JobPostingId }).IsUnique();
-            entity.HasIndex(x => new { x.UserAccountId, x.State });
+            entity.HasIndex(x => new { x.UserAccountId, x.IsSaved });
+            entity.HasIndex(x => new { x.UserAccountId, x.IsHidden });
             entity.HasOne<JobPosting>()
                 .WithMany()
                 .HasForeignKey(x => x.JobPostingId)
@@ -125,30 +124,24 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
             entity.Property(x => x.Id).ValueGeneratedNever();
             entity.Property(x => x.UserAccountId).IsRequired();
             entity.Property(x => x.JobPostingId).IsRequired();
-            entity.Property(x => x.AppliedAtUtc).IsRequired();
-            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
-            entity.Property(x => x.SubmittedCvDocumentId);
-            entity.Property(x => x.SubmittedCoverLetterDocumentId);
-            entity.Property(x => x.RejectionAtUtc);
-            entity.Property(x => x.RejectionReason).HasMaxLength(2000);
+            entity.Property(x => x.Note).HasMaxLength(4000);
             entity.Property(x => x.CreatedAtUtc).IsRequired();
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
             entity.HasIndex(x => new { x.UserAccountId, x.JobPostingId }).IsUnique();
-            entity.HasIndex(x => new { x.UserAccountId, x.Status });
             entity.HasOne<JobPosting>()
                 .WithMany()
                 .HasForeignKey(x => x.JobPostingId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<ApplicationNote>(entity =>
+        modelBuilder.Entity<JobApplicationStatusEntry>(entity =>
         {
-            entity.ToTable("application_notes");
+            entity.ToTable("job_application_status_entries");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).ValueGeneratedNever();
             entity.Property(x => x.JobApplicationId).IsRequired();
-            entity.Property(x => x.UserAccountId).IsRequired();
-            entity.Property(x => x.Body).HasMaxLength(4000).IsRequired();
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
+            entity.Property(x => x.StatusAtUtc).IsRequired();
             entity.Property(x => x.CreatedAtUtc).IsRequired();
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
             entity.HasIndex(x => x.JobApplicationId);

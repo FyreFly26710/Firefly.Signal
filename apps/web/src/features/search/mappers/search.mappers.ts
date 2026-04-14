@@ -1,4 +1,4 @@
-import type { JobsPageResponseDto, JobDetailsResponseDto } from "@/api/jobs/jobs.types";
+import type { JobSearchResultDto, JobsPageResponseDto } from "@/api/jobs/jobs.types";
 import type { JobCardModel } from "@/features/jobs/types/job.types";
 import type { SearchViewModel } from "@/features/search/types/search.types";
 
@@ -16,7 +16,7 @@ export function mapSearchResponse(
   };
 }
 
-function mapJobCard(job: JobDetailsResponseDto): JobCardModel {
+function mapJobCard(job: JobSearchResultDto): JobCardModel {
   return {
     id: String(job.id),
     title: job.title,
@@ -29,7 +29,9 @@ function mapJobCard(job: JobDetailsResponseDto): JobCardModel {
     source: job.sourceName,
     postedDate: formatPostedDate(job.postedAtUtc),
     salary: formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency),
-    type: formatJobType(job.contractType, job.isPermanent, job.isContract, job.isFullTime, job.isPartTime)
+    type: formatJobType(job.contractType, job.isPermanent, job.isContract, job.isFullTime, job.isPartTime),
+    isSaved: job.isSaved,
+    isHidden: job.isUserHidden
   };
 }
 

@@ -1,10 +1,12 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text.Json;
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.JobSearch.Infrastructure.External;
 using Firefly.Signal.SharedKernel.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 
 namespace Firefly.Signal.JobSearch.Endpoints;
 
@@ -22,8 +24,8 @@ public static class JobSearchEndpoints
         adminGroup.MapPut("/{id:long}", UpdateAsync);
         adminGroup.MapDelete("/{id:long}", DeleteByIdAsync);
         adminGroup.MapDelete("/", DeleteManyAsync);
-        adminGroup.MapPost("/{id:long}/hide", HideByIdAsync);
-        adminGroup.MapPost("/hide", HideManyAsync);
+        adminGroup.MapPost("/{id:long}/catalog-hide", HideByIdAsync);
+        adminGroup.MapPost("/catalog-hide", HideManyAsync);
         adminGroup.MapPost("/import/provider", ImportFromProviderAsync);
         adminGroup.MapPost("/import/json", ImportFromJsonAsync)
             .DisableAntiforgery();
@@ -32,7 +34,7 @@ public static class JobSearchEndpoints
         return endpoints;
     }
 
-    private static async Task<Ok<Paged<JobDetailsResponse>>> GetPageAsync(
+    private static async Task<Ok<Paged<JobSearchResultResponse>>> GetPageAsync(
         [FromQuery] int pageIndex,
         [FromQuery] int pageSize,
         [FromQuery] string? keyword,
@@ -42,9 +44,12 @@ public static class JobSearchEndpoints
         [FromQuery] string? sourceName,
         [FromQuery] string? categoryTag,
         [FromQuery] bool? isHidden,
+        ClaimsPrincipal claimsPrincipal,
         [FromServices] IJobSearchService service,
         CancellationToken cancellationToken)
-        => TypedResults.Ok(await service.GetPageAsync(
+    {
+        var userId = GetCurrentUserId(claimsPrincipal);
+        return TypedResults.Ok(await service.SearchPageAsync(
             new GetJobsPageRequest(
                 Math.Max(pageIndex, 0),
                 pageSize <= 0 ? 20 : pageSize,
@@ -55,7 +60,16 @@ public static class JobSearchEndpoints
                 sourceName,
                 categoryTag,
                 isHidden),
+            userId,
             cancellationToken));
+    }
+
+    private static long? GetCurrentUserId(ClaimsPrincipal claimsPrincipal)
+    {
+        var subject = claimsPrincipal.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
+        return long.TryParse(subject, out var id) ? id : null;
+    }
 
     private static async Task<Results<Ok<JobDetailsResponse>, NotFound>> GetByIdAsync(
         long id,

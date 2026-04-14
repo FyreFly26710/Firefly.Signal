@@ -5,9 +5,9 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { theme } from "@/app/theme";
 import {
+  catalogHideJobs,
   exportJobs,
   getJobsPage,
-  hideJobs,
   importJobsFromJson,
   importJobsFromProvider
 } from "@/api/jobs/jobs.api";
@@ -15,10 +15,10 @@ import { JobsListView } from "@/features/jobs/views/JobsListView";
 import { useSessionStore } from "@/store/session.store";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
+  catalogHideJobs: vi.fn(),
   deleteJobs: vi.fn(),
   exportJobs: vi.fn(),
   getJobsPage: vi.fn(),
-  hideJobs: vi.fn(),
   importJobsFromJson: vi.fn(),
   importJobsFromProvider: vi.fn()
 }));
@@ -51,41 +51,29 @@ describe("JobsListView", () => {
       items: [
         {
           id: 42,
-          jobRefreshRunId: null,
-          sourceName: "Adzuna",
           sourceJobId: "adz-42",
-          sourceAdReference: null,
           title: "Senior Frontend Engineer",
-          description: "Build the web application.",
           summary: "Build the web application.",
           url: "https://example.com/jobs/42",
           company: "Firefly",
           companyDisplayName: "Firefly",
-          companyCanonicalName: "firefly",
-          postcode: "EC2A 4NE",
           locationName: "London",
           locationDisplayName: "London",
-          locationAreaJson: "[\"London\"]",
-          latitude: null,
-          longitude: null,
-          categoryTag: "it-jobs",
-          categoryLabel: "IT jobs",
+          isRemote: true,
+          isHidden: false,
           salaryMin: 75000,
           salaryMax: 95000,
           salaryCurrency: "GBP",
-          salaryIsPredicted: false,
           contractTime: "full_time",
           contractType: "permanent",
           isFullTime: true,
           isPartTime: false,
           isPermanent: true,
           isContract: false,
-          isRemote: true,
+          sourceName: "Adzuna",
           postedAtUtc: "2025-04-03T10:00:00Z",
-          importedAtUtc: "2025-04-03T12:00:00Z",
-          lastSeenAtUtc: "2025-04-03T12:00:00Z",
-          isHidden: false,
-          rawPayloadJson: "{}"
+          isSaved: false,
+          isUserHidden: false
         }
       ]
     });
@@ -102,7 +90,7 @@ describe("JobsListView", () => {
       expect(screen.getByText("Senior Frontend Engineer")).toBeInTheDocument();
     });
 
-    vi.mocked(hideJobs).mockResolvedValueOnce({
+    vi.mocked(catalogHideJobs).mockResolvedValueOnce({
       hiddenCount: 1,
       hiddenIds: [42],
       missingIds: []
@@ -117,7 +105,7 @@ describe("JobsListView", () => {
 
     expect(screen.getByText(/total jobs/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Manage jobs" })).toBeInTheDocument();
-    expect(hideJobs).toHaveBeenCalledWith([42]);
+    expect(catalogHideJobs).toHaveBeenCalledWith([42]);
     expect(getJobsPage).toHaveBeenCalledWith(
       expect.objectContaining({
         pageIndex: 0,
@@ -138,41 +126,29 @@ describe("JobsListView", () => {
       items: [
         {
           id: 99,
-          jobRefreshRunId: null,
-          sourceName: "Adzuna",
           sourceJobId: "adz-99",
-          sourceAdReference: null,
           title: "Export Test Job",
-          description: "desc",
           summary: "summary",
           url: "https://example.com/jobs/99",
           company: "Acme",
           companyDisplayName: null,
-          companyCanonicalName: null,
-          postcode: "EC1A 1BB",
           locationName: "London",
           locationDisplayName: null,
-          locationAreaJson: null,
-          latitude: null,
-          longitude: null,
-          categoryTag: null,
-          categoryLabel: null,
+          isRemote: false,
+          isHidden: false,
           salaryMin: null,
           salaryMax: null,
           salaryCurrency: null,
-          salaryIsPredicted: null,
           contractTime: null,
           contractType: null,
           isFullTime: true,
           isPartTime: false,
           isPermanent: true,
           isContract: false,
-          isRemote: false,
+          sourceName: "Adzuna",
           postedAtUtc: "2025-04-03T10:00:00Z",
-          importedAtUtc: "2025-04-03T12:00:00Z",
-          lastSeenAtUtc: "2025-04-03T12:00:00Z",
-          isHidden: false,
-          rawPayloadJson: "{}"
+          isSaved: false,
+          isUserHidden: false
         }
       ]
     });

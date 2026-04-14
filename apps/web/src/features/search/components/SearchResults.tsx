@@ -4,6 +4,23 @@ import { Button, MenuItem, TextField } from "@mui/material";
 import type { SearchStatus } from "@/features/search/types/search.types";
 import { JobCard } from "@/features/jobs/components/JobCard";
 import type { JobCardModel } from "@/features/jobs/types/job.types";
+import { useJobState } from "@/features/search/hooks/useJobState";
+
+function JobCardWithState({ job }: { job: JobCardModel }) {
+  const { isSaved, isHidden, toggleSave, toggleHide } = useJobState(job.id, {
+    isSaved: job.isSaved,
+    isHidden: job.isHidden
+  });
+  return (
+    <JobCard
+      job={job}
+      isSaved={isSaved}
+      isHidden={isHidden}
+      onToggleSave={() => { void toggleSave(); }}
+      onToggleHide={() => { void toggleHide(); }}
+    />
+  );
+}
 
 type SearchResultsProps = {
   status: SearchStatus;
@@ -92,7 +109,7 @@ export function SearchResults({
 
       <div className="overflow-hidden rounded-lg border border-border bg-background-elevated">
         {results.map((job) => (
-          <JobCard key={job.id} job={job} />
+          <JobCardWithState key={job.id} job={job} />
         ))}
       </div>
 

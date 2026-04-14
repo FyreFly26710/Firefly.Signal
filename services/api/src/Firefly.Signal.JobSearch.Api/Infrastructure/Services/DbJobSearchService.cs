@@ -25,7 +25,7 @@ public sealed class DbJobSearchService(
             .Select(ToResponse())
             .SingleOrDefaultAsync(cancellationToken);
 
-    public async Task<Paged<JobDetailsResponse>> GetPageAsync(GetJobsPageRequest request, CancellationToken cancellationToken = default)
+    private async Task<Paged<JobDetailsResponse>> GetPageAsync(GetJobsPageRequest request, CancellationToken cancellationToken = default)
     {
         var pageIndex = Math.Max(request.PageIndex, 0);
         var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
@@ -42,6 +42,67 @@ public sealed class DbJobSearchService(
             .ToListAsync(cancellationToken);
 
         return new Paged<JobDetailsResponse>(pageIndex, pageSize, totalCount, jobs);
+    }
+
+    public async Task<Paged<JobSearchResultResponse>> SearchPageAsync(
+        GetJobsPageRequest request,
+        long? userId,
+        CancellationToken cancellationToken = default)
+    {
+        var pageIndex = Math.Max(request.PageIndex, 0);
+        var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
+
+        // Always exclude catalog-hidden jobs from search results
+        var query = ApplyFilters(dbContext.Jobs.AsQueryable(), request with { IsHidden = false });
+        var totalCount = await query.LongCountAsync(cancellationToken);
+
+        List<JobSearchResultResponse> items;
+
+        if (userId.HasValue)
+        {
+            var userStates = dbContext.UserJobStates.Where(s => s.UserAccountId == userId.Value);
+
+            items = await (
+                from j in query
+                join s in userStates on j.Id equals s.JobPostingId into joined
+                from s in joined.DefaultIfEmpty()
+                orderby j.PostedAtUtc descending, j.Id descending
+                select new JobSearchResultResponse(
+                    j.Id, j.SourceJobId, j.Title, j.Summary, j.Url,
+                    j.Company, j.CompanyDisplayName,
+                    j.LocationName, j.LocationDisplayName,
+                    j.IsRemote, j.IsHidden,
+                    j.SalaryMin, j.SalaryMax, j.SalaryCurrency,
+                    j.ContractType, j.ContractTime,
+                    j.IsFullTime, j.IsPartTime, j.IsPermanent, j.IsContract,
+                    j.SourceName, j.PostedAtUtc,
+                    s != null && s.IsSaved,
+                    s != null && s.IsHidden))
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+        }
+        else
+        {
+            items = await query
+                .OrderByDescending(x => x.PostedAtUtc)
+                .ThenByDescending(x => x.Id)
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .Select(j => new JobSearchResultResponse(
+                    j.Id, j.SourceJobId, j.Title, j.Summary, j.Url,
+                    j.Company, j.CompanyDisplayName,
+                    j.LocationName, j.LocationDisplayName,
+                    j.IsRemote, j.IsHidden,
+                    j.SalaryMin, j.SalaryMax, j.SalaryCurrency,
+                    j.ContractType, j.ContractTime,
+                    j.IsFullTime, j.IsPartTime, j.IsPermanent, j.IsContract,
+                    j.SourceName, j.PostedAtUtc,
+                    false, false))
+                .ToListAsync(cancellationToken);
+        }
+
+        return new Paged<JobSearchResultResponse>(pageIndex, pageSize, totalCount, items);
     }
 
     public async Task<ExportJobsResponse> ExportAsync(ExportJobsRequest request, CancellationToken cancellationToken = default)
