@@ -1,19 +1,19 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using Firefly.Signal.Identity.Application;
 using Firefly.Signal.Identity.Domain;
 using Firefly.Signal.Identity.Infrastructure.Persistence;
+using Firefly.Signal.Identity.Infrastructure.Services;
 using Firefly.Signal.Identity.Infrastructure.Storage;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Firefly.Signal.Identity.Endpoints;
+namespace Firefly.Signal.Identity.Api.Apis;
 
-public static class UserDocumentEndpoints
+public static class UserDocumentApi
 {
-    public static IEndpointRouteBuilder MapUserDocumentEndpoints(this IEndpointRouteBuilder endpoints)
+    public static RouteGroupBuilder MapUserDocumentApi(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/users/documents").RequireAuthorization();
 
@@ -25,18 +25,18 @@ public static class UserDocumentEndpoints
         group.MapPost("/{id:long}/default", SetDefaultAsync);
         group.MapDelete("/{id:long}", DeleteAsync);
 
-        return endpoints;
+        return group;
     }
 
-    private static async Task<IResult> ListAsync(
-        ClaimsPrincipal claimsPrincipal,
+    private static async Task<Results<Ok<IReadOnlyList<UserDocumentResponse>>, UnauthorizedHttpResult>> ListAsync(
+        ICurrentUserContext currentUserContext,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null)
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         var documents = await dbContext.UserDocuments
@@ -46,50 +46,52 @@ public static class UserDocumentEndpoints
             .Select(x => x.ToResponse())
             .ToListAsync(cancellationToken);
 
-        return Results.Ok(documents);
+        return TypedResults.Ok<IReadOnlyList<UserDocumentResponse>>(documents);
     }
 
-    private static async Task<IResult> GetByIdAsync(
+    private static async Task<Results<Ok<UserDocumentResponse>, NotFound, UnauthorizedHttpResult>> GetByIdAsync(
         long id,
-        ClaimsPrincipal claimsPrincipal,
+        ICurrentUserContext currentUserContext,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null)
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         var document = await dbContext.UserDocuments
             .SingleOrDefaultAsync(x => x.Id == id && x.UserAccountId == userId.Value, cancellationToken);
 
-        return document is null ? Results.NotFound() : Results.Ok(document.ToResponse());
+        return document is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(document.ToResponse());
     }
 
-    private static async Task<IResult> UploadAsync(
+    private static async Task<Results<Created<UserDocumentResponse>, BadRequest<ProblemDetails>, ValidationProblem, UnauthorizedHttpResult>> UploadAsync(
         [FromForm] UploadUserDocumentRequest request,
-        ClaimsPrincipal claimsPrincipal,
+        ICurrentUserContext currentUserContext,
         IdentityDbContext dbContext,
         IUserDocumentStorage documentStorage,
         IOptions<UserDocumentStorageOptions> storageOptions,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null)
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         var validationErrors = ValidateUploadRequest(request, storageOptions.Value);
         if (validationErrors.Count > 0)
         {
-            return Results.ValidationProblem(validationErrors);
+            return TypedResults.ValidationProblem(validationErrors);
         }
 
         if (!UserDocumentContractMappings.TryParseDocumentType(request.DocumentType, out var documentType))
         {
-            return Results.ValidationProblem(new Dictionary<string, string[]>
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
                 ["documentType"] = ["Document type must be one of cv, cover-letter, profile-supporting, or other."]
             });
@@ -97,7 +99,7 @@ public static class UserDocumentEndpoints
 
         if (!await dbContext.Users.AnyAsync(x => x.Id == userId.Value, cancellationToken))
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         var file = request.File!;
@@ -113,7 +115,7 @@ public static class UserDocumentEndpoints
         var supportsDefaultSelection = UserDocumentContractMappings.SupportsDefaultSelection(documentType);
         if (request.IsDefault && !supportsDefaultSelection)
         {
-            return Results.ValidationProblem(new Dictionary<string, string[]>
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
                 ["isDefault"] = ["Only CV and cover-letter documents support default selection."]
             });
@@ -158,7 +160,7 @@ public static class UserDocumentEndpoints
             dbContext.UserDocuments.Add(document);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return Results.Created($"/api/users/documents/{document.Id}", document.ToResponse());
+            return TypedResults.Created($"/api/users/documents/{document.Id}", document.ToResponse());
         }
         catch
         {
@@ -167,16 +169,16 @@ public static class UserDocumentEndpoints
         }
     }
 
-    private static async Task<IResult> SetDefaultAsync(
+    private static async Task<Results<Ok<UserDocumentResponse>, NotFound, ValidationProblem, UnauthorizedHttpResult>> SetDefaultAsync(
         long id,
-        ClaimsPrincipal claimsPrincipal,
+        ICurrentUserContext currentUserContext,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null)
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         var document = await dbContext.UserDocuments
@@ -184,12 +186,12 @@ public static class UserDocumentEndpoints
 
         if (document is null)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         if (!UserDocumentContractMappings.SupportsDefaultSelection(document.DocumentType))
         {
-            return Results.ValidationProblem(new Dictionary<string, string[]>
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
                 ["id"] = ["Only CV and cover-letter documents can be marked as default."]
             });
@@ -199,20 +201,20 @@ public static class UserDocumentEndpoints
         document.MarkDefault();
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(document.ToResponse());
+        return TypedResults.Ok(document.ToResponse());
     }
 
-    private static async Task<IResult> DeleteAsync(
+    private static async Task<Results<NoContent, NotFound, UnauthorizedHttpResult>> DeleteAsync(
         long id,
-        ClaimsPrincipal claimsPrincipal,
+        ICurrentUserContext currentUserContext,
         IdentityDbContext dbContext,
         IUserDocumentStorage documentStorage,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null)
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         var document = await dbContext.UserDocuments
@@ -220,7 +222,7 @@ public static class UserDocumentEndpoints
 
         if (document is null)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         await documentStorage.DeleteAsync(document.StorageKey, cancellationToken);
@@ -242,7 +244,7 @@ public static class UserDocumentEndpoints
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return Results.NoContent();
+        return TypedResults.NoContent();
     }
 
     private static async Task ClearDefaultDocumentsAsync(
@@ -309,13 +311,5 @@ public static class UserDocumentEndpoints
         }
 
         return validationErrors;
-    }
-
-    private static long? GetCurrentUserId(ClaimsPrincipal claimsPrincipal)
-    {
-        var subject = claimsPrincipal.FindFirstValue(JwtRegisteredClaimNames.Sub)
-            ?? claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        return long.TryParse(subject, out var userId) ? userId : null;
     }
 }

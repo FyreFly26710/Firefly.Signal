@@ -1,57 +1,58 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Firefly.Signal.Identity.Application;
 using Firefly.Signal.Identity.Domain;
 using Firefly.Signal.Identity.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Mvc;
+using Firefly.Signal.Identity.Infrastructure.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace Firefly.Signal.Identity.Endpoints;
+namespace Firefly.Signal.Identity.Api.Apis;
 
-public static class UserProfileEndpoints
+public static class UserProfileApi
 {
-    public static IEndpointRouteBuilder MapUserProfileEndpoints(this IEndpointRouteBuilder endpoints)
+    public static RouteGroupBuilder MapUserProfileApi(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/users/profile").RequireAuthorization();
 
         group.MapGet("/", GetCurrentAsync);
         group.MapPut("/", UpsertCurrentAsync);
 
-        return endpoints;
+        return group;
     }
 
-    private static async Task<IResult> GetCurrentAsync(
-        ClaimsPrincipal claimsPrincipal,
+    private static async Task<Results<Ok<UserProfileResponse>, NotFound, UnauthorizedHttpResult>> GetCurrentAsync(
+        ICurrentUserContext currentUserContext,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null)
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         var profile = await dbContext.UserProfiles
             .SingleOrDefaultAsync(x => x.UserAccountId == userId.Value, cancellationToken);
 
-        return profile is null ? Results.NotFound() : Results.Ok(profile.ToResponse());
+        return profile is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(profile.ToResponse());
     }
 
-    private static async Task<IResult> UpsertCurrentAsync(
+    private static async Task<Results<Created<UserProfileResponse>, Ok<UserProfileResponse>, UnauthorizedHttpResult>> UpsertCurrentAsync(
         UserProfileRequest request,
-        ClaimsPrincipal claimsPrincipal,
+        ICurrentUserContext currentUserContext,
         IdentityDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null)
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         if (!await dbContext.Users.AnyAsync(x => x.Id == userId.Value, cancellationToken))
         {
-            return Results.Unauthorized();
+            return TypedResults.Unauthorized();
         }
 
         var profile = await dbContext.UserProfiles
@@ -74,7 +75,7 @@ public static class UserProfileEndpoints
 
             dbContext.UserProfiles.Add(profile);
             await dbContext.SaveChangesAsync(cancellationToken);
-            return Results.Created("/api/users/profile", profile.ToResponse());
+            return TypedResults.Created("/api/users/profile", profile.ToResponse());
         }
 
         profile.Update(
@@ -90,14 +91,6 @@ public static class UserProfileEndpoints
             request.PreferencesJson);
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return Results.Ok(profile.ToResponse());
-    }
-
-    private static long? GetCurrentUserId(ClaimsPrincipal claimsPrincipal)
-    {
-        var subject = claimsPrincipal.FindFirstValue(JwtRegisteredClaimNames.Sub)
-            ?? claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        return long.TryParse(subject, out var userId) ? userId : null;
+        return TypedResults.Ok(profile.ToResponse());
     }
 }

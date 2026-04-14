@@ -40,11 +40,3 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         return new LoginTokenResult(new JwtSecurityTokenHandler().WriteToken(token), expiresAtUtc);
     }
 }
-
-public sealed class JwtOptions
-{
-    public string Issuer { get; init; } = "Firefly.Signal";
-    public string Audience { get; init; } = "Firefly.Signal.Client";
-    public string SigningKey { get; init; } = "firefly-signal-dev-signing-key-please-change";
-    public int ExpiresInMinutes { get; init; } = 120;
-}

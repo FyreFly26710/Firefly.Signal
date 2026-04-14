@@ -1,18 +1,17 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text.Json;
 using Firefly.Signal.JobSearch.Application;
 using Firefly.Signal.JobSearch.Infrastructure.External;
+using Firefly.Signal.JobSearch.Infrastructure.Services;
 using Firefly.Signal.SharedKernel.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Firefly.Signal.JobSearch.Endpoints;
+namespace Firefly.Signal.JobSearch.Api.Apis;
 
-public static class JobSearchEndpoints
+public static class JobSearchApi
 {
-    public static IEndpointRouteBuilder MapJobSearchEndpoints(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapJobSearchApi(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/job-search/jobs").RequireAuthorization();
         var adminGroup = group.MapGroup(string.Empty)
@@ -27,8 +26,7 @@ public static class JobSearchEndpoints
         adminGroup.MapPost("/{id:long}/catalog-hide", HideByIdAsync);
         adminGroup.MapPost("/catalog-hide", HideManyAsync);
         adminGroup.MapPost("/import/provider", ImportFromProviderAsync);
-        adminGroup.MapPost("/import/json", ImportFromJsonAsync)
-            .DisableAntiforgery();
+        adminGroup.MapPost("/import/json", ImportFromJsonAsync).DisableAntiforgery();
         adminGroup.MapPost("/export", ExportAsync);
 
         return endpoints;
@@ -44,12 +42,12 @@ public static class JobSearchEndpoints
         [FromQuery] string? sourceName,
         [FromQuery] string? categoryTag,
         [FromQuery] bool? isHidden,
-        ClaimsPrincipal claimsPrincipal,
-        [FromServices] IJobSearchService service,
+        ICurrentUserContext currentUserContext,
+        IJobSearchService service,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        return TypedResults.Ok(await service.SearchPageAsync(
+        var userId = currentUserContext.GetUserId();
+        var result = await service.SearchPageAsync(
             new GetJobsPageRequest(
                 Math.Max(pageIndex, 0),
                 pageSize <= 0 ? 20 : pageSize,
@@ -61,19 +59,14 @@ public static class JobSearchEndpoints
                 categoryTag,
                 isHidden),
             userId,
-            cancellationToken));
-    }
+            cancellationToken);
 
-    private static long? GetCurrentUserId(ClaimsPrincipal claimsPrincipal)
-    {
-        var subject = claimsPrincipal.FindFirstValue(JwtRegisteredClaimNames.Sub)
-            ?? claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
-        return long.TryParse(subject, out var id) ? id : null;
+        return TypedResults.Ok(result);
     }
 
     private static async Task<Results<Ok<JobDetailsResponse>, NotFound>> GetByIdAsync(
         long id,
-        [FromServices] IJobSearchService service,
+        IJobSearchService service,
         CancellationToken cancellationToken)
     {
         var job = await service.GetByIdAsync(id, cancellationToken);
@@ -81,8 +74,8 @@ public static class JobSearchEndpoints
     }
 
     private static async Task<Created<JobDetailsResponse>> CreateAsync(
-        [FromBody] CreateJobRequest request,
-        [FromServices] IJobSearchService service,
+        CreateJobRequest request,
+        IJobSearchService service,
         CancellationToken cancellationToken)
     {
         var created = await service.CreateAsync(request, cancellationToken);
@@ -91,8 +84,8 @@ public static class JobSearchEndpoints
 
     private static async Task<Results<Ok<JobDetailsResponse>, NotFound>> UpdateAsync(
         long id,
-        [FromBody] UpdateJobRequest request,
-        [FromServices] IJobSearchService service,
+        UpdateJobRequest request,
+        IJobSearchService service,
         CancellationToken cancellationToken)
     {
         var updated = await service.UpdateAsync(id, request, cancellationToken);
@@ -101,7 +94,7 @@ public static class JobSearchEndpoints
 
     private static async Task<Results<NoContent, NotFound, Conflict<ProblemDetails>>> DeleteByIdAsync(
         long id,
-        [FromServices] IJobSearchService service,
+        IJobSearchService service,
         CancellationToken cancellationToken)
     {
         var result = await service.DeleteAsync([id], cancellationToken);
@@ -123,8 +116,8 @@ public static class JobSearchEndpoints
     }
 
     private static async Task<Results<Ok<DeleteJobsResponse>, Conflict<ProblemDetails>>> DeleteManyAsync(
-        [FromBody] IdBatchRequest<long> request,
-        [FromServices] IJobSearchService service,
+        IdBatchRequest<long> request,
+        IJobSearchService service,
         CancellationToken cancellationToken)
     {
         var result = await service.DeleteAsync(request.Ids, cancellationToken);
@@ -142,19 +135,19 @@ public static class JobSearchEndpoints
 
     private static async Task<Ok<HideJobsResponse>> HideByIdAsync(
         long id,
-        [FromServices] IJobSearchService service,
+        IJobSearchService service,
         CancellationToken cancellationToken)
         => TypedResults.Ok(await service.HideAsync([id], cancellationToken));
 
     private static async Task<Ok<HideJobsResponse>> HideManyAsync(
-        [FromBody] IdBatchRequest<long> request,
-        [FromServices] IJobSearchService service,
+        IdBatchRequest<long> request,
+        IJobSearchService service,
         CancellationToken cancellationToken)
         => TypedResults.Ok(await service.HideAsync(request.Ids, cancellationToken));
 
     private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromProviderAsync(
-        [FromBody] ImportJobsFromProviderRequest request,
-        [FromServices] IJobSearchService service,
+        ImportJobsFromProviderRequest request,
+        IJobSearchService service,
         CancellationToken cancellationToken)
     {
         try
@@ -173,7 +166,7 @@ public static class JobSearchEndpoints
 
     private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromJsonAsync(
         IFormFile? file,
-        [FromServices] IJobSearchService service,
+        IJobSearchService service,
         CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
@@ -218,8 +211,8 @@ public static class JobSearchEndpoints
     }
 
     private static async Task<FileContentHttpResult> ExportAsync(
-        [FromBody] ExportJobsRequest request,
-        [FromServices] IJobSearchService service,
+        ExportJobsRequest request,
+        IJobSearchService service,
         CancellationToken cancellationToken)
     {
         var export = await service.ExportAsync(request, cancellationToken);

@@ -1,13 +1,12 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Firefly.Signal.JobSearch.Application;
+using Firefly.Signal.JobSearch.Infrastructure.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace Firefly.Signal.JobSearch.Endpoints;
+namespace Firefly.Signal.JobSearch.Api.Apis;
 
-public static class UserJobStateEndpoints
+public static class UserJobStateApi
 {
-    public static IEndpointRouteBuilder MapUserJobStateEndpoints(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapUserJobStateApi(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/job-search/jobs").RequireAuthorization();
 
@@ -21,12 +20,15 @@ public static class UserJobStateEndpoints
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> SaveAsync(
         long id,
-        ClaimsPrincipal claimsPrincipal,
+        ICurrentUserContext currentUserContext,
         IUserJobStateService service,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null) return TypedResults.Unauthorized();
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
+        {
+            return TypedResults.Unauthorized();
+        }
 
         var result = await service.SaveJobAsync(id, userId.Value, cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
@@ -34,12 +36,15 @@ public static class UserJobStateEndpoints
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> UnsaveAsync(
         long id,
-        ClaimsPrincipal claimsPrincipal,
+        ICurrentUserContext currentUserContext,
         IUserJobStateService service,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null) return TypedResults.Unauthorized();
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
+        {
+            return TypedResults.Unauthorized();
+        }
 
         var result = await service.UnsaveJobAsync(id, userId.Value, cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
@@ -47,12 +52,15 @@ public static class UserJobStateEndpoints
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> HideAsync(
         long id,
-        ClaimsPrincipal claimsPrincipal,
+        ICurrentUserContext currentUserContext,
         IUserJobStateService service,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null) return TypedResults.Unauthorized();
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
+        {
+            return TypedResults.Unauthorized();
+        }
 
         var result = await service.HideJobForUserAsync(id, userId.Value, cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
@@ -60,22 +68,17 @@ public static class UserJobStateEndpoints
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> UnhideAsync(
         long id,
-        ClaimsPrincipal claimsPrincipal,
+        ICurrentUserContext currentUserContext,
         IUserJobStateService service,
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId(claimsPrincipal);
-        if (userId is null) return TypedResults.Unauthorized();
+        var userId = currentUserContext.GetUserId();
+        if (!userId.HasValue)
+        {
+            return TypedResults.Unauthorized();
+        }
 
         var result = await service.UnhideJobForUserAsync(id, userId.Value, cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
-    }
-
-    private static long? GetCurrentUserId(ClaimsPrincipal claimsPrincipal)
-    {
-        var subject = claimsPrincipal.FindFirstValue(JwtRegisteredClaimNames.Sub)
-            ?? claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        return long.TryParse(subject, out var userId) ? userId : null;
     }
 }
