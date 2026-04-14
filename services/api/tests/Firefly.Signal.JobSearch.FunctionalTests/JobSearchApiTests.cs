@@ -103,6 +103,28 @@ public class JobSearchApiTests
     }
 
     [TestMethod]
+    public async Task Provider_import_accepts_string_enum_provider_from_json()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateAccessToken());
+
+        var response = await client.PostAsJsonAsync("/api/job-search/jobs/import/provider", new
+        {
+            postcode = "SW1A 1AA",
+            keyword = "platform",
+            pageSize = 20,
+            provider = "Adzuna"
+        });
+
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<ImportJobsResponse>();
+        Assert.IsNotNull(payload);
+        Assert.AreEqual("Adzuna", payload.Source);
+        Assert.AreEqual(2, payload.ImportedCount);
+    }
+
+    [TestMethod]
     public async Task Export_returns_json_file_for_admin()
     {
         await using var factory = CreateFactory();
