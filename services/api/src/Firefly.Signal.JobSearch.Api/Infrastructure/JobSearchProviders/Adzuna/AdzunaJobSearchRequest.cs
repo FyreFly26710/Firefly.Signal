@@ -8,7 +8,7 @@ public sealed record AdzunaJobSearchRequest(
     [property: JsonPropertyName("results_per_page")]
     int ResultsPerPage,
     [property: JsonPropertyName("what")]
-    string What,
+    string? What,
     [property: JsonPropertyName("what_exclude")]
     string? WhatExclude,
     [property: JsonPropertyName("where")]

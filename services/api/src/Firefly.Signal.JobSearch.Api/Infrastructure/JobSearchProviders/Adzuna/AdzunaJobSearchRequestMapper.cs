@@ -10,7 +10,7 @@ public sealed class AdzunaJobSearchRequestMapper
             request.PageSize,
             request.Keyword,
             request.ExcludedKeyword,
-            request.Postcode,
+            request.Location,
             request.DistanceKilometers,
             request.Category,
             request.SalaryMin,

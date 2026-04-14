@@ -62,27 +62,17 @@ public sealed record ExportJobsRequest(
     bool? IsHidden = null);
 
 public sealed record ImportJobsFromProviderRequest(
-    string Postcode,
-    string Keyword,
-    int PageIndex = 0,
-    int PageSize = 20,
+    int PageIndex = 1,
+    int PageSize = 50,
+    string Where = "london", //location or postcode
+    string? Keyword = null, 
+    int DistanceKilometers = 5,
+    int MaxDaysOld = 30, // days old of a job post
+    string Category = "it-jobs",
     JobSearchProviderKind Provider = JobSearchProviderKind.Adzuna,
     string? ExcludedKeyword = null,
-    int? DistanceKilometers = null,
-    string? Category = null,
     decimal? SalaryMin = null,
-    decimal? SalaryMax = null,
-    bool? FullTime = null,
-    bool? PartTime = null,
-    bool? Permanent = null,
-    bool? Contract = null,
-    string? SortBy = null,
-    int? MaxDaysOld = null,
-    string? Company = null,
-    bool TitleOnly = false,
-    string? Location0 = null,
-    string? Location1 = null,
-    string? Location2 = null);
+    decimal? SalaryMax = null);
 
 public sealed record CreateJobRequest(
     long? JobRefreshRunId,

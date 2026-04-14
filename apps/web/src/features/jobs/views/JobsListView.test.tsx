@@ -211,16 +211,21 @@ describe("JobsListView", () => {
 
     await user.click(screen.getByRole("button", { name: "Import from provider" }));
     await user.type(screen.getByRole("textbox", { name: "Keyword" }), "frontend engineer");
-    await user.type(screen.getByRole("textbox", { name: "Postcode" }), "SW1A 1AA");
+    const whereInput = screen.getByRole("textbox", { name: "Where" });
+    await user.clear(whereInput);
+    await user.type(whereInput, "SW1A 1AA");
     await user.click(screen.getByRole("button", { name: "Run import" }));
 
     await waitFor(() => {
       expect(importJobsFromProvider).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: "SW1A 1AA",
           keyword: "frontend engineer",
-          postcode: "SW1A 1AA",
-          pageIndex: 0,
-          pageSize: 20,
+          pageIndex: 1,
+          pageSize: 50,
+          distanceKilometers: 5,
+          maxDaysOld: 30,
+          category: "it-jobs",
           provider: "Adzuna"
         })
       );
