@@ -1,4 +1,4 @@
-namespace Firefly.Signal.JobSearch.Application;
+namespace Firefly.Signal.JobSearch.Contracts.Responses;
 
 public sealed record UserJobStateResponse(
     long JobPostingId,
@@ -23,9 +23,3 @@ public sealed record AppliedJobSummaryResponse(
     string Company,
     string CurrentStatus,
     DateTime? LatestStatusAtUtc);
-
-public sealed record ApplyJobRequest(string? Note = null);
-
-public sealed record AdvanceApplicationStatusRequest(string Status);
-
-public sealed record UpdateApplicationNoteRequest(string? Note = null);

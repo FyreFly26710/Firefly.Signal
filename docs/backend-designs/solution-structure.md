@@ -25,10 +25,10 @@ services/api/
     Firefly.Signal.EventBus/
     Firefly.Signal.EventBusRabbitMQ/
     Firefly.Signal.IntegrationEventLogEF/
-  tests/
-    Firefly.Signal.JobSearch.UnitTests/
-    Firefly.Signal.JobSearch.FunctionalTests/
 ```
+
+The active solution currently contains source projects only.
+If tests are removed temporarily, remove them from `Firefly.Signal.Api.slnx` as well so the solution stays buildable.
 
 ## Project Responsibilities
 
@@ -64,7 +64,7 @@ Responsibilities:
 - response normalization
 - feature-specific background events if needed
 
-Keep `Application`, `Domain`, and `Infrastructure` as folders inside the API project until the codebase proves they need to become separate projects.
+Keep `Contracts`, `Application`, `Domain`, and `Infrastructure` as folders inside the API project until the codebase proves they need to become separate projects.
 
 ### Shared Event Bus Projects
 Responsibilities:
@@ -77,6 +77,7 @@ Responsibilities:
 If a service is very small, it is acceptable to keep everything in one API project:
 ```text
 Firefly.Signal.JobSearch.Api/
+  Contracts/
   Application/
   Domain/
   Infrastructure/
@@ -114,7 +115,7 @@ The backend solution should eventually include:
 - job search API
 - event bus libraries
 - integration event log library
-- all backend tests
+- backend tests when they exist in the repo
 
 Keep frontend out of this solution.
 
@@ -143,4 +144,4 @@ Keep namespaces aligned with project names.
 - a custom identity API
 - one real job search service
 - small shared infrastructure projects
-- tests separated by style and service
+- tests added back only when the corresponding projects exist

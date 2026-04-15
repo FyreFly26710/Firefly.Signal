@@ -20,11 +20,6 @@ public static class MediatorExtensions
             config.AddOpenBehavior(typeof(TransactionBehavior<,>));
         });
 
-        foreach (var assembly in assemblies.Distinct())
-        {
-            services.AddValidatorsFromAssembly(assembly);
-        }
-
         return services;
     }
 }

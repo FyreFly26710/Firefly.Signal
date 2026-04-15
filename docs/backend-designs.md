@@ -92,11 +92,10 @@ services/api/
     Firefly.Signal.EventBus/
     Firefly.Signal.EventBusRabbitMQ/
     Firefly.Signal.IntegrationEventLogEF/
-  tests/
-    Firefly.Signal.Identity.FunctionalTests/
-    Firefly.Signal.JobSearch.UnitTests/
-    Firefly.Signal.JobSearch.FunctionalTests/
 ```
+
+The repository currently does not include a `services/api/tests/` tree.
+Keep the source projects ready for future `WebApplicationFactory` coverage, but do not leave deleted test projects referenced from the active solution.
 
 ## Data Strategy
 ### PostgreSQL

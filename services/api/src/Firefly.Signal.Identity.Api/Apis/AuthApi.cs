@@ -1,11 +1,8 @@
-using Firefly.Signal.Identity.Application;
-using Firefly.Signal.Identity.Domain;
-using Firefly.Signal.Identity.Infrastructure.Persistence;
-using Firefly.Signal.Identity.Infrastructure.Services;
+using Firefly.Signal.Identity.Application.Queries;
+using Firefly.Signal.Identity.Contracts.Requests;
+using Firefly.Signal.Identity.Contracts.Responses;
 using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace Firefly.Signal.Identity.Api.Apis;
 
@@ -23,32 +20,16 @@ public static class AuthApi
 
     private static async Task<Results<Ok<LoginResponse>, UnauthorizedHttpResult>> LoginAsync(
         LoginUserRequest request,
-        IdentityDbContext dbContext,
-        IPasswordHasher<UserAccount> passwordHasher,
-        IJwtTokenService jwtTokenService,
+        IAuthQueries queries,
         CancellationToken cancellationToken)
     {
-        var user = await dbContext.Users
-            .SingleOrDefaultAsync(x => x.UserAccountName == request.UserAccount, cancellationToken);
-
-        if (user is null)
-        {
-            return TypedResults.Unauthorized();
-        }
-
-        var passwordVerification = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
-        if (passwordVerification is PasswordVerificationResult.Failed)
-        {
-            return TypedResults.Unauthorized();
-        }
-
-        var token = jwtTokenService.CreateToken(user);
-        return TypedResults.Ok(IdentityMapper.ToLoginResponse(token, user));
+        var response = await queries.AuthenticateAsync(request, cancellationToken);
+        return response is null ? TypedResults.Unauthorized() : TypedResults.Ok(response);
     }
 
     private static async Task<Results<Ok<AuthenticatedUserResponse>, NotFound, UnauthorizedHttpResult>> GetCurrentUserAsync(
         IIdentityService identityService,
-        IdentityDbContext dbContext,
+        IAuthQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -57,9 +38,9 @@ public static class AuthApi
             return TypedResults.Unauthorized();
         }
 
-        var user = await dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId.Value, cancellationToken);
+        var user = await queries.GetCurrentUserAsync(userId.Value, cancellationToken);
         return user is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(IdentityMapper.ToAuthenticatedUserResponse(user));
+            : TypedResults.Ok(user);
     }
 }

@@ -1,74 +1,6 @@
-using Firefly.Signal.SharedKernel.Models;
+using Firefly.Signal.JobSearch.Application;
 
-namespace Firefly.Signal.JobSearch.Application;
-
-public sealed record JobDetailsResponse(
-    long Id,
-    long? JobRefreshRunId,
-    string SourceName,
-    string SourceJobId,
-    string? SourceAdReference,
-    string Title,
-    string Description,
-    string Summary,
-    string Url,
-    string Company,
-    string? CompanyDisplayName,
-    string? CompanyCanonicalName,
-    string Postcode,
-    string LocationName,
-    string? LocationDisplayName,
-    string? LocationAreaJson,
-    decimal? Latitude,
-    decimal? Longitude,
-    string? CategoryTag,
-    string? CategoryLabel,
-    decimal? SalaryMin,
-    decimal? SalaryMax,
-    string? SalaryCurrency,
-    bool? SalaryIsPredicted,
-    string? ContractTime,
-    string? ContractType,
-    bool IsFullTime,
-    bool IsPartTime,
-    bool IsPermanent,
-    bool IsContract,
-    bool IsRemote,
-    DateTime PostedAtUtc,
-    DateTime ImportedAtUtc,
-    DateTime LastSeenAtUtc,
-    bool IsHidden,
-    string RawPayloadJson);
-
-/// <summary>
-/// Response for the job list/search page. Contains only the fields needed by list views,
-/// plus per-user save and hide state (defaulting to false when the caller is unauthenticated).
-/// </summary>
-public sealed record JobSearchResultResponse(
-    long Id,
-    string SourceJobId,
-    string Title,
-    string Summary,
-    string Url,
-    string Company,
-    string? CompanyDisplayName,
-    string LocationName,
-    string? LocationDisplayName,
-    bool IsRemote,
-    bool IsHidden,          // catalog hide status
-    decimal? SalaryMin,
-    decimal? SalaryMax,
-    string? SalaryCurrency,
-    string? ContractType,
-    string? ContractTime,
-    bool IsFullTime,
-    bool IsPartTime,
-    bool IsPermanent,
-    bool IsContract,
-    string SourceName,
-    DateTime PostedAtUtc,
-    bool IsSaved,           // user's saved state
-    bool IsUserHidden);     // user's personal hide state
+namespace Firefly.Signal.JobSearch.Contracts.Requests;
 
 public sealed record GetJobsPageRequest(
     int PageIndex = 0,
@@ -94,10 +26,10 @@ public sealed record ExportJobsRequest(
 public sealed record ImportJobsFromProviderRequest(
     int PageIndex = 1,
     int PageSize = 50,
-    string Where = "london", //location or postcode
-    string? Keyword = null, 
+    string Where = "london",
+    string? Keyword = null,
     int DistanceKilometers = 5,
-    int MaxDaysOld = 30, // days old of a job post
+    int MaxDaysOld = 30,
     string Category = "it-jobs",
     JobSearchProviderKind Provider = JobSearchProviderKind.Adzuna,
     string? ExcludedKeyword = null,
@@ -177,25 +109,3 @@ public sealed record UpdateJobRequest(
     DateTime LastSeenAtUtc,
     bool IsHidden,
     string RawPayloadJson);
-
-public sealed record HideJobsResponse(
-    int HiddenCount,
-    IReadOnlyList<long> HiddenIds,
-    IReadOnlyList<long> MissingIds);
-
-public sealed record DeleteJobsResponse(
-    int DeletedCount,
-    IReadOnlyList<long> DeletedIds,
-    IReadOnlyList<long> MissingIds,
-    IReadOnlyList<long> NotHiddenIds);
-
-public sealed record ImportJobsResponse(
-    long JobRefreshRunId,
-    string Source,
-    int ImportedCount,
-    int FailedCount);
-
-public sealed record ExportJobsResponse(
-    DateTime ExportedAtUtc,
-    int Count,
-    IReadOnlyList<CreateJobRequest> Jobs);

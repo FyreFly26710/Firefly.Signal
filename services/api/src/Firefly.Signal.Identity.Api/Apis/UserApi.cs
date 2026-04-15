@@ -1,10 +1,9 @@
-using Firefly.Signal.Identity.Application;
-using Firefly.Signal.Identity.Domain;
-using Firefly.Signal.Identity.Infrastructure.Persistence;
+using Firefly.Signal.Identity.Application.Commands;
+using Firefly.Signal.Identity.Application.Queries;
+using Firefly.Signal.Identity.Contracts.Requests;
+using Firefly.Signal.Identity.Contracts.Responses;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Firefly.Signal.Identity.Api.Apis;
 
@@ -24,80 +23,53 @@ public static class UserApi
     }
 
     private static async Task<Ok<IReadOnlyList<AuthenticatedUserResponse>>> ListAsync(
-        IdentityDbContext dbContext,
+        IUserQueries queries,
         CancellationToken cancellationToken)
     {
-        var users = await dbContext.Users
-            .OrderBy(x => x.UserAccountName)
-            .Select(x => new AuthenticatedUserResponse(x.Id, x.UserAccountName, x.DisplayName, x.Email, x.Role))
-            .ToListAsync(cancellationToken);
-
+        var users = await queries.ListAsync(cancellationToken);
         return TypedResults.Ok<IReadOnlyList<AuthenticatedUserResponse>>(users);
     }
 
     private static async Task<Results<Ok<AuthenticatedUserResponse>, NotFound>> GetByIdAsync(
         long id,
-        IdentityDbContext dbContext,
+        IUserQueries queries,
         CancellationToken cancellationToken)
     {
-        var user = await dbContext.Users.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var user = await queries.GetByIdAsync(id, cancellationToken);
         return user is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(IdentityMapper.ToAuthenticatedUserResponse(user));
+            : TypedResults.Ok(user);
     }
 
     private static async Task<Results<Created<AuthenticatedUserResponse>, Conflict<ProblemDetails>>> CreateAsync(
         CreateUserRequest request,
-        IdentityDbContext dbContext,
-        IPasswordHasher<UserAccount> passwordHasher,
+        IUserCommands commands,
         CancellationToken cancellationToken)
     {
-        if (await dbContext.Users.AnyAsync(x => x.UserAccountName == request.UserAccount, cancellationToken))
+        var response = await commands.CreateAsync(request, cancellationToken);
+        if (response is null)
         {
             return TypedResults.Conflict(new ProblemDetails { Title = "User account already exists." });
         }
 
-        var user = UserAccount.Create(request.UserAccount, string.Empty, request.Email, request.DisplayName, request.Role);
-        user.ChangePassword(passwordHasher.HashPassword(user, request.Password));
-
-        dbContext.Users.Add(user);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var response = IdentityMapper.ToAuthenticatedUserResponse(user);
-        return TypedResults.Created($"/api/users/{user.Id}", response);
+        return TypedResults.Created($"/api/users/{response.UserId}", response);
     }
 
     private static async Task<Results<Ok<AuthenticatedUserResponse>, NotFound>> UpdateAsync(
         long id,
         UpdateUserRequest request,
-        IdentityDbContext dbContext,
+        IUserCommands commands,
         CancellationToken cancellationToken)
     {
-        var user = await dbContext.Users.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (user is null)
-        {
-            return TypedResults.NotFound();
-        }
-
-        user.UpdateProfile(request.Email, request.DisplayName, request.Role);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return TypedResults.Ok(IdentityMapper.ToAuthenticatedUserResponse(user));
+        var user = await commands.UpdateAsync(id, request, cancellationToken);
+        return user is null ? TypedResults.NotFound() : TypedResults.Ok(user);
     }
 
     private static async Task<Results<NoContent, NotFound>> DeleteAsync(
         long id,
-        IdentityDbContext dbContext,
+        IUserCommands commands,
         CancellationToken cancellationToken)
     {
-        var user = await dbContext.Users.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (user is null)
-        {
-            return TypedResults.NotFound();
-        }
-
-        user.MarkDeleted();
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return TypedResults.NoContent();
+        return await commands.DeleteAsync(id, cancellationToken) ? TypedResults.NoContent() : TypedResults.NotFound();
     }
 }

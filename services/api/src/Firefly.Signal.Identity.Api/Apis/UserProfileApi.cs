@@ -1,9 +1,9 @@
-using Firefly.Signal.Identity.Application;
-using Firefly.Signal.Identity.Domain;
-using Firefly.Signal.Identity.Infrastructure.Persistence;
+using Firefly.Signal.Identity.Application.Commands;
+using Firefly.Signal.Identity.Application.Queries;
+using Firefly.Signal.Identity.Contracts.Requests;
+using Firefly.Signal.Identity.Contracts.Responses;
 using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.EntityFrameworkCore;
 
 namespace Firefly.Signal.Identity.Api.Apis;
 
@@ -21,7 +21,7 @@ public static class UserProfileApi
 
     private static async Task<Results<Ok<UserProfileResponse>, NotFound, UnauthorizedHttpResult>> GetCurrentAsync(
         IIdentityService identityService,
-        IdentityDbContext dbContext,
+        IUserProfileQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -30,18 +30,17 @@ public static class UserProfileApi
             return TypedResults.Unauthorized();
         }
 
-        var profile = await dbContext.UserProfiles
-            .SingleOrDefaultAsync(x => x.UserAccountId == userId.Value, cancellationToken);
+        var profile = await queries.GetCurrentAsync(userId.Value, cancellationToken);
 
         return profile is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(UserProfileMapper.ToUserProfileResponse(profile));
+            : TypedResults.Ok(profile);
     }
 
     private static async Task<Results<Created<UserProfileResponse>, Ok<UserProfileResponse>, UnauthorizedHttpResult>> UpsertCurrentAsync(
         UserProfileRequest request,
         IIdentityService identityService,
-        IdentityDbContext dbContext,
+        IUserProfileCommands commands,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -50,47 +49,14 @@ public static class UserProfileApi
             return TypedResults.Unauthorized();
         }
 
-        if (!await dbContext.Users.AnyAsync(x => x.Id == userId.Value, cancellationToken))
+        var result = await commands.UpsertCurrentAsync(userId.Value, request, cancellationToken);
+        if (result is null)
         {
             return TypedResults.Unauthorized();
         }
 
-        var profile = await dbContext.UserProfiles
-            .SingleOrDefaultAsync(x => x.UserAccountId == userId.Value, cancellationToken);
-
-        if (profile is null)
-        {
-            profile = UserProfile.Create(
-                userId.Value,
-                request.FullName,
-                request.PreferredTitle,
-                request.PrimaryLocationPostcode,
-                request.LinkedInUrl,
-                request.GithubUrl,
-                request.PortfolioUrl,
-                request.Summary,
-                request.SkillsText,
-                request.ExperienceText,
-                request.PreferencesJson);
-
-            dbContext.UserProfiles.Add(profile);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return TypedResults.Created("/api/users/profile", UserProfileMapper.ToUserProfileResponse(profile));
-        }
-
-        profile.Update(
-            request.FullName,
-            request.PreferredTitle,
-            request.PrimaryLocationPostcode,
-            request.LinkedInUrl,
-            request.GithubUrl,
-            request.PortfolioUrl,
-            request.Summary,
-            request.SkillsText,
-            request.ExperienceText,
-            request.PreferencesJson);
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return TypedResults.Ok(UserProfileMapper.ToUserProfileResponse(profile));
+        return result.Created
+            ? TypedResults.Created("/api/users/profile", result.Response)
+            : TypedResults.Ok(result.Response);
     }
 }

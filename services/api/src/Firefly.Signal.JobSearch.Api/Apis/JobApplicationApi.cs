@@ -1,4 +1,7 @@
-using Firefly.Signal.JobSearch.Application;
+using Firefly.Signal.JobSearch.Application.Commands;
+using Firefly.Signal.JobSearch.Application.Queries;
+using Firefly.Signal.JobSearch.Contracts.Requests;
+using Firefly.Signal.JobSearch.Contracts.Responses;
 using Firefly.Signal.JobSearch.Domain;
 using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -25,7 +28,7 @@ public static class JobApplicationApi
         long id,
         ApplyJobRequest request,
         IIdentityService identityService,
-        IJobApplicationService service,
+        IJobApplicationCommands commands,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -34,7 +37,7 @@ public static class JobApplicationApi
             return TypedResults.Unauthorized();
         }
 
-        var result = await service.ApplyJobAsync(id, userId.Value, request.Note, cancellationToken);
+        var result = await commands.ApplyJobAsync(id, userId.Value, request.Note, cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
@@ -42,7 +45,7 @@ public static class JobApplicationApi
         long id,
         AdvanceApplicationStatusRequest request,
         IIdentityService identityService,
-        IJobApplicationService service,
+        IJobApplicationCommands commands,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -51,7 +54,7 @@ public static class JobApplicationApi
             return TypedResults.Unauthorized();
         }
 
-        if (!Enum.TryParse<JobApplicationStatus>(request.Status, ignoreCase: true, out var newStatus))
+        if (!JobApplicationApiMappers.TryParseStatus(request.Status, out var newStatus))
         {
             return TypedResults.BadRequest(new ProblemDetails
             {
@@ -62,7 +65,7 @@ public static class JobApplicationApi
 
         try
         {
-            var result = await service.AdvanceApplicationStatusAsync(id, userId.Value, newStatus, cancellationToken);
+            var result = await commands.AdvanceApplicationStatusAsync(id, userId.Value, newStatus, cancellationToken);
             return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -79,7 +82,7 @@ public static class JobApplicationApi
         long id,
         UpdateApplicationNoteRequest request,
         IIdentityService identityService,
-        IJobApplicationService service,
+        IJobApplicationCommands commands,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -88,13 +91,13 @@ public static class JobApplicationApi
             return TypedResults.Unauthorized();
         }
 
-        var result = await service.UpdateApplicationNoteAsync(id, userId.Value, request.Note, cancellationToken);
+        var result = await commands.UpdateApplicationNoteAsync(id, userId.Value, request.Note, cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     private static async Task<Results<Ok<IReadOnlyList<AppliedJobSummaryResponse>>, UnauthorizedHttpResult>> GetAppliedJobsAsync(
         IIdentityService identityService,
-        IJobApplicationService service,
+        IJobApplicationQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -103,7 +106,7 @@ public static class JobApplicationApi
             return TypedResults.Unauthorized();
         }
 
-        var result = await service.GetAppliedJobsAsync(userId.Value, cancellationToken);
+        var result = await queries.GetAppliedJobsAsync(userId.Value, cancellationToken);
         return TypedResults.Ok(result);
     }
 }

@@ -15,9 +15,9 @@ public sealed class TransactionBehavior<TRequest, TResponse>(
     {
         logger.LogInformation("Running transactional request {RequestName}", typeof(TRequest).Name);
 
-        return await transaction.ExecuteAsync(
+        return await transaction.ExecuteAsync<TResponse>(
             typeof(TRequest).Name,
-            next,
+            () => next(),
             cancellationToken);
     }
 }

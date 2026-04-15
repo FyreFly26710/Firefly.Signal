@@ -1,4 +1,7 @@
 using System.Text;
+using Firefly.Signal.Identity.Application.Commands;
+using Firefly.Signal.Identity.Application.Queries;
+using Firefly.Signal.Identity.Api.Options;
 using Firefly.Signal.Identity.Domain;
 using Firefly.Signal.Identity.Infrastructure.Persistence;
 using Firefly.Signal.Identity.Infrastructure.Services;
@@ -23,6 +26,13 @@ internal static class ApplicationServiceExtensions
         services.AddHttpContextAccessor();
         services.AddScoped<IIdentityService, HttpContextIdentityService>();
         services.AddScoped<IPasswordHasher<UserAccount>, PasswordHasher<UserAccount>>();
+        services.AddScoped<IAuthQueries, AuthQueries>();
+        services.AddScoped<IUserQueries, UserQueries>();
+        services.AddScoped<IUserCommands, UserCommands>();
+        services.AddScoped<IUserProfileQueries, UserProfileQueries>();
+        services.AddScoped<IUserProfileCommands, UserProfileCommands>();
+        services.AddScoped<IUserDocumentQueries, UserDocumentQueries>();
+        services.AddScoped<IUserDocumentCommands, UserDocumentCommands>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         services.AddDbContext<IdentityDbContext>(options =>

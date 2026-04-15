@@ -1,12 +1,10 @@
-using Firefly.Signal.SharedKernel.Models;
+using Firefly.Signal.JobSearch.Contracts.Requests;
+using Firefly.Signal.JobSearch.Contracts.Responses;
 
-namespace Firefly.Signal.JobSearch.Application;
+namespace Firefly.Signal.JobSearch.Application.Commands;
 
-public interface IJobSearchService
+public interface IJobSearchCommands
 {
-    Task<JobDetailsResponse?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
-    Task<Paged<JobSearchResultResponse>> SearchPageAsync(GetJobsPageRequest request, long? userId, CancellationToken cancellationToken = default);
-    Task<ExportJobsResponse> ExportAsync(ExportJobsRequest request, CancellationToken cancellationToken = default);
     Task<JobDetailsResponse> CreateAsync(CreateJobRequest request, CancellationToken cancellationToken = default);
     Task<JobDetailsResponse?> UpdateAsync(long id, UpdateJobRequest request, CancellationToken cancellationToken = default);
     Task<ImportJobsResponse> ImportFromProviderAsync(ImportJobsFromProviderRequest request, CancellationToken cancellationToken = default);

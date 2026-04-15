@@ -1,4 +1,4 @@
-namespace Firefly.Signal.JobSearch.Infrastructure.Services;
+namespace Firefly.Signal.JobSearch.Api.Options;
 
 public sealed class JwtOptions
 {

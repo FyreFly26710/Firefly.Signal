@@ -1,13 +1,13 @@
 using System.Security.Cryptography;
-using Firefly.Signal.Identity.Application;
-using Firefly.Signal.Identity.Domain;
-using Firefly.Signal.Identity.Infrastructure.Persistence;
-using Firefly.Signal.Identity.Infrastructure.Storage;
+using Firefly.Signal.Identity.Application.Commands;
+using Firefly.Signal.Identity.Application.Queries;
+using Firefly.Signal.Identity.Contracts.Requests;
+using Firefly.Signal.Identity.Contracts.Responses;
 using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Firefly.Signal.Identity.Infrastructure.Storage;
 
 namespace Firefly.Signal.Identity.Api.Apis;
 
@@ -30,7 +30,7 @@ public static class UserDocumentApi
 
     private static async Task<Results<Ok<IReadOnlyList<UserDocumentResponse>>, UnauthorizedHttpResult>> ListAsync(
         IIdentityService identityService,
-        IdentityDbContext dbContext,
+        IUserDocumentQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -39,20 +39,14 @@ public static class UserDocumentApi
             return TypedResults.Unauthorized();
         }
 
-        var documents = await dbContext.UserDocuments
-            .Where(x => x.UserAccountId == userId.Value)
-            .OrderByDescending(x => x.IsDefault)
-            .ThenByDescending(x => x.UploadedAtUtc)
-            .Select(UserDocumentMapper.ToUserDocumentResponse)
-            .ToListAsync(cancellationToken);
-
+        var documents = await queries.ListAsync(userId.Value, cancellationToken);
         return TypedResults.Ok<IReadOnlyList<UserDocumentResponse>>(documents);
     }
 
     private static async Task<Results<Ok<UserDocumentResponse>, NotFound, UnauthorizedHttpResult>> GetByIdAsync(
         long id,
         IIdentityService identityService,
-        IdentityDbContext dbContext,
+        IUserDocumentQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -61,19 +55,17 @@ public static class UserDocumentApi
             return TypedResults.Unauthorized();
         }
 
-        var document = await dbContext.UserDocuments
-            .SingleOrDefaultAsync(x => x.Id == id && x.UserAccountId == userId.Value, cancellationToken);
+        var document = await queries.GetByIdAsync(userId.Value, id, cancellationToken);
 
         return document is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(UserDocumentMapper.ToUserDocumentResponse(document));
+            : TypedResults.Ok(document);
     }
 
     private static async Task<Results<Created<UserDocumentResponse>, BadRequest<ProblemDetails>, ValidationProblem, UnauthorizedHttpResult>> UploadAsync(
         [FromForm] UploadUserDocumentRequest request,
         IIdentityService identityService,
-        IdentityDbContext dbContext,
-        IUserDocumentStorage documentStorage,
+        IUserDocumentCommands commands,
         IOptions<UserDocumentStorageOptions> storageOptions,
         CancellationToken cancellationToken)
     {
@@ -83,13 +75,13 @@ public static class UserDocumentApi
             return TypedResults.Unauthorized();
         }
 
-        var validationErrors = ValidateUploadRequest(request, storageOptions.Value);
+        var validationErrors = UserDocumentApiMappers.ValidateUploadRequest(request, storageOptions.Value);
         if (validationErrors.Count > 0)
         {
             return TypedResults.ValidationProblem(validationErrors);
         }
 
-        if (!UserDocumentMapper.TryToUserDocumentType(request.DocumentType, out var documentType))
+        if (!UserDocumentApiMappers.TryToUserDocumentType(request.DocumentType, out var documentType))
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
@@ -97,22 +89,12 @@ public static class UserDocumentApi
             });
         }
 
-        if (!await dbContext.Users.AnyAsync(x => x.Id == userId.Value, cancellationToken))
-        {
-            return TypedResults.Unauthorized();
-        }
-
         var file = request.File!;
         await using var uploadStream = new MemoryStream();
         await file.CopyToAsync(uploadStream, cancellationToken);
         var contentBytes = uploadStream.ToArray();
         var checksumSha256 = Convert.ToHexString(SHA256.HashData(contentBytes)).ToLowerInvariant();
-        var originalFileName = Path.GetFileName(file.FileName.Trim());
-        var displayName = string.IsNullOrWhiteSpace(request.DisplayName)
-            ? Path.GetFileNameWithoutExtension(originalFileName)
-            : request.DisplayName.Trim();
-
-        var supportsDefaultSelection = UserDocumentMapper.ToSupportsDefaultSelection(documentType);
+        var supportsDefaultSelection = UserDocumentApiMappers.SupportsDefaultSelection(documentType);
         if (request.IsDefault && !supportsDefaultSelection)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
@@ -121,58 +103,28 @@ public static class UserDocumentApi
             });
         }
 
-        var hasExistingDefault = supportsDefaultSelection && await dbContext.UserDocuments
-            .AnyAsync(
-                x => x.UserAccountId == userId.Value
-                    && x.DocumentType == documentType
-                    && x.IsDefault,
-                cancellationToken);
+        var command = UserDocumentApiMappers.ToUploadCommand(
+            userId.Value,
+            documentType,
+            request.DisplayName,
+            file,
+            contentBytes,
+            checksumSha256,
+            request.IsDefault);
 
-        var isDefault = supportsDefaultSelection && (request.IsDefault || !hasExistingDefault);
-        var storedDocument = await documentStorage.UploadAsync(
-            new UserDocumentUploadRequest(
-                userId.Value,
-                request.DocumentType.Trim().ToLowerInvariant(),
-                originalFileName,
-                file.ContentType.Trim(),
-                contentBytes,
-                checksumSha256),
-            cancellationToken);
-
-        try
+        var document = await commands.UploadAsync(command, cancellationToken);
+        if (document is null)
         {
-            if (isDefault)
-            {
-                await ClearDefaultDocumentsAsync(userId.Value, documentType, dbContext, cancellationToken);
-            }
-
-            var document = UserDocument.Create(
-                userId.Value,
-                documentType,
-                displayName,
-                originalFileName,
-                storedDocument.StorageKey,
-                file.ContentType.Trim(),
-                file.Length,
-                checksumSha256,
-                isDefault);
-
-            dbContext.UserDocuments.Add(document);
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            return TypedResults.Created($"/api/users/documents/{document.Id}", UserDocumentMapper.ToUserDocumentResponse(document));
+            return TypedResults.Unauthorized();
         }
-        catch
-        {
-            await documentStorage.DeleteAsync(storedDocument.StorageKey, cancellationToken);
-            throw;
-        }
+
+        return TypedResults.Created($"/api/users/documents/{document.Id}", document);
     }
 
     private static async Task<Results<Ok<UserDocumentResponse>, NotFound, ValidationProblem, UnauthorizedHttpResult>> SetDefaultAsync(
         long id,
         IIdentityService identityService,
-        IdentityDbContext dbContext,
+        IUserDocumentCommands commands,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -181,34 +133,26 @@ public static class UserDocumentApi
             return TypedResults.Unauthorized();
         }
 
-        var document = await dbContext.UserDocuments
-            .SingleOrDefaultAsync(x => x.Id == id && x.UserAccountId == userId.Value, cancellationToken);
-
-        if (document is null)
+        try
         {
-            return TypedResults.NotFound();
+            var document = await commands.SetDefaultAsync(userId.Value, id, cancellationToken);
+            return document is null
+                ? TypedResults.NotFound()
+                : TypedResults.Ok(document);
         }
-
-        if (!UserDocumentMapper.ToSupportsDefaultSelection(document.DocumentType))
+        catch (InvalidOperationException exception)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["id"] = ["Only CV and cover-letter documents can be marked as default."]
+                ["id"] = [exception.Message]
             });
         }
-
-        await ClearDefaultDocumentsAsync(userId.Value, document.DocumentType, dbContext, cancellationToken);
-        document.MarkDefault();
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return TypedResults.Ok(UserDocumentMapper.ToUserDocumentResponse(document));
     }
 
     private static async Task<Results<NoContent, NotFound, UnauthorizedHttpResult>> DeleteAsync(
         long id,
         IIdentityService identityService,
-        IdentityDbContext dbContext,
-        IUserDocumentStorage documentStorage,
+        IUserDocumentCommands commands,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -217,99 +161,8 @@ public static class UserDocumentApi
             return TypedResults.Unauthorized();
         }
 
-        var document = await dbContext.UserDocuments
-            .SingleOrDefaultAsync(x => x.Id == id && x.UserAccountId == userId.Value, cancellationToken);
-
-        if (document is null)
-        {
-            return TypedResults.NotFound();
-        }
-
-        await documentStorage.DeleteAsync(document.StorageKey, cancellationToken);
-
-        var wasDefault = document.IsDefault;
-        var documentType = document.DocumentType;
-
-        document.MarkDeleted();
-        document.ClearDefault();
-
-        if (wasDefault && UserDocumentMapper.ToSupportsDefaultSelection(documentType))
-        {
-            var replacementDocument = await dbContext.UserDocuments
-                .Where(x => x.UserAccountId == userId.Value && x.DocumentType == documentType && x.Id != document.Id)
-                .OrderByDescending(x => x.UploadedAtUtc)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            replacementDocument?.MarkDefault();
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return TypedResults.NoContent();
-    }
-
-    private static async Task ClearDefaultDocumentsAsync(
-        long userId,
-        UserDocumentType documentType,
-        IdentityDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var defaultDocuments = await dbContext.UserDocuments
-            .Where(x => x.UserAccountId == userId && x.DocumentType == documentType && x.IsDefault)
-            .ToListAsync(cancellationToken);
-
-        foreach (var defaultDocument in defaultDocuments)
-        {
-            defaultDocument.ClearDefault();
-        }
-    }
-
-    private static Dictionary<string, string[]> ValidateUploadRequest(
-        UploadUserDocumentRequest request,
-        UserDocumentStorageOptions storageOptions)
-    {
-        var validationErrors = new Dictionary<string, string[]>();
-
-        if (request.File is null)
-        {
-            validationErrors["file"] = ["A document file is required."];
-            return validationErrors;
-        }
-
-        if (string.IsNullOrWhiteSpace(request.DocumentType))
-        {
-            validationErrors["documentType"] = ["Document type is required."];
-        }
-
-        if (request.File.Length <= 0)
-        {
-            validationErrors["file"] = ["The uploaded file must not be empty."];
-        }
-
-        if (request.File.Length > storageOptions.MaxFileSizeBytes)
-        {
-            validationErrors["file"] = [$"The uploaded file exceeds the {storageOptions.MaxFileSizeBytes} byte limit."];
-        }
-
-        var fileName = Path.GetFileName(request.File.FileName ?? string.Empty);
-        if (string.IsNullOrWhiteSpace(fileName))
-        {
-            validationErrors["fileName"] = ["A valid original file name is required."];
-        }
-
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(extension) || !storageOptions.AllowedFileExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
-        {
-            validationErrors["fileExtension"] =
-                [$"The uploaded file extension must be one of: {string.Join(", ", storageOptions.AllowedFileExtensions)}."];
-        }
-
-        var contentType = request.File.ContentType?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(contentType) || !storageOptions.AllowedContentTypes.Contains(contentType, StringComparer.OrdinalIgnoreCase))
-        {
-            validationErrors["contentType"] =
-                [$"The uploaded content type must be one of: {string.Join(", ", storageOptions.AllowedContentTypes)}."];
-        }
-
-        return validationErrors;
+        return await commands.DeleteAsync(userId.Value, id, cancellationToken)
+            ? TypedResults.NoContent()
+            : TypedResults.NotFound();
     }
 }

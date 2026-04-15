@@ -1,4 +1,4 @@
-namespace Firefly.Signal.Identity.Infrastructure.Services;
+namespace Firefly.Signal.Identity.Api.Options;
 
 public sealed class JwtOptions
 {
