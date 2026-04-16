@@ -29,7 +29,7 @@ import {
 } from "@/features/jobs/components/JobsManagementToolbar";
 import { JobsManagementTable } from "@/features/jobs/components/JobsManagementTable";
 import { useAsyncTask } from "@/lib/async/useAsyncTask";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 
 const emptyFilters: JobsListFilters = {
   keyword: "",

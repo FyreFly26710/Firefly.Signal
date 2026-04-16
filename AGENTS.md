@@ -4,8 +4,8 @@
 
 Firefly Signal is a monorepo with both backend services and frontend apps.
 
-- The backend under `services/` is the more complete part of the repo and should be treated as the current architectural source of truth.
-- The frontend under `apps/` exists and is functional, but it is expected to be refactored. Do not treat the current frontend folder shape as the long-term target shape.
+- The backend under `services/` is the more complete part of the repo and should be treated as the current architectural source of truth for backend patterns.
+- The frontend under `apps/web` is functional and has a settled architecture. Treat `apps/web/src/` as the authoritative frontend target shape.
 - Shared implementation guidance lives in `.agents/skills/`.
 - `AGENTS.md` is the shared repository operating contract for both Codex and Claude.
 
@@ -105,49 +105,121 @@ Issue and branch conventions for backend work:
 
 ### Architecture Boundaries
 
-`apps/` is for user-facing application surfaces.
+`apps/` is for user-facing application surfaces. The current app is `apps/web` — a React + Vite + TypeScript web app. Future surfaces (`apps/mobile/`, `apps/shared/`) do not exist yet; do not create them speculatively.
 
-Target shape placeholder:
+The `apps/web` folder shape is settled. Treat it as the authoritative frontend target, not a placeholder.
 
-- `apps/web/`
-- `apps/mobile/`
-- `apps/shared/`
+```
+apps/web/src/
+  api/          ← HTTP transport layer (raw DTOs, one folder per backend resource)
+  app/          ← App bootstrap (AppRoot, AppProviders, AppRouter, theme)
+  components/   ← Shared pure UI (AppHeader, SearchInput, SectionCard)
+  features/     ← Primary code boundary — feature-first, colocated tests
+    auth/
+      components/   ← Route guards, login form
+      store/        ← session.store.ts (Zustand)
+      views/        ← LoginView
+    jobs/
+      components/   ← Job cards, editor sections, panels
+      hooks/        ← useJobDetail (TanStack Query)
+      mappers/      ← Response → view model
+      types/        ← Feature types
+      views/        ← JobDetailView, JobsListView, ManageJobView
+    profile/
+      views/        ← ProfileView
+    search/
+      components/   ← SearchForm, SearchResults, toolbar
+      hooks/        ← useJobSearch (TanStack Query), useJobState
+      lib/          ← search-query.ts (pure URL helpers)
+      mappers/      ← search.mappers.ts
+      types/        ← search.types.ts
+      views/        ← SearchLandingView, SearchResultsView
+    workspace/
+      components/   ← Workspace panels
+      views/        ← WorkspaceView
+  lib/          ← Framework-agnostic utilities (async, auth, http, env)
+  routes/       ← Thin wrappers: extract URL params, render one feature view
+  test/         ← renderWithProviders, renderHookWithProviders, setupTests
+```
 
-Placeholder rules for future frontend refactor:
+Frontend architecture boundaries:
 
-- Keep app-specific UI, routes, and state inside the owning app.
-- Move reusable app-facing UI and client utilities into shared frontend modules only when reuse is real.
-- Keep transport contracts explicit between apps and backend services.
-- Do not treat the current frontend folder layout as final.
+- `src/routes/` files are thin — param extraction + one view render only. No logic.
+- `src/api/` is the HTTP transport layer. Feature code calls `src/api/` functions; views call feature hooks.
+- `src/features/<feature>/hooks/` wraps `src/api/` calls in TanStack Query. Views consume hooks, not API modules.
+- `src/features/<feature>/store/` holds Zustand stores. Auth session store lives at `src/features/auth/store/session.store.ts`.
+- `src/lib/` holds framework-agnostic utilities with no business logic.
+- `src/components/` holds shared pure UI that no single feature owns.
+- Tests are colocated: `*.test.ts` or `*.test.tsx` next to the file under test.
 
-Use these skills when frontend work is being reshaped:
+### Key Packages and Their Roles
 
-- `frontend-patterns`
-- `frontend-design`
-- `documentation-lookup`
+| Package | Role |
+|---|---|
+| `@tanstack/react-query` | Server-state reads: queries, caching, loading/error states |
+| `zustand` | Client-owned global state (auth session, UI state that spans routes) |
+| `react-router-dom` | Routing and navigation |
+| `@mui/material` | Form controls, feedback components (Alert, TextField, Button) |
+| `tailwindcss` | Layout, spacing, typography, design tokens |
+| `vitest` + `@testing-library/react` | Unit, hook, and view tests |
+| `@playwright/test` | E2E browser smoke tests |
+
+Do not add `axios` — the fetch client in `src/lib/http/client.ts` handles all HTTP concerns. Do not use React Suspense for data fetching — use TanStack Query's `isPending`/`isError` states instead.
+
+### QueryClient Architecture
+
+The production `QueryClient` lives in `src/app/AppRoot.tsx` (`staleTime: 30_000`, `retry: 1`). `AppProviders` handles session hydration and MUI theme — it does NOT own a `QueryClient`. Tests get a fresh isolated `QueryClient` from `renderWithProviders` or `renderHookWithProviders` (`retry: false`, `staleTime: 0`).
+
+Never set `retry` at the individual query level — it overrides the `QueryClient` default and breaks test isolation.
 
 ### Build, Test, and Development Commands
 
-Current web app commands:
+All commands run from `apps/web`:
 
 ```bash
-cd apps/web
-npm run dev
-npm run build
-npm run lint
-npm test
+npm run dev          # local dev server
+npm run build        # production build (runs tsc + vite build)
+npm run lint         # ESLint
+npm test             # Vitest (src/**/*.test.{ts,tsx} only)
+npm run test:e2e     # Playwright (tests/e2e/*.spec.ts)
 ```
 
-Placeholder expectations for future app structure:
+Targeted test commands:
 
-- Each app should have its own local run, build, lint, and test commands.
-- Shared frontend tooling should be introduced intentionally rather than inferred from the current app layout.
+```bash
+npm test -- JobDetailView     # run one test file by name
+npm run test:e2e -- --grep "Search landing"
+```
+
+Verification before finishing any frontend task:
+
+```bash
+npm run lint && npm test && npm run build
+```
 
 ### Coding Style & Naming Conventions
 
-Placeholder rules for the frontend refactor:
+- Feature code belongs inside its feature folder. Do not reach across feature boundaries.
+- Views consume feature hooks. Feature hooks wrap `src/api/` modules. Views do not import from `src/api/` directly.
+- Route files in `src/routes/` contain only param extraction and one view render.
+- Zustand stores belong colocated with the owning feature, not in a top-level `src/store/`.
+- File naming: `*.api.ts`, `*.types.ts`, `*.mappers.ts`, `*.store.ts`, `use*.ts` / `use*.tsx`, `*View.tsx`, `*Page.tsx`.
+- Tests colocated: `JobDetailView.test.tsx` next to `JobDetailView.tsx`.
+- Use `renderWithProviders` for view tests and `renderHookWithProviders` for hook tests. Do not rebuild providers in individual test files.
 
-- Prefer explicit module ownership by feature or app surface.
-- Keep route, state, and API-boundary code easy to trace.
-- Avoid spreading shared abstractions too early while the frontend structure is still being refactored.
-- Preserve a clean path from the current web-first product to later app surfaces.
+Issue and branch conventions for frontend work:
+
+- Treat the GitHub issue as the source of truth.
+- Branches should use `issue-<number>-<descriptive-title>`.
+- PR titles should use `<type>(<scope>): <description> (#<issue-number>)`.
+- PR bodies should include `Closes #<issue-number>`.
+
+### Skills
+
+Use these skills when doing frontend work in `apps/web`:
+
+- `frontend-patterns` — folder structure, TanStack Query hooks, Zustand, HTTP client, component composition
+- `frontend-tdd-workflow` — TDD workflow, test placement rules, renderWithProviders, renderHookWithProviders, mock patterns
+- `frontend-design` — visual direction, design system, composition, accessibility
+- `frontend-e2e-testing` — Playwright smoke flows, route and auth coverage
+- `documentation-lookup` — fetch up-to-date docs for TanStack Query, React Router, MUI, Tailwind, Zustand

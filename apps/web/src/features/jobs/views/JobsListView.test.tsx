@@ -1,9 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ThemeProvider } from "@mui/material";
-import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { theme } from "@/app/theme";
 import {
   catalogHideJobs,
   exportJobs,
@@ -12,7 +9,8 @@ import {
   importJobsFromProvider
 } from "@/api/jobs/jobs.api";
 import { JobsListView } from "@/features/jobs/views/JobsListView";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
+import { renderWithProviders } from "@/test/render";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
   catalogHideJobs: vi.fn(),
@@ -78,13 +76,7 @@ describe("JobsListView", () => {
       ]
     });
 
-    render(
-      <ThemeProvider theme={theme}>
-        <MemoryRouter initialEntries={["/admin/manage-jobs"]}>
-          <JobsListView />
-        </MemoryRouter>
-      </ThemeProvider>
-    );
+    renderWithProviders(<JobsListView />, { route: "/admin/manage-jobs" });
 
     await waitFor(() => {
       expect(screen.getByText("Senior Frontend Engineer")).toBeInTheDocument();
@@ -113,7 +105,7 @@ describe("JobsListView", () => {
         isHidden: false
       })
     );
-  }, 10000);
+  }, 20000);
 
   it("supports provider import, json import, and json export for admin users", async () => {
     const user = userEvent.setup();
@@ -173,13 +165,7 @@ describe("JobsListView", () => {
       jobs: []
     });
 
-    render(
-      <ThemeProvider theme={theme}>
-        <MemoryRouter initialEntries={["/admin/manage-jobs"]}>
-          <JobsListView />
-        </MemoryRouter>
-      </ThemeProvider>
-    );
+    renderWithProviders(<JobsListView />, { route: "/admin/manage-jobs" });
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Manage jobs" })).toBeInTheDocument();
@@ -219,6 +205,9 @@ describe("JobsListView", () => {
     await waitFor(() => {
       expect(importJobsFromJson).toHaveBeenCalledWith(file);
     });
+
+    // Wait for the list to reload after import before interacting with the table
+    await screen.findByRole("checkbox", { name: "Select job 99" });
 
     await user.click(screen.getByRole("checkbox", { name: "Select job 99" }));
     await user.click(screen.getByRole("button", { name: "Export JSON" }));

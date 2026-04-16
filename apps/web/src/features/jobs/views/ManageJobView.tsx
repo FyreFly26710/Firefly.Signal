@@ -19,7 +19,7 @@ import { JobEditorAlerts } from "@/features/jobs/components/JobEditorAlerts";
 import { JobEditorForm } from "@/features/jobs/components/JobEditorForm";
 import { JobEditorHeader } from "@/features/jobs/components/JobEditorHeader";
 import { createAsyncState, type AsyncState } from "@/lib/async/async-state";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 
 type ManageJobViewProps = {
   jobId?: string;

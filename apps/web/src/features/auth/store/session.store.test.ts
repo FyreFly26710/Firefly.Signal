@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getCurrentUser, login } from "@/api/auth/auth.api";
 import { ApiError } from "@/lib/http/api-error";
 import { readAccessToken, readStoredUser, writeAccessToken, writeStoredUser } from "@/lib/auth/session-storage";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 
 vi.mock("@/api/auth/auth.api", () => ({
   login: vi.fn(),

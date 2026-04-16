@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 
 export function SessionRedirect() {
   const isAuthenticated = useSessionStore((state) => state.isAuthenticated);
