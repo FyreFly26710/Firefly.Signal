@@ -1,0 +1,38 @@
+using System.Security.Claims;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Firefly.Signal.Identity.FunctionalTests.Testing;
+
+internal sealed class TestAuthenticationHandler(
+    IOptionsMonitor<AuthenticationSchemeOptions> options,
+    ILoggerFactory logger,
+    UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+{
+    public const string SchemeName = "Test";
+    public const string UserIdHeaderName = "X-Test-UserId";
+
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        if (!Request.Headers.TryGetValue(UserIdHeaderName, out var values)
+            || !long.TryParse(values.ToString(), out var userId))
+        {
+            return Task.FromResult(AuthenticateResult.NoResult());
+        }
+
+        var claims = new[]
+        {
+            new Claim("sub", userId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Name, $"identity-test-user-{userId}")
+        };
+
+        var identity = new ClaimsIdentity(claims, SchemeName);
+        var principal = new ClaimsPrincipal(identity);
+        var ticket = new AuthenticationTicket(principal, SchemeName);
+
+        return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+}

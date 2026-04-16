@@ -5,6 +5,7 @@ using Firefly.Signal.Identity.Contracts.Responses;
 using Firefly.Signal.SharedKernel.Services;
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Firefly.Signal.Identity.Api.Apis;
 
@@ -21,8 +22,8 @@ public static class UserProfileApi
     }
 
     private static async Task<Results<Ok<UserProfileResponse>, NotFound, UnauthorizedHttpResult>> GetCurrentAsync(
-        IIdentityService identityService,
-        IUserProfileQueries queries,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IUserProfileQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -39,9 +40,9 @@ public static class UserProfileApi
     }
 
     private static async Task<Results<Created<UserProfileResponse>, Ok<UserProfileResponse>, UnauthorizedHttpResult>> UpsertCurrentAsync(
-        UserProfileRequest request,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromBody] UserProfileRequest request,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
