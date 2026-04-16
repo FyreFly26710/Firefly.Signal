@@ -124,6 +124,8 @@ Use these skills when frontend work is being reshaped:
 
 - `frontend-patterns`
 - `frontend-design`
+- `frontend-e2e-testing`
+- `frontend-tdd-workflow`
 - `documentation-lookup`
 
 ### Build, Test, and Development Commands

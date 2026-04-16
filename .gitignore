@@ -25,6 +25,10 @@ services/api/src/**/appsettings.Development.json
 node_modules/
 dist/
 coverage/
+playwright-report/
+test-results/
+playwright-results.xml
+playwright-results.json
 *.tsbuildinfo
 vite.config.ts.timestamp-*
 

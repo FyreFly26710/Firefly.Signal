@@ -6,7 +6,14 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist", "coverage", "node_modules", "eslint.config.mjs"]
+    ignores: [
+      "dist",
+      "coverage",
+      "node_modules",
+      "playwright-report",
+      "test-results",
+      "eslint.config.mjs"
+    ]
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -17,7 +24,7 @@ export default tseslint.config(
       ecmaVersion: 2024,
       globals: globals.browser,
       parserOptions: {
-        project: ["./tsconfig.app.json", "./tsconfig.node.json"],
+        project: ["./tsconfig.app.json", "./tsconfig.node.json", "./tsconfig.playwright.json"],
         tsconfigRootDir: import.meta.dirname
       }
     },
