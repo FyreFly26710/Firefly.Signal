@@ -3,6 +3,7 @@ using Firefly.Signal.Identity.Contracts.Requests;
 using Firefly.Signal.Identity.Contracts.Responses;
 using Firefly.Signal.SharedKernel.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Firefly.Signal.Identity.Api.Apis;
 
@@ -19,8 +20,8 @@ public static class AuthApi
     }
 
     private static async Task<Results<Ok<LoginResponse>, UnauthorizedHttpResult>> LoginAsync(
-        LoginUserRequest request,
-        IAuthQueries queries,
+        [FromBody] LoginUserRequest request,
+        [FromServices] IAuthQueries queries,
         CancellationToken cancellationToken)
     {
         var response = await queries.AuthenticateAsync(request, cancellationToken);
@@ -28,8 +29,8 @@ public static class AuthApi
     }
 
     private static async Task<Results<Ok<AuthenticatedUserResponse>, NotFound, UnauthorizedHttpResult>> GetCurrentUserAsync(
-        IIdentityService identityService,
-        IAuthQueries queries,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IAuthQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();

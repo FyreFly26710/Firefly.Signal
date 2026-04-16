@@ -24,7 +24,7 @@ public static class UserApi
     }
 
     private static async Task<Ok<IReadOnlyList<AuthenticatedUserResponse>>> ListAsync(
-        IUserQueries queries,
+        [FromServices] IUserQueries queries,
         CancellationToken cancellationToken)
     {
         var users = await queries.ListAsync(cancellationToken);
@@ -33,7 +33,7 @@ public static class UserApi
 
     private static async Task<Results<Ok<AuthenticatedUserResponse>, NotFound>> GetByIdAsync(
         long id,
-        IUserQueries queries,
+        [FromServices] IUserQueries queries,
         CancellationToken cancellationToken)
     {
         var user = await queries.GetByIdAsync(id, cancellationToken);
@@ -43,8 +43,8 @@ public static class UserApi
     }
 
     private static async Task<Results<Created<AuthenticatedUserResponse>, Conflict<ProblemDetails>>> CreateAsync(
-        CreateUserRequest request,
-        IMediator mediator,
+        [FromBody] CreateUserRequest request,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var response = await mediator.Send(UserApiMappers.ToCreateCommand(request), cancellationToken);
@@ -58,8 +58,8 @@ public static class UserApi
 
     private static async Task<Results<Ok<AuthenticatedUserResponse>, NotFound>> UpdateAsync(
         long id,
-        UpdateUserRequest request,
-        IMediator mediator,
+        [FromBody] UpdateUserRequest request,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var user = await mediator.Send(UserApiMappers.ToUpdateCommand(id, request), cancellationToken);
@@ -68,7 +68,7 @@ public static class UserApi
 
     private static async Task<Results<NoContent, NotFound>> DeleteAsync(
         long id,
-        IMediator mediator,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         return await mediator.Send(UserApiMappers.ToDeleteCommand(id), cancellationToken)

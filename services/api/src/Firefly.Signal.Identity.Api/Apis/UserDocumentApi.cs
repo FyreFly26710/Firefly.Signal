@@ -30,8 +30,8 @@ public static class UserDocumentApi
     }
 
     private static async Task<Results<Ok<IReadOnlyList<UserDocumentResponse>>, UnauthorizedHttpResult>> ListAsync(
-        IIdentityService identityService,
-        IUserDocumentQueries queries,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IUserDocumentQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -46,8 +46,8 @@ public static class UserDocumentApi
 
     private static async Task<Results<Ok<UserDocumentResponse>, NotFound, UnauthorizedHttpResult>> GetByIdAsync(
         long id,
-        IIdentityService identityService,
-        IUserDocumentQueries queries,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IUserDocumentQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -65,9 +65,9 @@ public static class UserDocumentApi
 
     private static async Task<Results<Created<UserDocumentResponse>, BadRequest<ProblemDetails>, ValidationProblem, UnauthorizedHttpResult>> UploadAsync(
         [FromForm] UploadUserDocumentRequest request,
-        IIdentityService identityService,
-        IMediator mediator,
-        IOptions<UserDocumentStorageOptions> storageOptions,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
+        [FromServices] IOptions<UserDocumentStorageOptions> storageOptions,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -124,8 +124,8 @@ public static class UserDocumentApi
 
     private static async Task<Results<Ok<UserDocumentResponse>, NotFound, UnauthorizedHttpResult>> SetDefaultAsync(
         long id,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -142,8 +142,8 @@ public static class UserDocumentApi
 
     private static async Task<Results<NoContent, NotFound, UnauthorizedHttpResult>> DeleteAsync(
         long id,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();

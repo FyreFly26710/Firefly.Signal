@@ -45,8 +45,8 @@ public static class JobSearchApi
         [FromQuery] string? sourceName,
         [FromQuery] string? categoryTag,
         [FromQuery] bool? isHidden,
-        IIdentityService identityService,
-        IJobSearchQueries queries,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IJobSearchQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -69,7 +69,7 @@ public static class JobSearchApi
 
     private static async Task<Results<Ok<JobDetailsResponse>, NotFound>> GetByIdAsync(
         long id,
-        IJobSearchQueries queries,
+        [FromServices] IJobSearchQueries queries,
         CancellationToken cancellationToken)
     {
         var job = await queries.GetByIdAsync(id, cancellationToken);
@@ -77,8 +77,8 @@ public static class JobSearchApi
     }
 
     private static async Task<Created<JobDetailsResponse>> CreateAsync(
-        CreateJobRequest request,
-        IMediator mediator,
+        [FromBody] CreateJobRequest request,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var created = await mediator.Send(JobSearchApiMappers.ToCreateCommand(request), cancellationToken);
@@ -87,8 +87,8 @@ public static class JobSearchApi
 
     private static async Task<Results<Ok<JobDetailsResponse>, NotFound>> UpdateAsync(
         long id,
-        UpdateJobRequest request,
-        IMediator mediator,
+        [FromBody] UpdateJobRequest request,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var updated = await mediator.Send(JobSearchApiMappers.ToUpdateCommand(id, request), cancellationToken);
@@ -97,7 +97,7 @@ public static class JobSearchApi
 
     private static async Task<Results<NoContent, NotFound, Conflict<ProblemDetails>>> DeleteByIdAsync(
         long id,
-        IMediator mediator,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(JobSearchApiMappers.ToDeleteCommand([id]), cancellationToken);
@@ -119,8 +119,8 @@ public static class JobSearchApi
     }
 
     private static async Task<Results<Ok<DeleteJobsResponse>, Conflict<ProblemDetails>>> DeleteManyAsync(
-        IdBatchRequest<long> request,
-        IMediator mediator,
+        [FromBody] IdBatchRequest<long> request,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(JobSearchApiMappers.ToDeleteCommand(request.Ids), cancellationToken);
@@ -138,25 +138,25 @@ public static class JobSearchApi
 
     private static async Task<Ok<HideJobsResponse>> HideByIdAsync(
         long id,
-        IMediator mediator,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
         => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToHideCommand([id]), cancellationToken));
 
     private static async Task<Ok<HideJobsResponse>> HideManyAsync(
-        IdBatchRequest<long> request,
-        IMediator mediator,
+        [FromBody] IdBatchRequest<long> request,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
         => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToHideCommand(request.Ids), cancellationToken));
 
     private static async Task<Ok<ImportJobsResponse>> ImportFromProviderAsync(
-        ImportJobsFromProviderRequest request,
-        IMediator mediator,
+        [FromBody] ImportJobsFromProviderRequest request,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
         => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToImportFromProviderCommand(request), cancellationToken));
 
     private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromJsonAsync(
-        IFormFile? file,
-        IMediator mediator,
+        [FromForm] IFormFile? file,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
@@ -182,8 +182,8 @@ public static class JobSearchApi
     }
 
     private static async Task<FileContentHttpResult> ExportAsync(
-        ExportJobsRequest request,
-        IJobSearchQueries queries,
+        [FromBody] ExportJobsRequest request,
+        [FromServices] IJobSearchQueries queries,
         CancellationToken cancellationToken)
     {
         var export = await queries.ExportAsync(request, cancellationToken);

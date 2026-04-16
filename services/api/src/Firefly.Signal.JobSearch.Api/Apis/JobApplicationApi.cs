@@ -27,9 +27,9 @@ public static class JobApplicationApi
 
     private static async Task<Results<Ok<JobApplicationResponse>, NotFound, UnauthorizedHttpResult>> ApplyAsync(
         long id,
-        ApplyJobRequest request,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromBody] ApplyJobRequest request,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -44,9 +44,9 @@ public static class JobApplicationApi
 
     private static async Task<Results<Ok<JobApplicationResponse>, NotFound, BadRequest<ProblemDetails>, UnauthorizedHttpResult>> AdvanceStatusAsync(
         long id,
-        AdvanceApplicationStatusRequest request,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromBody] AdvanceApplicationStatusRequest request,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -72,9 +72,9 @@ public static class JobApplicationApi
 
     private static async Task<Results<Ok<JobApplicationResponse>, NotFound, UnauthorizedHttpResult>> UpdateNoteAsync(
         long id,
-        UpdateApplicationNoteRequest request,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromBody] UpdateApplicationNoteRequest request,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -88,8 +88,8 @@ public static class JobApplicationApi
     }
 
     private static async Task<Results<Ok<IReadOnlyList<AppliedJobSummaryResponse>>, UnauthorizedHttpResult>> GetAppliedJobsAsync(
-        IIdentityService identityService,
-        IJobApplicationQueries queries,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IJobApplicationQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
