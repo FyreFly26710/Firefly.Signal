@@ -98,14 +98,20 @@ internal static class UserDocumentApiMappers
             : displayName.Trim();
 
         return new UploadUserDocumentCommand(
-            userId,
-            documentType,
-            resolvedDisplayName,
-            originalFileName,
-            file.ContentType.Trim(),
-            file.Length,
-            checksumSha256,
-            isDefault,
-            content);
+            UserId: userId,
+            DocumentType: documentType,
+            DisplayName: resolvedDisplayName,
+            OriginalFileName: originalFileName,
+            ContentType: file.ContentType.Trim(),
+            FileSizeBytes: file.Length,
+            ChecksumSha256: checksumSha256,
+            IsDefault: isDefault,
+            Content: content);
     }
+
+    public static SetDefaultUserDocumentCommand ToSetDefaultCommand(long userId, long id)
+        => new(UserId: userId, Id: id);
+
+    public static DeleteUserDocumentCommand ToDeleteCommand(long userId, long id)
+        => new(UserId: userId, Id: id);
 }

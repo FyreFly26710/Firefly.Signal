@@ -17,7 +17,6 @@ public static class MediatorExtensions
             config.RegisterServicesFromAssemblies(assemblies);
             config.AddOpenBehavior(typeof(LoggingBehavior<,>));
             config.AddOpenBehavior(typeof(ValidatorBehavior<,>));
-            config.AddOpenBehavior(typeof(TransactionBehavior<,>));
         });
 
         return services;

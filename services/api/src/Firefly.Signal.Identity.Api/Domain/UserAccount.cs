@@ -2,7 +2,7 @@ using Firefly.Signal.SharedKernel.Domain;
 
 namespace Firefly.Signal.Identity.Domain;
 
-public sealed class UserAccount : AuditableEntity, IAggregateRoot
+public sealed class UserAccount : AuditableEntity
 {
     private UserAccount()
     {

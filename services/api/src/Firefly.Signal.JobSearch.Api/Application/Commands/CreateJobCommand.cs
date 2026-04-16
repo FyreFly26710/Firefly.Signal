@@ -1,0 +1,41 @@
+using Firefly.Signal.JobSearch.Contracts.Responses;
+using MediatR;
+
+namespace Firefly.Signal.JobSearch.Application.Commands;
+
+public sealed record CreateJobCommand(
+    long? JobRefreshRunId,
+    string SourceName,
+    string SourceJobId,
+    string? SourceAdReference,
+    string Title,
+    string Description,
+    string Summary,
+    string Url,
+    string Company,
+    string? CompanyDisplayName,
+    string? CompanyCanonicalName,
+    string Postcode,
+    string LocationName,
+    string? LocationDisplayName,
+    string? LocationAreaJson,
+    decimal? Latitude,
+    decimal? Longitude,
+    string? CategoryTag,
+    string? CategoryLabel,
+    decimal? SalaryMin,
+    decimal? SalaryMax,
+    string? SalaryCurrency,
+    bool? SalaryIsPredicted,
+    string? ContractTime,
+    string? ContractType,
+    bool IsFullTime,
+    bool IsPartTime,
+    bool IsPermanent,
+    bool IsContract,
+    bool IsRemote,
+    DateTime PostedAtUtc,
+    DateTime ImportedAtUtc,
+    DateTime LastSeenAtUtc,
+    bool IsHidden,
+    string RawPayloadJson) : IRequest<JobDetailsResponse>;

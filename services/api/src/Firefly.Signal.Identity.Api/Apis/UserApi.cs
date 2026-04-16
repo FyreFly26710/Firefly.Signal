@@ -2,6 +2,7 @@ using Firefly.Signal.Identity.Application.Commands;
 using Firefly.Signal.Identity.Application.Queries;
 using Firefly.Signal.Identity.Contracts.Requests;
 using Firefly.Signal.Identity.Contracts.Responses;
+using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -43,10 +44,10 @@ public static class UserApi
 
     private static async Task<Results<Created<AuthenticatedUserResponse>, Conflict<ProblemDetails>>> CreateAsync(
         CreateUserRequest request,
-        IUserCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var response = await commands.CreateAsync(request, cancellationToken);
+        var response = await mediator.Send(UserApiMappers.ToCreateCommand(request), cancellationToken);
         if (response is null)
         {
             return TypedResults.Conflict(new ProblemDetails { Title = "User account already exists." });
@@ -58,18 +59,20 @@ public static class UserApi
     private static async Task<Results<Ok<AuthenticatedUserResponse>, NotFound>> UpdateAsync(
         long id,
         UpdateUserRequest request,
-        IUserCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var user = await commands.UpdateAsync(id, request, cancellationToken);
+        var user = await mediator.Send(UserApiMappers.ToUpdateCommand(id, request), cancellationToken);
         return user is null ? TypedResults.NotFound() : TypedResults.Ok(user);
     }
 
     private static async Task<Results<NoContent, NotFound>> DeleteAsync(
         long id,
-        IUserCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
-        return await commands.DeleteAsync(id, cancellationToken) ? TypedResults.NoContent() : TypedResults.NotFound();
+        return await mediator.Send(UserApiMappers.ToDeleteCommand(id), cancellationToken)
+            ? TypedResults.NoContent()
+            : TypedResults.NotFound();
     }
 }

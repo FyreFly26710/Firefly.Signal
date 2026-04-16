@@ -2,7 +2,7 @@ using Firefly.Signal.SharedKernel.Domain;
 
 namespace Firefly.Signal.JobSearch.Domain;
 
-public sealed class JobPosting : AuditableEntity, IAggregateRoot
+public sealed class JobPosting : AuditableEntity
 {
     private JobPosting()
     {

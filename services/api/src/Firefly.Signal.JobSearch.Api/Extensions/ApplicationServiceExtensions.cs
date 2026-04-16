@@ -8,11 +8,11 @@ using Firefly.Signal.JobSearch.Api.Options;
 using Firefly.Signal.JobSearch.Infrastructure.External;
 using Firefly.Signal.JobSearch.Infrastructure.JobSearchProviders.Adzuna;
 using Firefly.Signal.JobSearch.Infrastructure.Persistence;
-using Firefly.Signal.JobSearch.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.IdentityModel.Tokens;
+using Firefly.Signal.SharedKernel.Extensions;
 using Firefly.Signal.SharedKernel.Services;
 
 namespace Firefly.Signal.JobSearch.Api.Extensions;
@@ -31,12 +31,10 @@ internal static class ApplicationServiceExtensions
         services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
         services.Configure<AdzunaOptions>(builder.Configuration.GetSection(AdzunaOptions.SectionName));
         services.AddHttpContextAccessor();
+        services.AddFireflyMediator(typeof(Program).Assembly);
         services.AddScoped<IIdentityService, HttpContextIdentityService>();
         services.AddScoped<IJobSearchQueries, JobSearchQueries>();
-        services.AddScoped<IJobSearchCommands, JobSearchCommands>();
-        services.AddScoped<IUserJobStateCommands, UserJobStateCommands>();
         services.AddScoped<IJobApplicationQueries, JobApplicationQueries>();
-        services.AddScoped<IJobApplicationCommands, JobApplicationCommands>();
         services.AddSingleton<AdzunaJobSearchRequestMapper>();
         services.AddSingleton<AdzunaJobSearchResponseMapper>();
         services.AddSingleton<MockAdzunaJobSearchProvider>();

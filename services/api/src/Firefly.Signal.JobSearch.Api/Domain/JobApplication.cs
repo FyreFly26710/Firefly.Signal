@@ -7,7 +7,7 @@ namespace Firefly.Signal.JobSearch.Domain;
 /// Status history is tracked in JobApplicationStatusEntry.
 /// Documents are linked via ApplicationDocumentLink.
 /// </summary>
-public sealed class JobApplication : AuditableEntity, IAggregateRoot
+public sealed class JobApplication : AuditableEntity
 {
     private JobApplication()
     {

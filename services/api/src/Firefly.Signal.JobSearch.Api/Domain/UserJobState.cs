@@ -6,7 +6,7 @@ namespace Firefly.Signal.JobSearch.Domain;
 /// Stores a user-specific lightweight workflow state for a job.
 /// IsSaved and IsHidden are independent flags; application stage tracking lives on JobApplication.
 /// </summary>
-public sealed class UserJobState : AuditableEntity, IAggregateRoot
+public sealed class UserJobState : AuditableEntity
 {
     private UserJobState()
     {

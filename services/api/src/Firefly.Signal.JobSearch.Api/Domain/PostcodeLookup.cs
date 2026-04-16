@@ -5,7 +5,7 @@ namespace Firefly.Signal.JobSearch.Domain;
 /// <summary>
 /// Cached or imported postcode reference data used for distance-based filtering.
 /// </summary>
-public sealed class PostcodeLookup : AuditableEntity, IAggregateRoot
+public sealed class PostcodeLookup : AuditableEntity
 {
     private PostcodeLookup()
     {

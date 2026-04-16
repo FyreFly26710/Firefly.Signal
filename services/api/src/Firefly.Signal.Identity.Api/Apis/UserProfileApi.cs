@@ -3,6 +3,7 @@ using Firefly.Signal.Identity.Application.Queries;
 using Firefly.Signal.Identity.Contracts.Requests;
 using Firefly.Signal.Identity.Contracts.Responses;
 using Firefly.Signal.SharedKernel.Services;
+using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Firefly.Signal.Identity.Api.Apis;
@@ -40,7 +41,7 @@ public static class UserProfileApi
     private static async Task<Results<Created<UserProfileResponse>, Ok<UserProfileResponse>, UnauthorizedHttpResult>> UpsertCurrentAsync(
         UserProfileRequest request,
         IIdentityService identityService,
-        IUserProfileCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -49,7 +50,7 @@ public static class UserProfileApi
             return TypedResults.Unauthorized();
         }
 
-        var result = await commands.UpsertCurrentAsync(userId.Value, request, cancellationToken);
+        var result = await mediator.Send(UserProfileApiMappers.ToUpsertCommand(userId.Value, request), cancellationToken);
         if (result is null)
         {
             return TypedResults.Unauthorized();

@@ -5,7 +5,7 @@ namespace Firefly.Signal.Identity.Domain;
 /// <summary>
 /// Stores the user's profile context used by job review and AI-assisted workflows.
 /// </summary>
-public sealed class UserProfile : AuditableEntity, IAggregateRoot
+public sealed class UserProfile : AuditableEntity
 {
     private UserProfile()
     {

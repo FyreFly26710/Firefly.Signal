@@ -4,6 +4,7 @@ using Firefly.Signal.JobSearch.Contracts.Requests;
 using Firefly.Signal.JobSearch.Contracts.Responses;
 using Firefly.Signal.JobSearch.Domain;
 using Firefly.Signal.SharedKernel.Services;
+using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,7 +29,7 @@ public static class JobApplicationApi
         long id,
         ApplyJobRequest request,
         IIdentityService identityService,
-        IJobApplicationCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -37,7 +38,7 @@ public static class JobApplicationApi
             return TypedResults.Unauthorized();
         }
 
-        var result = await commands.ApplyJobAsync(id, userId.Value, request.Note, cancellationToken);
+        var result = await mediator.Send(JobApplicationApiMappers.ToApplyCommand(id, userId.Value, request), cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
@@ -45,7 +46,7 @@ public static class JobApplicationApi
         long id,
         AdvanceApplicationStatusRequest request,
         IIdentityService identityService,
-        IJobApplicationCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -65,7 +66,9 @@ public static class JobApplicationApi
 
         try
         {
-            var result = await commands.AdvanceApplicationStatusAsync(id, userId.Value, newStatus, cancellationToken);
+            var result = await mediator.Send(
+                JobApplicationApiMappers.ToAdvanceStatusCommand(id, userId.Value, newStatus),
+                cancellationToken);
             return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -82,7 +85,7 @@ public static class JobApplicationApi
         long id,
         UpdateApplicationNoteRequest request,
         IIdentityService identityService,
-        IJobApplicationCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -91,7 +94,7 @@ public static class JobApplicationApi
             return TypedResults.Unauthorized();
         }
 
-        var result = await commands.UpdateApplicationNoteAsync(id, userId.Value, request.Note, cancellationToken);
+        var result = await mediator.Send(JobApplicationApiMappers.ToUpdateNoteCommand(id, userId.Value, request), cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 

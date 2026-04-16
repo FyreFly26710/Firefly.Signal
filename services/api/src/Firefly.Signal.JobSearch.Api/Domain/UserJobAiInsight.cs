@@ -5,7 +5,7 @@ namespace Firefly.Signal.JobSearch.Domain;
 /// <summary>
 /// Persisted AI result for one user and one job, generated from a specific analysis request.
 /// </summary>
-public sealed class UserJobAiInsight : AuditableEntity, IAggregateRoot
+public sealed class UserJobAiInsight : AuditableEntity
 {
     private UserJobAiInsight()
     {

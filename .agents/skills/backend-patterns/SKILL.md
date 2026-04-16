@@ -94,13 +94,15 @@ Startup-owned types belong in normal files, usually `Options/` or `Infrastructur
 Split reads and writes intentionally.
 
 - Put read-side interfaces and implementations in `Application/Queries/`.
-- Put write-side interfaces and implementations in `Application/Commands/`.
+- Put write-side commands and handlers in `Application/Commands/`.
+- Put each command in its own `Application/Commands/<Action>Command.cs` file.
+- Put each command handler in its own `Application/Commands/<Action>CommandHandler.cs` file.
 - Put entity-to-response mapping in `Application/Mappers/`.
 - Keep request-to-command or request-to-query translation in `Apis/*ApiMappers.cs`.
-
-Firefly Signal does **not** have to introduce MediatR just to satisfy this structure.
-If a service already uses plain application services, keep the command/query split explicit with interfaces and concrete classes.
-Only add MediatR when the issue explicitly calls for it and the service truly benefits from pipeline behaviors.
+- Keep query execution out of APIs. APIs translate transport input, then call a query service or `Mediator.Send(...)`.
+- Use MediatR for every write. APIs must not call write services directly.
+- Each write action gets one command and one handler. Do not group multiple commands or multiple handlers into one file.
+- Keep query interfaces explicit. Queries do not need MediatR unless a task explicitly asks for it.
 
 ## API Layer Rules
 
@@ -148,6 +150,7 @@ Caching:
 - put enums and constants in `Domain/Constants/`
 - keep domain logic on the entity when it is truly domain behavior
 - do not let EF or transport concerns leak into domain types
+- Do not introduce `IAggregateRoot`. Firefly Signal is not using that DDD marker.
 
 ## Event Bus Rules
 

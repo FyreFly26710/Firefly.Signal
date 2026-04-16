@@ -4,6 +4,7 @@ using Firefly.Signal.Identity.Application.Queries;
 using Firefly.Signal.Identity.Contracts.Requests;
 using Firefly.Signal.Identity.Contracts.Responses;
 using Firefly.Signal.SharedKernel.Services;
+using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -65,7 +66,7 @@ public static class UserDocumentApi
     private static async Task<Results<Created<UserDocumentResponse>, BadRequest<ProblemDetails>, ValidationProblem, UnauthorizedHttpResult>> UploadAsync(
         [FromForm] UploadUserDocumentRequest request,
         IIdentityService identityService,
-        IUserDocumentCommands commands,
+        IMediator mediator,
         IOptions<UserDocumentStorageOptions> storageOptions,
         CancellationToken cancellationToken)
     {
@@ -112,7 +113,7 @@ public static class UserDocumentApi
             checksumSha256,
             request.IsDefault);
 
-        var document = await commands.UploadAsync(command, cancellationToken);
+        var document = await mediator.Send(command, cancellationToken);
         if (document is null)
         {
             return TypedResults.Unauthorized();
@@ -124,7 +125,7 @@ public static class UserDocumentApi
     private static async Task<Results<Ok<UserDocumentResponse>, NotFound, ValidationProblem, UnauthorizedHttpResult>> SetDefaultAsync(
         long id,
         IIdentityService identityService,
-        IUserDocumentCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -135,7 +136,7 @@ public static class UserDocumentApi
 
         try
         {
-            var document = await commands.SetDefaultAsync(userId.Value, id, cancellationToken);
+            var document = await mediator.Send(UserDocumentApiMappers.ToSetDefaultCommand(userId.Value, id), cancellationToken);
             return document is null
                 ? TypedResults.NotFound()
                 : TypedResults.Ok(document);
@@ -152,7 +153,7 @@ public static class UserDocumentApi
     private static async Task<Results<NoContent, NotFound, UnauthorizedHttpResult>> DeleteAsync(
         long id,
         IIdentityService identityService,
-        IUserDocumentCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -161,7 +162,7 @@ public static class UserDocumentApi
             return TypedResults.Unauthorized();
         }
 
-        return await commands.DeleteAsync(userId.Value, id, cancellationToken)
+        return await mediator.Send(UserDocumentApiMappers.ToDeleteCommand(userId.Value, id), cancellationToken)
             ? TypedResults.NoContent()
             : TypedResults.NotFound();
     }

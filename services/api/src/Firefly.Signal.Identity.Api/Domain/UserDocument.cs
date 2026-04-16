@@ -5,7 +5,7 @@ namespace Firefly.Signal.Identity.Domain;
 /// <summary>
 /// Metadata for a user-owned document such as a CV or cover letter.
 /// </summary>
-public sealed class UserDocument : AuditableEntity, IAggregateRoot
+public sealed class UserDocument : AuditableEntity
 {
     private UserDocument()
     {

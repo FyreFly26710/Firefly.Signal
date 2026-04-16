@@ -6,6 +6,7 @@ using Firefly.Signal.JobSearch.Contracts.Responses;
 using Firefly.Signal.JobSearch.Infrastructure.External;
 using Firefly.Signal.SharedKernel.Models;
 using Firefly.Signal.SharedKernel.Services;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -78,29 +79,29 @@ public static class JobSearchApi
 
     private static async Task<Created<JobDetailsResponse>> CreateAsync(
         CreateJobRequest request,
-        IJobSearchCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var created = await commands.CreateAsync(request, cancellationToken);
+        var created = await mediator.Send(JobSearchApiMappers.ToCreateCommand(request), cancellationToken);
         return TypedResults.Created($"/api/job-search/jobs/{created.Id}", created);
     }
 
     private static async Task<Results<Ok<JobDetailsResponse>, NotFound>> UpdateAsync(
         long id,
         UpdateJobRequest request,
-        IJobSearchCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var updated = await commands.UpdateAsync(id, request, cancellationToken);
+        var updated = await mediator.Send(JobSearchApiMappers.ToUpdateCommand(id, request), cancellationToken);
         return updated is null ? TypedResults.NotFound() : TypedResults.Ok(updated);
     }
 
     private static async Task<Results<NoContent, NotFound, Conflict<ProblemDetails>>> DeleteByIdAsync(
         long id,
-        IJobSearchCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var result = await commands.DeleteAsync([id], cancellationToken);
+        var result = await mediator.Send(JobSearchApiMappers.ToDeleteCommand([id]), cancellationToken);
         if (result.MissingIds.Count == 1)
         {
             return TypedResults.NotFound();
@@ -120,10 +121,10 @@ public static class JobSearchApi
 
     private static async Task<Results<Ok<DeleteJobsResponse>, Conflict<ProblemDetails>>> DeleteManyAsync(
         IdBatchRequest<long> request,
-        IJobSearchCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var result = await commands.DeleteAsync(request.Ids, cancellationToken);
+        var result = await mediator.Send(JobSearchApiMappers.ToDeleteCommand(request.Ids), cancellationToken);
         if (result.NotHiddenIds.Count > 0)
         {
             return TypedResults.Conflict(new ProblemDetails
@@ -138,24 +139,24 @@ public static class JobSearchApi
 
     private static async Task<Ok<HideJobsResponse>> HideByIdAsync(
         long id,
-        IJobSearchCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
-        => TypedResults.Ok(await commands.HideAsync([id], cancellationToken));
+        => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToHideCommand([id]), cancellationToken));
 
     private static async Task<Ok<HideJobsResponse>> HideManyAsync(
         IdBatchRequest<long> request,
-        IJobSearchCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
-        => TypedResults.Ok(await commands.HideAsync(request.Ids, cancellationToken));
+        => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToHideCommand(request.Ids), cancellationToken));
 
     private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromProviderAsync(
         ImportJobsFromProviderRequest request,
-        IJobSearchCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
         try
         {
-            return TypedResults.Ok(await commands.ImportFromProviderAsync(request, cancellationToken));
+            return TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToImportFromProviderCommand(request), cancellationToken));
         }
         catch (JobSearchProviderException exception)
         {
@@ -169,7 +170,7 @@ public static class JobSearchApi
 
     private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromJsonAsync(
         IFormFile? file,
-        IJobSearchCommands commands,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
@@ -193,7 +194,7 @@ public static class JobSearchApi
         try
         {
             await using var stream = file.OpenReadStream();
-            return TypedResults.Ok(await commands.ImportFromJsonAsync(stream, file.FileName, cancellationToken));
+            return TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToImportFromJsonCommand(stream, file.FileName), cancellationToken));
         }
         catch (InvalidDataException exception)
         {

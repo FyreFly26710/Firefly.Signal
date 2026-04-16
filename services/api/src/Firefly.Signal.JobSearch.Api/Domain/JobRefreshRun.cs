@@ -2,7 +2,7 @@ using Firefly.Signal.SharedKernel.Domain;
 
 namespace Firefly.Signal.JobSearch.Domain;
 
-public sealed class JobRefreshRun : AuditableEntity, IAggregateRoot
+public sealed class JobRefreshRun : AuditableEntity
 {
     private JobRefreshRun()
     {

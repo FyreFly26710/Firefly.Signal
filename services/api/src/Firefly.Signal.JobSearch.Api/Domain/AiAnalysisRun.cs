@@ -5,7 +5,7 @@ namespace Firefly.Signal.JobSearch.Domain;
 /// <summary>
 /// Tracks one admin-triggered AI analysis request over a set of jobs for a target user.
 /// </summary>
-public sealed class AiAnalysisRun : AuditableEntity, IAggregateRoot
+public sealed class AiAnalysisRun : AuditableEntity
 {
     private AiAnalysisRun()
     {

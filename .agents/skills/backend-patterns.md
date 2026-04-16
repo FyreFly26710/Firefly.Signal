@@ -1337,3 +1337,5 @@ var userId = services.IdentityService.GetUserId();
 ```
 
 ---
+> Deprecated reference. This version predates `draft.md` and the active skill in `.agents/skills/backend-patterns/SKILL.md`.
+> Use `draft.md` and `backend-patterns/SKILL.md` as the current source of truth.
