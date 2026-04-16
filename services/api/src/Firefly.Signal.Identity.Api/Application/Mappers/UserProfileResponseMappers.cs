@@ -7,18 +7,18 @@ internal static class UserProfileResponseMappers
 {
     public static UserProfileResponse ToUserProfileResponse(UserProfile profile)
         => new(
-            profile.Id,
-            profile.UserAccountId,
-            profile.FullName,
-            profile.PreferredTitle,
-            profile.PrimaryLocationPostcode,
-            profile.LinkedInUrl,
-            profile.GithubUrl,
-            profile.PortfolioUrl,
-            profile.Summary,
-            profile.SkillsText,
-            profile.ExperienceText,
-            profile.PreferencesJson,
-            profile.CreatedAtUtc,
-            profile.UpdatedAtUtc);
+            Id: profile.Id,
+            UserAccountId: profile.UserAccountId,
+            FullName: profile.FullName,
+            PreferredTitle: profile.PreferredTitle,
+            PrimaryLocationPostcode: profile.PrimaryLocationPostcode,
+            LinkedInUrl: profile.LinkedInUrl,
+            GithubUrl: profile.GithubUrl,
+            PortfolioUrl: profile.PortfolioUrl,
+            Summary: profile.Summary,
+            SkillsText: profile.SkillsText,
+            ExperienceText: profile.ExperienceText,
+            PreferencesJson: profile.PreferencesJson,
+            CreatedAtUtc: profile.CreatedAtUtc,
+            UpdatedAtUtc: profile.UpdatedAtUtc);
 }

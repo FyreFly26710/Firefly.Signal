@@ -46,10 +46,3 @@ public sealed class UserAccount : AuditableEntity
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
-
-public static class Roles
-{
-    public const string Admin = "admin";
-    public const string TestAdmin = "test-admin";
-    public const string User = "user";
-}

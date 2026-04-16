@@ -48,14 +48,12 @@ Feature.Api/
     Queries/
     Mappers/
     IntegrationEventHandlers/
-    DomainEventHandlers/
   Infrastructure/
     Persistence/
     Services/
-    Cache/
   Domain/
     Entities/
-    Constants/
+    Consts/
     DomainEvents/
   Extensions/
   Options/
@@ -139,15 +137,10 @@ External integrations:
 - provider adapters and their models live under `Infrastructure/Services/<ProviderName>/`
 - keep third-party request/response models close to the adapter that owns them
 
-Caching:
-- if used, keep cache interfaces and policies under `Infrastructure/Cache/`
-- reads may use cache
-- write paths should not hide cache invalidation logic
-
 ## Domain Rules
 
 - Put entities in `Domain/Entities/`
-- put enums and constants in `Domain/Constants/`
+- put enums and constants in `Domain/Consts/`
 - keep domain logic on the entity when it is truly domain behavior
 - do not let EF or transport concerns leak into domain types
 - Do not introduce `IAggregateRoot`. Firefly Signal is not using that DDD marker.

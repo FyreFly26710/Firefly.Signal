@@ -7,19 +7,19 @@ internal static class UserDocumentResponseMappers
 {
     public static UserDocumentResponse ToUserDocumentResponse(UserDocument document)
         => new(
-            document.Id,
-            ToApiDocumentType(document.DocumentType),
-            document.DisplayName,
-            document.OriginalFileName,
-            document.StorageKey,
-            document.ContentType,
-            document.FileSizeBytes,
-            document.ChecksumSha256,
-            document.IsDefault,
-            SupportsDefaultSelection(document.DocumentType),
-            document.UploadedAtUtc,
-            document.CreatedAtUtc,
-            document.UpdatedAtUtc);
+            Id: document.Id,
+            DocumentType: ToApiDocumentType(document.DocumentType),
+            DisplayName: document.DisplayName,
+            OriginalFileName: document.OriginalFileName,
+            StorageKey: document.StorageKey,
+            ContentType: document.ContentType,
+            FileSizeBytes: document.FileSizeBytes,
+            ChecksumSha256: document.ChecksumSha256,
+            IsDefault: document.IsDefault,
+            SupportsDefaultSelection: SupportsDefaultSelection(document.DocumentType),
+            UploadedAtUtc: document.UploadedAtUtc,
+            CreatedAtUtc: document.CreatedAtUtc,
+            UpdatedAtUtc: document.UpdatedAtUtc);
 
     public static bool SupportsDefaultSelection(UserDocumentType documentType)
         => documentType is UserDocumentType.Cv or UserDocumentType.CoverLetter;
