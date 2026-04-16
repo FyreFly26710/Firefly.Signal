@@ -122,7 +122,7 @@ public static class UserDocumentApi
         return TypedResults.Created($"/api/users/documents/{document.Id}", document);
     }
 
-    private static async Task<Results<Ok<UserDocumentResponse>, NotFound, ValidationProblem, UnauthorizedHttpResult>> SetDefaultAsync(
+    private static async Task<Results<Ok<UserDocumentResponse>, NotFound, UnauthorizedHttpResult>> SetDefaultAsync(
         long id,
         IIdentityService identityService,
         IMediator mediator,
@@ -134,20 +134,10 @@ public static class UserDocumentApi
             return TypedResults.Unauthorized();
         }
 
-        try
-        {
-            var document = await mediator.Send(UserDocumentApiMappers.ToSetDefaultCommand(userId.Value, id), cancellationToken);
-            return document is null
-                ? TypedResults.NotFound()
-                : TypedResults.Ok(document);
-        }
-        catch (InvalidOperationException exception)
-        {
-            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
-            {
-                ["id"] = [exception.Message]
-            });
-        }
+        var document = await mediator.Send(UserDocumentApiMappers.ToSetDefaultCommand(userId.Value, id), cancellationToken);
+        return document is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(document);
     }
 
     private static async Task<Results<NoContent, NotFound, UnauthorizedHttpResult>> DeleteAsync(

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Firefly.Signal.JobSearch.Application;
+using Firefly.Signal.JobSearch.Application.Exceptions;
 using Firefly.Signal.JobSearch.Contracts.Responses;
 using Firefly.Signal.JobSearch.Domain;
 using Firefly.Signal.JobSearch.Infrastructure.External;
@@ -65,6 +66,13 @@ public sealed class ImportJobsFromProviderCommandHandler(
                 Source: request.Provider.ToString(),
                 ImportedCount: importedJobs.Length,
                 FailedCount: 0);
+        }
+        catch (JobSearchProviderException exception)
+        {
+            refreshRun.RecordFailedItems(1);
+            refreshRun.Fail("Provider import failed.");
+            await dbContext.SaveChangesAsync(cancellationToken);
+            throw new JobImportProviderFailedException(exception.Message, exception);
         }
         catch
         {

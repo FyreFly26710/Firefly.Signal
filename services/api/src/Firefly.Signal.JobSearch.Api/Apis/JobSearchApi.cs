@@ -3,7 +3,6 @@ using Firefly.Signal.JobSearch.Application.Commands;
 using Firefly.Signal.JobSearch.Application.Queries;
 using Firefly.Signal.JobSearch.Contracts.Requests;
 using Firefly.Signal.JobSearch.Contracts.Responses;
-using Firefly.Signal.JobSearch.Infrastructure.External;
 using Firefly.Signal.SharedKernel.Models;
 using Firefly.Signal.SharedKernel.Services;
 using MediatR;
@@ -149,24 +148,11 @@ public static class JobSearchApi
         CancellationToken cancellationToken)
         => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToHideCommand(request.Ids), cancellationToken));
 
-    private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromProviderAsync(
+    private static async Task<Ok<ImportJobsResponse>> ImportFromProviderAsync(
         ImportJobsFromProviderRequest request,
         IMediator mediator,
         CancellationToken cancellationToken)
-    {
-        try
-        {
-            return TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToImportFromProviderCommand(request), cancellationToken));
-        }
-        catch (JobSearchProviderException exception)
-        {
-            return TypedResults.BadRequest(new ProblemDetails
-            {
-                Title = "Provider import failed",
-                Detail = exception.Message
-            });
-        }
-    }
+        => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToImportFromProviderCommand(request), cancellationToken));
 
     private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromJsonAsync(
         IFormFile? file,
@@ -191,27 +177,8 @@ public static class JobSearchApi
             });
         }
 
-        try
-        {
-            await using var stream = file.OpenReadStream();
-            return TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToImportFromJsonCommand(stream, file.FileName), cancellationToken));
-        }
-        catch (InvalidDataException exception)
-        {
-            return TypedResults.BadRequest(new ProblemDetails
-            {
-                Title = "JSON import failed",
-                Detail = exception.Message
-            });
-        }
-        catch (JsonException)
-        {
-            return TypedResults.BadRequest(new ProblemDetails
-            {
-                Title = "JSON import failed",
-                Detail = "The uploaded file is not valid job export JSON."
-            });
-        }
+        await using var stream = file.OpenReadStream();
+        return TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToImportFromJsonCommand(stream, file.FileName), cancellationToken));
     }
 
     private static async Task<FileContentHttpResult> ExportAsync(

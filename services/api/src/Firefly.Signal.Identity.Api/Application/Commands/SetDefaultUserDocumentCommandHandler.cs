@@ -1,4 +1,5 @@
 using Firefly.Signal.Identity.Application.Mappers;
+using Firefly.Signal.Identity.Application.Exceptions;
 using Firefly.Signal.Identity.Contracts.Responses;
 using Firefly.Signal.Identity.Infrastructure.Persistence;
 using MediatR;
@@ -23,7 +24,7 @@ public sealed class SetDefaultUserDocumentCommandHandler(IdentityDbContext dbCon
 
         if (!UserDocumentResponseMappers.SupportsDefaultSelection(document.DocumentType))
         {
-            throw new InvalidOperationException("Only CV and cover-letter documents can be marked as default.");
+            throw new UserDocumentDefaultSelectionNotSupportedException();
         }
 
         await UserDocumentCommandSupport.ClearDefaultDocumentsAsync(dbContext, request.UserId, document.DocumentType, cancellationToken);

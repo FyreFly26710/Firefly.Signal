@@ -1,4 +1,6 @@
+using System.Runtime.ExceptionServices;
 using FluentValidation;
+using Firefly.Signal.SharedKernel.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -35,7 +37,7 @@ public sealed class GlobalExceptionHandlerMiddleware(
                 context.Request.Method,
                 context.Request.Path);
 
-            throw exception;
+            ExceptionDispatchInfo.Capture(exception).Throw();
         }
 
         logger.LogError(
@@ -79,6 +81,26 @@ public sealed class GlobalExceptionHandlerMiddleware(
 
             validationProblem.Extensions["traceId"] = traceId;
             return validationProblem;
+        }
+
+        if (exception is FireflyProblemException fireflyProblemException)
+        {
+            var customProblemDetails = new ProblemDetails
+            {
+                Status = fireflyProblemException.StatusCode,
+                Title = fireflyProblemException.Title,
+                Detail = fireflyProblemException.Detail,
+                Instance = context.Request.Path
+            };
+
+            customProblemDetails.Extensions["traceId"] = traceId;
+
+            if (!string.IsNullOrWhiteSpace(fireflyProblemException.ErrorCode))
+            {
+                customProblemDetails.Extensions["errorCode"] = fireflyProblemException.ErrorCode;
+            }
+
+            return customProblemDetails;
         }
 
         if (exception is BadHttpRequestException badHttpRequestException)

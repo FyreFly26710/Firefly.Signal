@@ -7,17 +7,6 @@ description: Firefly Signal backend structure and coding patterns for .NET 10 se
 
 Use this skill for Firefly Signal backend work under `services/api/`.
 
-`draft.md` in the sibling `.agents/skills/` folder is the source of truth for this skill.
-Use the eShop references in `sources/eshop/src/` for shape and intent, not for blind copying:
-- `eShop.ServiceDefaults`
-- `Shared`
-- `EventBus`
-- `EventBusRabbitMQ`
-- `Ordering.API`
-- `Catalog.API`
-
-Ignore eShop `Identity.API` for platform design. Firefly Signal uses its own identity direction.
-
 ## What Good Looks Like
 
 - `Program.cs` stays thin.
@@ -176,21 +165,3 @@ Keep shared code small and stable:
 
 Do not keep duplicate copies of the same shared type in different namespaces or folders.
 
-## Refactor Priorities
-
-When refactoring an existing Firefly backend service:
-1. Thin `Program.cs`
-2. Move DI into `Extensions/ApplicationServiceExtensions.cs`
-3. Split transport contracts into `Contracts/Requests` and `Contracts/Responses`
-4. Split read and write application logic
-5. Move external adapters under `Infrastructure/Services/<Provider>/`
-6. Separate domain entities and constants
-7. Align shared EventBus and SharedKernel structure
-
-## Firefly-Specific Guardrails
-
-- Keep `.NET 10` and `.slnx`
-- do not reintroduce deleted test projects just to satisfy structure
-- keep identity setup repo-specific, not eShop identity-shaped
-- prefer small, reviewable moves over speculative architecture
-- preserve behavior while reshaping structure unless the task explicitly asks for functional change

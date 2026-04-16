@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Firefly.Signal.JobSearch.Application.Exceptions;
 using Firefly.Signal.JobSearch.Contracts.Requests;
 using Firefly.Signal.JobSearch.Contracts.Responses;
 using Firefly.Signal.JobSearch.Domain;
@@ -20,14 +21,11 @@ public sealed class ImportJobsFromJsonCommandHandler(JobSearchDbContext dbContex
     {
         ArgumentNullException.ThrowIfNull(request.JsonStream);
 
-        var payload = await JsonSerializer.DeserializeAsync<ImportedJobsFile>(
-            request.JsonStream,
-            JsonOptions,
-            cancellationToken);
+        var payload = await DeserializePayloadAsync(request.JsonStream, cancellationToken);
 
         if (payload?.Jobs is null || payload.Jobs.Count == 0)
         {
-            throw new InvalidDataException($"The uploaded file '{request.FileName}' does not contain any jobs.");
+            throw new JobImportPayloadException($"The uploaded file '{request.FileName}' does not contain any jobs.");
         }
 
         var refreshRun = JobRefreshRun.Start(
@@ -67,6 +65,25 @@ public sealed class ImportJobsFromJsonCommandHandler(JobSearchDbContext dbContex
             refreshRun.Fail("JSON import failed.");
             await dbContext.SaveChangesAsync(cancellationToken);
             throw;
+        }
+    }
+
+    private static async Task<ImportedJobsFile?> DeserializePayloadAsync(
+        Stream jsonStream,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await JsonSerializer.DeserializeAsync<ImportedJobsFile>(
+                jsonStream,
+                JsonOptions,
+                cancellationToken);
+        }
+        catch (JsonException exception)
+        {
+            throw new JobImportPayloadException(
+                "The uploaded file is not valid job export JSON.",
+                exception);
         }
     }
 

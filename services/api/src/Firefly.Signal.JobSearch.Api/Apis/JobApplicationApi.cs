@@ -64,21 +64,10 @@ public static class JobApplicationApi
             });
         }
 
-        try
-        {
-            var result = await mediator.Send(
-                JobApplicationApiMappers.ToAdvanceStatusCommand(id, userId.Value, newStatus),
-                cancellationToken);
-            return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return TypedResults.BadRequest(new ProblemDetails
-            {
-                Title = "Invalid status transition",
-                Detail = ex.Message
-            });
-        }
+        var result = await mediator.Send(
+            JobApplicationApiMappers.ToAdvanceStatusCommand(id, userId.Value, newStatus),
+            cancellationToken);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     private static async Task<Results<Ok<JobApplicationResponse>, NotFound, UnauthorizedHttpResult>> UpdateNoteAsync(

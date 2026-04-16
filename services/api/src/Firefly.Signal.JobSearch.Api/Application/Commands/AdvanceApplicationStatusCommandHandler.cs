@@ -1,4 +1,5 @@
 using Firefly.Signal.JobSearch.Application.Mappers;
+using Firefly.Signal.JobSearch.Application.Exceptions;
 using Firefly.Signal.JobSearch.Contracts.Responses;
 using Firefly.Signal.JobSearch.Domain;
 using Firefly.Signal.JobSearch.Infrastructure.Persistence;
@@ -31,12 +32,13 @@ public sealed class AdvanceApplicationStatusCommandHandler(JobSearchDbContext db
 
         if (currentStatus == JobApplicationStatus.Rejected)
         {
-            throw new InvalidOperationException("Cannot advance status from Rejected.");
+            throw new InvalidApplicationStatusTransitionException("Cannot advance status from Rejected.");
         }
 
         if ((int)request.NewStatus <= (int)currentStatus)
         {
-            throw new InvalidOperationException($"Cannot transition from {currentStatus} to {request.NewStatus}.");
+            throw new InvalidApplicationStatusTransitionException(
+                $"Cannot transition from {currentStatus} to {request.NewStatus}.");
         }
 
         var newEntry = JobApplicationStatusEntry.Create(application.Id, request.NewStatus);
