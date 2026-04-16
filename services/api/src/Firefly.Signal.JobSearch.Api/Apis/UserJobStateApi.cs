@@ -3,6 +3,7 @@ using Firefly.Signal.JobSearch.Contracts.Responses;
 using Firefly.Signal.SharedKernel.Services;
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Firefly.Signal.JobSearch.Api.Apis;
 
@@ -22,8 +23,8 @@ public static class UserJobStateApi
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> SaveAsync(
         long id,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -38,8 +39,8 @@ public static class UserJobStateApi
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> UnsaveAsync(
         long id,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -54,8 +55,8 @@ public static class UserJobStateApi
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> HideAsync(
         long id,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
@@ -70,8 +71,8 @@ public static class UserJobStateApi
 
     private static async Task<Results<Ok<UserJobStateResponse>, NotFound, UnauthorizedHttpResult>> UnhideAsync(
         long id,
-        IIdentityService identityService,
-        IMediator mediator,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
