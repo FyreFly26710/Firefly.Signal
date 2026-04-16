@@ -1,18 +1,11 @@
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { AppProviders } from "@/app/AppProviders";
 import { WorkspaceView } from "@/features/workspace/views/WorkspaceView";
+import { renderWithProviders } from "@/test/render";
 
 describe("WorkspaceView", () => {
   it("keeps the workspace focused on supported search actions", () => {
-    render(
-      <MemoryRouter>
-        <AppProviders>
-          <WorkspaceView />
-        </AppProviders>
-      </MemoryRouter>
-    );
+    renderWithProviders(<WorkspaceView />);
 
     expect(screen.getByRole("heading", { name: "Your workspace" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Search from your workspace" })).toBeInTheDocument();

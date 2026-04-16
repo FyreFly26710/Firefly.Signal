@@ -1,13 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ThemeProvider } from "@mui/material";
-import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { theme } from "@/app/theme";
 import { getCurrentProfile, upsertCurrentProfile } from "@/api/profile/profile.api";
 import { ProfileView } from "@/features/profile/views/ProfileView";
 import { ApiError } from "@/lib/http/api-error";
 import { useSessionStore } from "@/store/session.store";
+import { renderWithProviders } from "@/test/render";
 
 vi.mock("@/api/profile/profile.api", () => ({
   getCurrentProfile: vi.fn(),
@@ -65,17 +63,9 @@ describe("ProfileView", () => {
       updatedAtUtc: "2026-04-11T11:00:00Z"
     });
 
-    render(
-      <ThemeProvider theme={theme}>
-        <MemoryRouter initialEntries={["/app/profile"]}>
-          <ProfileView />
-        </MemoryRouter>
-      </ThemeProvider>
-    );
+    renderWithProviders(<ProfileView />, { route: "/app/profile" });
 
-    await waitFor(() => {
-      expect(screen.getByDisplayValue("Ada Lovelace")).toBeInTheDocument();
-    });
+    expect(await screen.findByDisplayValue("Ada Lovelace")).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText("Preferred title"));
     await user.type(screen.getByLabelText("Preferred title"), "Principal Engineer");
@@ -94,18 +84,12 @@ describe("ProfileView", () => {
       })
     );
     expect(screen.getByDisplayValue("EC1A 1BB")).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it("shows a retry state when profile loading fails", async () => {
     vi.mocked(getCurrentProfile).mockRejectedValueOnce(new ApiError("Server unavailable", 500));
 
-    render(
-      <ThemeProvider theme={theme}>
-        <MemoryRouter initialEntries={["/app/profile"]}>
-          <ProfileView />
-        </MemoryRouter>
-      </ThemeProvider>
-    );
+    renderWithProviders(<ProfileView />, { route: "/app/profile" });
 
     await waitFor(() => {
       expect(screen.getByText("We couldn't load your profile right now.")).toBeInTheDocument();

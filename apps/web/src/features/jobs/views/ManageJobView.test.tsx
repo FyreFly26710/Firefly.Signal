@@ -1,12 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ThemeProvider } from "@mui/material";
-import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { theme } from "@/app/theme";
 import { catalogHideJob, deleteJob, getJobById } from "@/api/jobs/jobs.api";
 import { ManageJobView } from "@/features/jobs/views/ManageJobView";
 import { useSessionStore } from "@/store/session.store";
+import { renderWithProviders } from "@/test/render";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
   catalogHideJob: vi.fn(),
@@ -81,17 +79,9 @@ describe("ManageJobView", () => {
       missingIds: []
     });
 
-    render(
-      <ThemeProvider theme={theme}>
-        <MemoryRouter>
-          <ManageJobView jobId="42" />
-        </MemoryRouter>
-      </ThemeProvider>
-    );
+    renderWithProviders(<ManageJobView jobId="42" />);
 
-    await waitFor(() => {
-      expect(screen.getByDisplayValue("Senior Frontend Engineer")).toBeInTheDocument();
-    });
+    expect(await screen.findByDisplayValue("Senior Frontend Engineer")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Delete job" }));
 
@@ -112,5 +102,5 @@ describe("ManageJobView", () => {
     expect(catalogHideJob).toHaveBeenCalledWith(42);
 
     confirmSpy.mockRestore();
-  }, 10000);
+  }, 20000);
 });

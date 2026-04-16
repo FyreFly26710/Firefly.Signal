@@ -1,10 +1,8 @@
-import { render, screen } from "@testing-library/react";
-import { ThemeProvider } from "@mui/material";
-import { MemoryRouter } from "react-router-dom";
+import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { theme } from "@/app/theme";
 import { AppHeader } from "@/components/AppHeader";
 import { useSessionStore } from "@/store/session.store";
+import { renderWithProviders } from "@/test/render";
 
 describe("AppHeader", () => {
   afterEach(() => {
@@ -25,13 +23,7 @@ describe("AppHeader", () => {
       isAuthenticated: true
     });
 
-    render(
-      <ThemeProvider theme={theme}>
-        <MemoryRouter>
-          <AppHeader />
-        </MemoryRouter>
-      </ThemeProvider>
-    );
+    renderWithProviders(<AppHeader />);
 
     expect(screen.queryByRole("link", { name: "Sign in" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
@@ -49,13 +41,7 @@ describe("AppHeader", () => {
       isAuthenticated: true
     });
 
-    render(
-      <ThemeProvider theme={theme}>
-        <MemoryRouter initialEntries={["/app/profile"]}>
-          <AppHeader variant="authenticated" />
-        </MemoryRouter>
-      </ThemeProvider>
-    );
+    renderWithProviders(<AppHeader variant="authenticated" />, { route: "/app/profile" });
 
     expect(screen.getByRole("link", { name: "Profile" })).toHaveClass(
       "bg-accent-secondary",
