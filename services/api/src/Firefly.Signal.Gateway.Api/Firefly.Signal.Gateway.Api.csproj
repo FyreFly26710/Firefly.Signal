@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Firefly.Signal.SharedKernel\Firefly.Signal.SharedKernel.csproj" />
     <ProjectReference Include="..\Firefly.Signal.ServiceDefaults\Firefly.Signal.ServiceDefaults.csproj" />
   </ItemGroup>
 

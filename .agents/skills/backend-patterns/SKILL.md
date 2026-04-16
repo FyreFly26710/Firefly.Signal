@@ -39,7 +39,6 @@ Feature.Api/
   Apis/
     <Resource>Api.cs
     <Resource>ApiMappers.cs
-    <Feature>Services.cs
   Contracts/
     Requests/
     Responses/
@@ -123,7 +122,6 @@ Use a small current-user abstraction such as `IIdentityService` or another narro
 - Transport contracts live under `Contracts/Requests` and `Contracts/Responses`.
 - Do not mix request and response records into broad `Application/*Contracts.cs` buckets.
 - Do not use anonymous payloads for stable endpoints.
-- Do not use AutoMapper.
 - When constructing records in non-trivial mappings, prefer named arguments.
 
 ## Infrastructure Rules
@@ -143,7 +141,6 @@ External integrations:
 - put enums and constants in `Domain/Consts/`
 - keep domain logic on the entity when it is truly domain behavior
 - do not let EF or transport concerns leak into domain types
-- Do not introduce `IAggregateRoot`. Firefly Signal is not using that DDD marker.
 
 ## Event Bus Rules
 

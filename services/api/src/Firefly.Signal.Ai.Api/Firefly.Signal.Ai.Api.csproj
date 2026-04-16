@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Firefly.Signal.EventBus\Firefly.Signal.EventBus.csproj" />
     <ProjectReference Include="..\Firefly.Signal.EventBusRabbitMQ\Firefly.Signal.EventBusRabbitMQ.csproj" />
+    <ProjectReference Include="..\Firefly.Signal.SharedKernel\Firefly.Signal.SharedKernel.csproj" />
     <ProjectReference Include="..\Firefly.Signal.ServiceDefaults\Firefly.Signal.ServiceDefaults.csproj" />
   </ItemGroup>
 
