@@ -1,0 +1,7 @@
+interface:
+  display_name: "Git Issue"
+  short_description: "Refine and manage Firefly GitHub issues"
+  brand_color: "#2563EB"
+  default_prompt: "Refine or manage a Firefly GitHub issue"
+policy:
+  allow_implicit_invocation: true
