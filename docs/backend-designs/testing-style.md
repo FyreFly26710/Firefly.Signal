@@ -19,6 +19,9 @@ Recommended project names:
 - `Firefly.Signal.JobSearch.FunctionalTests`
 - `Firefly.Signal.Identity.FunctionalTests`
 
+The repository does not currently include these test projects.
+Until tests are added back, keep `Program.Testing.cs` and `InternalsVisibleTo` hooks minimal, and do not reference missing test projects from `Firefly.Signal.Api.slnx`.
+
 ## 2. Unit Test Style
 
 Unit tests should be:

@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Firefly.Signal.Identity.Api.Options;
 using Firefly.Signal.Identity.Domain;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -39,12 +40,4 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
 
         return new LoginTokenResult(new JwtSecurityTokenHandler().WriteToken(token), expiresAtUtc);
     }
-}
-
-public sealed class JwtOptions
-{
-    public string Issuer { get; init; } = "Firefly.Signal";
-    public string Audience { get; init; } = "Firefly.Signal.Client";
-    public string SigningKey { get; init; } = "firefly-signal-dev-signing-key-please-change";
-    public int ExpiresInMinutes { get; init; } = 120;
 }

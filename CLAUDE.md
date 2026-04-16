@@ -25,12 +25,7 @@ npm run test:watch   # Tests in watch mode
 # Always use .slnx — do not use .sln or .slnf
 dotnet restore services/api/Firefly.Signal.Api.slnx
 dotnet build services/api/Firefly.Signal.Api.slnx
-dotnet test services/api/Firefly.Signal.Api.slnx
-
-# Single test project
-dotnet test services/api/tests/Firefly.Signal.JobSearch.UnitTests/Firefly.Signal.JobSearch.UnitTests.csproj
-# Filter by class or method
-dotnet test <project.csproj> --filter "ClassName=MyTests" --verbosity detailed
+# Backend tests are not currently checked in, so `dotnet test` is only valid once test projects exist again.
 ```
 
 ### Local infrastructure
@@ -54,12 +49,13 @@ AI API              — job rating and explanations
 Shared libs         — EventBus, EventBusRabbitMQ, IntegrationEventLogEF (outbox), SharedKernel, ServiceDefaults
 ```
 
-Each API follows Clean Architecture:
-- `Application/` — use cases, command/query handlers
+Each API follows a small, explicit service structure:
+- `Apis/` — minimal API route modules and request-to-application mapping
+- `Contracts/` — request and response models
+- `Application/` — command/query interfaces and response mappers
 - `Domain/` — entities and domain logic
-- `Endpoints/` — minimal API route handlers
-- `Infrastructure/` — EF Core DbContext, migrations, external integrations
-- `Program.cs` — DI and middleware
+- `Infrastructure/` — EF Core DbContext, migrations, storage, and external integrations
+- `Program.cs` — thin startup and middleware
 
 Cross-cutting conventions live in `Directory.Build.props` (warnings as errors, nullable enabled, implicit usings) and `Directory.Packages.props` (centralized NuGet versions).
 

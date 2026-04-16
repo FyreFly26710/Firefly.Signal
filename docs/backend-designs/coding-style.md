@@ -335,14 +335,27 @@ public partial class Program { }
 ```text
 Firefly.Signal.JobSearch.Api/
   Apis/
+  Contracts/
+    Requests/
+    Responses/
+  Application/
+    Commands/
+    Queries/
+    Mappers/
   Extensions/
   Infrastructure/
-  IntegrationEvents/
-  Model/
+  Options/
   Program.cs
   Program.Testing.cs
   GlobalUsings.cs
 ```
+
+Notes:
+- `Apis/` owns route modules and request-to-application translation.
+- `Contracts/` owns transport models.
+- `Application/` owns read/write interfaces plus mapping that should not live in the HTTP layer.
+- `Infrastructure/` owns EF Core, storage, provider adapters, and service implementations.
+- Keep `Program.Testing.cs` even if no test project currently exists so functional tests can be reintroduced cleanly later.
 
 If the service grows, split feature logic further. If it stays small, keep it simple.
 

@@ -1,7 +1,5 @@
 namespace Firefly.Signal.SharedKernel.Domain;
 
-public interface IAggregateRoot;
-
 public interface ISoftDeletable
 {
     bool IsDeleted { get; }
