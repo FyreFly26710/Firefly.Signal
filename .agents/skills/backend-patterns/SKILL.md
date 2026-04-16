@@ -62,6 +62,7 @@ Gateway and AI APIs can stay lighter, but they should still follow the same spir
 - add shared defaults
 - call `AddApplicationServices()`
 - add problem details and OpenAPI
+- add shared exception handling
 - build the app
 - map endpoints
 - run the app
@@ -74,6 +75,7 @@ Do not put these in `Program.cs`:
 - large endpoint handlers
 
 Startup-owned types belong in normal files, usually `Options/` or `Infrastructure/Services/`.
+Cross-cutting middleware and exception handling belong in `SharedKernel`.
 
 ## Application Layer Rules
 
@@ -103,6 +105,7 @@ Endpoint modules should not:
 - own provider integration logic
 - parse claims all over the place
 - contain large mapping blocks that belong in mappers
+- catch business exceptions just to translate them into problem details
 
 Use a small current-user abstraction such as `IIdentityService` or another narrow adapter.
 
@@ -123,6 +126,37 @@ Persistence:
 External integrations:
 - provider adapters and their models live under `Infrastructure/Services/<ProviderName>/`
 - keep third-party request/response models close to the adapter that owns them
+
+## Exception Rules
+
+Standardize on central middleware exception mapping.
+
+- Unexpected failures should reach the shared exception middleware.
+- Expected write-path failures should use custom typed exceptions, not endpoint-local `try/catch`.
+- Normal control flow should not throw. Use `null`, booleans, or typed results for ordinary branches such as simple read-side not found cases.
+
+Throwing guidance:
+- Domain entities should throw built-in guard exceptions only:
+  - `ArgumentNullException`
+  - `ArgumentException`
+  - `ArgumentOutOfRangeException`
+  - `InvalidOperationException` only for true invariant misuse or impossible state
+- Application command handlers should throw custom application exceptions for expected business failures that need stable API responses.
+- Application query handlers should usually return `null` or a normal result instead of throwing for ordinary missing data.
+- Infrastructure/provider code may throw provider-specific exceptions internally, but those should be wrapped or translated into application exceptions before escaping to the API boundary.
+
+Where exceptions live:
+- Shared cross-cutting base exceptions live in `SharedKernel/Exceptions/`.
+- Use `FireflyProblemException` as the shared base type for exceptions that should map directly to problem-details responses.
+- Feature-specific business exceptions live in `Feature.Api/Application/Exceptions/`.
+- Provider-specific raw exceptions stay near the provider under `Infrastructure/Services/<ProviderName>/` or the provider-owned infrastructure area.
+
+Middleware contract:
+- `ValidationException` maps to `400`.
+- `FireflyProblemException` maps using its embedded status, title, detail, and optional error code.
+- `BadHttpRequestException` maps to `400`.
+- Everything else maps to `500`.
+- Problem-details responses should include `status`, `title`, `detail`, `instance`, `traceId`, and `errorCode` when available.
 
 ## Domain Rules
 
@@ -164,4 +198,3 @@ Keep shared code small and stable:
 - pipeline helpers only when already justified
 
 Do not keep duplicate copies of the same shared type in different namespaces or folders.
-
