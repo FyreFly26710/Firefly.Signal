@@ -1,410 +1,300 @@
 ---
 name: frontend-tdd-workflow
-description: Use this skill when writing new features, fixing bugs, or refactoring code. Enforces test-driven development with 80%+ coverage including unit, integration, and E2E tests.
-origin: ECC
+description: Use this skill when writing frontend features, fixing frontend bugs, or refactoring apps/web. Enforces Firefly Signal's frontend TDD workflow with colocated Vitest coverage and focused Playwright smoke flows where browser behavior matters.
 ---
 
-# Test-Driven Development Workflow
+# Frontend TDD Workflow
 
-This skill ensures all code development follows TDD principles with comprehensive test coverage.
+This skill defines the frontend testing workflow for Firefly Signal under `apps/web/`.
+
+Use it together with `frontend-patterns`, `frontend-design`, and `frontend-e2e-testing` when changing frontend behavior.
 
 ## When to Activate
 
-- Writing new features or functionality
-- Fixing bugs or issues
-- Refactoring existing code
-- Adding API endpoints
-- Creating new components
+- Writing new frontend features in `apps/web`
+- Fixing frontend bugs
+- Refactoring view, hook, route, or shared UI behavior
+- Adding tests or expanding existing frontend coverage
+- Changing browser-visible behavior that may need Playwright validation
 
-## Core Principles
+## Firefly Rules
 
-### 1. Tests BEFORE Code
-ALWAYS write tests first, then implement code to make tests pass.
+### 1. Tests Before Code
 
-### 2. Coverage Requirements
-- Minimum 80% coverage (unit + integration + E2E)
-- All edge cases covered
-- Error scenarios tested
-- Boundary conditions verified
+Always start with a failing test at the lowest layer that owns the behavior.
 
-### 3. Test Types
+Use:
 
-#### Unit Tests
-- Individual functions and utilities
-- Component logic
-- Pure functions
-- Helpers and utilities
+- colocated `*.test.ts` for pure logic, mappers, stores, and helpers
+- colocated `*.test.tsx` for hooks, components, and views
+- Playwright specs in `tests/e2e/` for critical browser flows
 
-#### Integration Tests
-- API endpoints
-- Database operations
-- Service interactions
-- External API calls
+### 2. Follow The Existing Repo Split
 
-#### E2E Tests (Playwright)
-- Critical user flows
-- Complete workflows
-- Browser automation
-- UI interactions
+The current frontend standard is:
 
-## TDD Workflow Steps
+- feature behavior lives under `apps/web/src/features/<feature>/`
+- shared UI lives under `apps/web/src/components/`
+- shared test helpers live under `apps/web/src/test/`
+- browser tests live under `apps/web/tests/e2e/`
 
-### Step 1: Write User Journeys
-```
-As a [role], I want to [action], so that [benefit]
+Do not create separate `integration` or `acceptance` folder layers for normal frontend work unless the task explicitly needs them.
 
-Example:
-As a user, I want to search for markets semantically,
-so that I can find relevant markets even without exact keywords.
-```
+### 3. Coverage Means Behavior, Not Metrics Theater
 
-### Step 2: Generate Test Cases
-For each user journey, create comprehensive test cases:
+The repo does not currently standardize on a numeric frontend coverage threshold.
+Do not invent one in implementation tasks.
 
-```typescript
-describe('Semantic Search', () => {
-  it('returns relevant markets for query', async () => {
-    // Test implementation
-  })
+Instead, make coverage meaningful:
 
-  it('handles empty query gracefully', async () => {
-    // Test edge case
-  })
+- happy path
+- relevant edge cases
+- user-facing error paths
+- routing and auth behavior when the change affects navigation
 
-  it('falls back to substring search when Redis unavailable', async () => {
-    // Test fallback behavior
-  })
+### 4. Test Real Ownership Boundaries
 
-  it('sorts results by similarity score', async () => {
-    // Test sorting logic
-  })
-})
-```
+Place tests where the logic actually lives:
 
-### Step 3: Run Tests (They Should Fail)
+- normalization and pure helpers: colocated `*.test.ts`
+- hooks and store transitions: colocated `*.test.ts` or `*.test.tsx`
+- view behavior and rendering: colocated `*.test.tsx`
+- browser routing and critical workflows: Playwright under `tests/e2e/`
+
+## Firefly Frontend Test Types
+
+### Unit And Logic Tests
+
+Use for:
+
+- search query normalization
+- API response mapping
+- session store behavior
+- small async helpers
+- feature-specific pure utilities
+
+Examples already in the repo:
+
+- `apps/web/src/features/search/lib/search-query.test.ts`
+- `apps/web/src/features/search/mappers/search.mappers.test.ts`
+- `apps/web/src/store/session.store.test.ts`
+
+### View And Component Tests
+
+Use for:
+
+- form interaction
+- retry and error states
+- auth-aware rendering
+- feature view behavior
+- component rendering with shared providers
+
+Examples already in the repo:
+
+- `apps/web/src/components/AppHeader.test.tsx`
+- `apps/web/src/features/profile/views/ProfileView.test.tsx`
+- `apps/web/src/features/jobs/views/JobsListView.test.tsx`
+
+### E2E Tests
+
+Use for:
+
+- route smoke tests
+- protected-route redirects
+- admin flows
+- end-to-end regressions that span multiple page concerns
+
+Current example:
+
+- `apps/web/tests/e2e/search-landing.spec.ts`
+
+## TDD Workflow
+
+### Step 1: State The Frontend Behavior
+
+Describe the behavior in one or two sentences before coding.
+
+Examples:
+
+- "As a public user, I can submit search criteria from the landing page."
+- "As an authenticated user, I can edit my profile and see a saved confirmation."
+
+### Step 2: Choose The Lowest Owning Layer
+
+Pick the first failing test target with this rule:
+
+1. If the behavior is pure logic, start with a colocated `*.test.ts`.
+2. If the behavior is a hook, store, component, or view concern, start with a colocated `*.test.tsx` or hook test.
+3. If the behavior depends on real browser routing or full-page workflow, add a Playwright spec.
+
+### Step 3: Write The Failing Test
+
+Write the smallest failing test that proves the missing behavior.
+
+Examples already in the repo:
+
+- `apps/web/src/features/search/components/SearchForm.test.tsx`
+- `apps/web/src/features/search/hooks/useJobSearch.test.tsx`
+- `apps/web/src/features/workspace/views/WorkspaceView.test.tsx`
+- `apps/web/tests/e2e/search-landing.spec.ts`
+
+### Step 4: Run The Smallest Relevant Test Command
+
+Prefer targeted commands while iterating:
+
 ```bash
+npm test -- SearchForm
+npm test -- useJobSearch
+npm run test:e2e -- --grep "Search landing"
+```
+
+The first run should fail for the new behavior.
+
+### Step 5: Implement The Smallest Passing Change
+
+Add only the code needed to make the new test pass.
+
+Follow `frontend-patterns`:
+
+- keep route modules thin
+- keep feature behavior with the owning feature
+- prefer composition over large monolithic render blocks
+- use shared test helpers instead of duplicating provider setup
+
+### Step 6: Re-Run Focused Tests, Then Refactor
+
+Once the targeted test is green:
+
+- remove duplication
+- improve naming
+- simplify helpers
+- keep the tests green throughout
+
+### Step 7: Verify The Frontend Slice
+
+Before finishing frontend work, run the relevant app commands:
+
+```bash
+npm run lint
 npm test
-# Tests should fail - we haven't implemented yet
+npm run build
 ```
 
-### Step 4: Implement Code
-Write minimal code to make tests pass:
+If browser behavior changed, also run:
 
-```typescript
-// Implementation guided by tests
-export async function searchMarkets(query: string) {
-  // Implementation here
-}
-```
-
-### Step 5: Run Tests Again
 ```bash
-npm test
-# Tests should now pass
+npm run test:e2e
 ```
 
-### Step 6: Refactor
-Improve code quality while keeping tests green:
-- Remove duplication
-- Improve naming
-- Optimize performance
-- Enhance readability
+If the task only touched one focused slice, explain which narrower command you ran instead of the whole suite.
 
-### Step 7: Verify Coverage
-```bash
-npm run test:coverage
-# Verify 80%+ coverage achieved
-```
+## Patterns To Follow
 
-## Testing Patterns
+### Pure Helper Test Pattern
 
-### Unit Test Pattern (Jest/Vitest)
 ```typescript
-import { render, screen, fireEvent } from '@testing-library/react'
-import { Button } from './Button'
+import { describe, expect, it } from "vitest";
+import { createSearchPath } from "@/features/search/lib/search-query";
 
-describe('Button Component', () => {
-  it('renders with correct text', () => {
-    render(<Button>Click me</Button>)
-    expect(screen.getByText('Click me')).toBeInTheDocument()
-  })
-
-  it('calls onClick when clicked', () => {
-    const handleClick = jest.fn()
-    render(<Button onClick={handleClick}>Click</Button>)
-
-    fireEvent.click(screen.getByRole('button'))
-
-    expect(handleClick).toHaveBeenCalledTimes(1)
-  })
-
-  it('is disabled when disabled prop is true', () => {
-    render(<Button disabled>Click</Button>)
-    expect(screen.getByRole('button')).toBeDisabled()
-  })
-})
+describe("search-query", () => {
+  it("builds the search path from normalized criteria", () => {
+    expect(
+      createSearchPath({ keyword: "designer", postcode: "EC2A", pageIndex: 0, pageSize: 20 })
+    ).toContain("/search");
+  });
+});
 ```
 
-### API Integration Test Pattern
+### View Test Pattern
+
 ```typescript
-import { NextRequest } from 'next/server'
-import { GET } from './route'
+import { screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { WorkspaceView } from "@/features/workspace/views/WorkspaceView";
+import { renderWithProviders } from "@/test/render";
 
-describe('GET /api/markets', () => {
-  it('returns markets successfully', async () => {
-    const request = new NextRequest('http://localhost/api/markets')
-    const response = await GET(request)
-    const data = await response.json()
+describe("WorkspaceView", () => {
+  it("keeps the workspace focused on supported search actions", () => {
+    renderWithProviders(<WorkspaceView />);
 
-    expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    expect(Array.isArray(data.data)).toBe(true)
-  })
-
-  it('validates query parameters', async () => {
-    const request = new NextRequest('http://localhost/api/markets?limit=invalid')
-    const response = await GET(request)
-
-    expect(response.status).toBe(400)
-  })
-
-  it('handles database errors gracefully', async () => {
-    // Mock database failure
-    const request = new NextRequest('http://localhost/api/markets')
-    // Test error handling
-  })
-})
+    expect(screen.getByRole("heading", { name: "Your workspace" })).toBeInTheDocument();
+  });
+});
 ```
 
-### E2E Test Pattern (Playwright)
+### Async View Pattern
+
 ```typescript
-import { test, expect } from '@playwright/test'
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+import { ProfileView } from "@/features/profile/views/ProfileView";
+import { getCurrentProfile } from "@/api/profile/profile.api";
+import { renderWithProviders } from "@/test/render";
 
-test('user can search and filter markets', async ({ page }) => {
-  // Navigate to markets page
-  await page.goto('/')
-  await page.click('a[href="/markets"]')
+vi.mock("@/api/profile/profile.api", () => ({
+  getCurrentProfile: vi.fn()
+}));
 
-  // Verify page loaded
-  await expect(page.locator('h1')).toContainText('Markets')
+describe("ProfileView", () => {
+  it("loads profile data", async () => {
+    vi.mocked(getCurrentProfile).mockResolvedValueOnce(/* ... */);
 
-  // Search for markets
-  await page.fill('input[placeholder="Search markets"]', 'election')
+    renderWithProviders(<ProfileView />, { route: "/app/profile" });
 
-  // Wait for debounce and results
-  await page.waitForTimeout(600)
-
-  // Verify search results displayed
-  const results = page.locator('[data-testid="market-card"]')
-  await expect(results).toHaveCount(5, { timeout: 5000 })
-
-  // Verify results contain search term
-  const firstResult = results.first()
-  await expect(firstResult).toContainText('election', { ignoreCase: true })
-
-  // Filter by status
-  await page.click('button:has-text("Active")')
-
-  // Verify filtered results
-  await expect(results).toHaveCount(3)
-})
-
-test('user can create a new market', async ({ page }) => {
-  // Login first
-  await page.goto('/creator-dashboard')
-
-  // Fill market creation form
-  await page.fill('input[name="name"]', 'Test Market')
-  await page.fill('textarea[name="description"]', 'Test description')
-  await page.fill('input[name="endDate"]', '2025-12-31')
-
-  // Submit form
-  await page.click('button[type="submit"]')
-
-  // Verify success message
-  await expect(page.locator('text=Market created successfully')).toBeVisible()
-
-  // Verify redirect to market page
-  await expect(page).toHaveURL(/\/markets\/test-market/)
-})
+    expect(await screen.findByLabelText("Preferred title")).toBeInTheDocument();
+  });
+});
 ```
 
-## Test File Organization
+### Browser Smoke Pattern
 
-```
-src/
-├── components/
-│   ├── Button/
-│   │   ├── Button.tsx
-│   │   ├── Button.test.tsx          # Unit tests
-│   │   └── Button.stories.tsx       # Storybook
-│   └── MarketCard/
-│       ├── MarketCard.tsx
-│       └── MarketCard.test.tsx
-├── app/
-│   └── api/
-│       └── markets/
-│           ├── route.ts
-│           └── route.test.ts         # Integration tests
-└── e2e/
-    ├── markets.spec.ts               # E2E tests
-    ├── trading.spec.ts
-    └── auth.spec.ts
-```
-
-## Mocking External Services
-
-### Supabase Mock
 ```typescript
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({
-          data: [{ id: 1, name: 'Test Market' }],
-          error: null
-        }))
-      }))
-    }))
-  }
-}))
+import { expect, test } from "@playwright/test";
+
+test("shows the public entry points", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByRole("link", { name: "Search" })).toBeVisible();
+});
 ```
 
-### Redis Mock
-```typescript
-jest.mock('@/lib/redis', () => ({
-  searchMarketsByVector: jest.fn(() => Promise.resolve([
-    { slug: 'test-market', similarity_score: 0.95 }
-  ])),
-  checkRedisHealth: jest.fn(() => Promise.resolve({ connected: true }))
-}))
-```
+## What Not To Do
 
-### OpenAI Mock
-```typescript
-jest.mock('@/lib/openai', () => ({
-  generateEmbedding: jest.fn(() => Promise.resolve(
-    new Array(1536).fill(0.1) // Mock 1536-dim embedding
-  ))
-}))
-```
+- Do not build a second provider setup in every test file when `src/test/render.tsx` already fits.
+- Do not default to Playwright when a view or hook test is the real owning layer.
+- Do not assert implementation details such as internal state or brittle DOM wrappers.
+- Do not add frontend tests for untouched behavior just to make a change look bigger.
+- Do not claim TDD if the tests were added only after the implementation was already complete.
 
-## Test Coverage Verification
+## Frontend-Specific Mistakes To Avoid
 
-### Run Coverage Report
-```bash
-npm run test:coverage
-```
+### Wrong: Testing Through The Wrong Layer
 
-### Coverage Thresholds
-```json
-{
-  "jest": {
-    "coverageThresholds": {
-      "global": {
-        "branches": 80,
-        "functions": 80,
-        "lines": 80,
-        "statements": 80
-      }
-    }
-  }
-}
-```
+Do not use a browser test for string normalization, mapper logic, or store transitions that belong in Vitest.
 
-## Common Testing Mistakes to Avoid
+### Right: Match The Ownership Boundary
 
-### FAIL: WRONG: Testing Implementation Details
-```typescript
-// Don't test internal state
-expect(component.state.count).toBe(5)
-```
+If the change is local to a feature view, test the feature view.
+If the change is a pure utility, test the utility.
+If the change is a real browser journey, use Playwright.
 
-### PASS: CORRECT: Test User-Visible Behavior
-```typescript
-// Test what users see
-expect(screen.getByText('Count: 5')).toBeInTheDocument()
-```
+### Wrong: Rebuilding Providers In Every Test
 
-### FAIL: WRONG: Brittle Selectors
-```typescript
-// Breaks easily
-await page.click('.css-class-xyz')
-```
+Avoid repeating `ThemeProvider`, `MemoryRouter`, and app setup manually when the shared renderer already supports the case.
 
-### PASS: CORRECT: Semantic Selectors
-```typescript
-// Resilient to changes
-await page.click('button:has-text("Submit")')
-await page.click('[data-testid="submit-button"]')
-```
+### Right: Reuse Shared Test Helpers
 
-### FAIL: WRONG: No Test Isolation
-```typescript
-// Tests depend on each other
-test('creates user', () => { /* ... */ })
-test('updates same user', () => { /* depends on previous test */ })
-```
+Prefer `renderWithProviders(...)` and extend it only when a new cross-test need is truly shared.
 
-### PASS: CORRECT: Independent Tests
-```typescript
-// Each test sets up its own data
-test('creates user', () => {
-  const user = createTestUser()
-  // Test logic
-})
+## Success Criteria
 
-test('updates user', () => {
-  const user = createTestUser()
-  // Update logic
-})
-```
+Frontend work is done when:
 
-## Continuous Testing
+- the first test was written before the behavior change
+- the test sits at the correct ownership layer
+- changed behavior is covered by focused Vitest or Playwright tests
+- the relevant frontend commands pass
+- the implementation still follows Firefly's frontend structure
 
-### Watch Mode During Development
-```bash
-npm test -- --watch
-# Tests run automatically on file changes
-```
-
-### Pre-Commit Hook
-```bash
-# Runs before every commit
-npm test && npm run lint
-```
-
-### CI/CD Integration
-```yaml
-# GitHub Actions
-- name: Run Tests
-  run: npm test -- --coverage
-- name: Upload Coverage
-  uses: codecov/codecov-action@v3
-```
-
-## Best Practices
-
-1. **Write Tests First** - Always TDD
-2. **One Assert Per Test** - Focus on single behavior
-3. **Descriptive Test Names** - Explain what's tested
-4. **Arrange-Act-Assert** - Clear test structure
-5. **Mock External Dependencies** - Isolate unit tests
-6. **Test Edge Cases** - Null, undefined, empty, large
-7. **Test Error Paths** - Not just happy paths
-8. **Keep Tests Fast** - Unit tests < 50ms each
-9. **Clean Up After Tests** - No side effects
-10. **Review Coverage Reports** - Identify gaps
-
-## Success Metrics
-
-- 80%+ code coverage achieved
-- All tests passing (green)
-- No skipped or disabled tests
-- Fast test execution (< 30s for unit tests)
-- E2E tests cover critical user flows
-- Tests catch bugs before production
-
----
-
-**Remember**: Tests are not optional. They are the safety net that enables confident refactoring, rapid development, and production reliability.
+In this repo, good frontend TDD means small red-green-refactor loops with tests placed exactly where the UI architecture says the behavior belongs.

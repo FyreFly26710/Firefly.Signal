@@ -1,326 +1,259 @@
 ---
 name: frontend-e2e-testing
-description: Playwright E2E testing patterns, Page Object Model, configuration, CI/CD integration, artifact management, and flaky test strategies.
-origin: ECC
+description: Use this skill when adding or refactoring Playwright coverage for Firefly Signal's web app under apps/web. Enforces repo-specific frontend E2E patterns, configuration, and smoke-flow coverage.
 ---
 
-# E2E Testing Patterns
+# Frontend E2E Testing
 
-Comprehensive Playwright patterns for building stable, fast, and maintainable E2E test suites.
+This skill defines the Playwright workflow for Firefly Signal under `apps/web/`.
 
-## Test File Organization
+Use it together with `frontend-patterns` and `frontend-tdd-workflow` when browser-level behavior is part of the change.
 
-```
-tests/
-├── e2e/
-│   ├── auth/
-│   │   ├── login.spec.ts
-│   │   ├── logout.spec.ts
-│   │   └── register.spec.ts
-│   ├── features/
-│   │   ├── browse.spec.ts
-│   │   ├── search.spec.ts
-│   │   └── create.spec.ts
-│   └── api/
-│       └── endpoints.spec.ts
-├── fixtures/
-│   ├── auth.ts
-│   └── data.ts
-└── playwright.config.ts
-```
+## When to Activate
 
-## Page Object Model (POM)
+- Adding Playwright coverage under `apps/web/tests/e2e`
+- Validating critical user journeys through the running web app
+- Refactoring frontend behavior that needs end-to-end confidence
+- Fixing flaky browser tests
+- Updating Playwright config, fixtures, or smoke flows
 
-```typescript
-import { Page, Locator } from '@playwright/test'
+## Firefly Rules
 
-export class ItemsPage {
-  readonly page: Page
-  readonly searchInput: Locator
-  readonly itemCards: Locator
-  readonly createButton: Locator
+### 1. E2E Covers User-Visible Flows
 
-  constructor(page: Page) {
-    this.page = page
-    this.searchInput = page.locator('[data-testid="search-input"]')
-    this.itemCards = page.locator('[data-testid="item-card"]')
-    this.createButton = page.locator('[data-testid="create-btn"]')
-  }
+Use Playwright for real browser behavior that spans routing, rendering, and user interaction.
 
-  async goto() {
-    await this.page.goto('/items')
-    await this.page.waitForLoadState('networkidle')
-  }
+Good E2E targets in this repo:
 
-  async search(query: string) {
-    await this.searchInput.fill(query)
-    await this.page.waitForResponse(resp => resp.url().includes('/api/search'))
-    await this.page.waitForLoadState('networkidle')
-  }
+- public search entry flows
+- sign-in and protected-route behavior
+- workspace navigation
+- admin job-management flows
+- regression smoke checks after significant UI refactors
 
-  async getItemCount() {
-    return await this.itemCards.count()
-  }
-}
-```
+Do not use Playwright for behavior already covered well by a colocated Vitest component or hook test.
 
-## Test Structure
+### 2. Keep The Suite Small And Intentional
 
-```typescript
-import { test, expect } from '@playwright/test'
-import { ItemsPage } from '../../pages/ItemsPage'
+The current frontend suite is mostly Vitest-based.
+Playwright should stay focused on critical journeys, not duplicate every component test in a browser.
 
-test.describe('Item Search', () => {
-  let itemsPage: ItemsPage
+Prefer:
 
-  test.beforeEach(async ({ page }) => {
-    itemsPage = new ItemsPage(page)
-    await itemsPage.goto()
-  })
+- one smoke test for a route or flow
+- one happy-path browser test per critical workflow
+- one regression test for a previously broken cross-page behavior
 
-  test('should search by keyword', async ({ page }) => {
-    await itemsPage.search('test')
+Avoid:
 
-    const count = await itemsPage.getItemCount()
-    expect(count).toBeGreaterThan(0)
+- broad “click every button” scripts
+- asserting styling details that belong in component tests
+- duplicating all form validation cases already covered in Vitest
 
-    await expect(itemsPage.itemCards.first()).toContainText(/test/i)
-    await page.screenshot({ path: 'artifacts/search-results.png' })
-  })
+### 3. Follow The Existing Repo Layout
 
-  test('should handle no results', async ({ page }) => {
-    await itemsPage.search('xyznonexistent123')
+The current standard is:
 
-    await expect(page.locator('[data-testid="no-results"]')).toBeVisible()
-    expect(await itemsPage.getItemCount()).toBe(0)
-  })
-})
+```text
+apps/web/
+  playwright.config.ts
+  tests/
+    e2e/
+      *.spec.ts
 ```
 
-## Playwright Configuration
+Keep:
 
-```typescript
-import { defineConfig, devices } from '@playwright/test'
+- Playwright config in `apps/web/playwright.config.ts`
+- browser specs in `apps/web/tests/e2e/`
+- future fixtures under `apps/web/tests/fixtures/` only when reuse is real
 
-export default defineConfig({
-  testDir: './tests/e2e',
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['junit', { outputFile: 'playwright-results.xml' }],
-    ['json', { outputFile: 'playwright-results.json' }]
-  ],
-  use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    actionTimeout: 10000,
-    navigationTimeout: 30000,
-  },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-    { name: 'mobile-chrome', use: { ...devices['Pixel 5'] } },
-  ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
-})
-```
+Do not introduce a separate repo-root frontend E2E setup for normal web app work.
 
-## Flaky Test Patterns
+### 4. Prefer Accessible Selectors First
 
-### Quarantine
+Use:
 
-```typescript
-test('flaky: complex search', async ({ page }) => {
-  test.fixme(true, 'Flaky - Issue #123')
-  // test code...
-})
+- `getByRole`
+- `getByLabelText` equivalents through Playwright locators
+- visible text when stable
 
-test('conditional skip', async ({ page }) => {
-  test.skip(process.env.CI, 'Flaky in CI - Issue #123')
-  // test code...
-})
-```
+Only add `data-testid` when the UI does not expose a stable accessible hook.
 
-### Identify Flakiness
+## Firefly Playwright Commands
+
+Run frontend E2E work from `apps/web`:
 
 ```bash
-npx playwright test tests/search.spec.ts --repeat-each=10
-npx playwright test tests/search.spec.ts --retries=3
+npm run test:e2e
+npm run test:e2e -- --grep "Search landing"
+npm run test:e2e:headed
+npm run test:e2e:ui
+npm run test:e2e:install
 ```
 
-### Common Causes & Fixes
+Current config expectations:
 
-**Race conditions:**
-```typescript
-// Bad: assumes element is ready
-await page.click('[data-testid="button"]')
+- local base URL defaults to `http://127.0.0.1:4173`
+- Playwright starts the Vite dev server automatically
+- Chromium is the default project
+- artifacts are written to ignored Playwright output folders
 
-// Good: auto-wait locator
-await page.locator('[data-testid="button"]').click()
+## E2E Workflow
+
+### Step 1: State The User Journey
+
+Describe the browser behavior in one or two sentences before coding.
+
+Examples:
+
+- "As a public user, I can reach the search entry points from the landing page."
+- "As an admin, I can open manage jobs and hide a job after a delete conflict."
+
+### Step 2: Choose The Smallest Browser Slice
+
+Pick the narrowest flow that proves the behavior:
+
+1. one route if the regression is page-local
+2. one cross-page flow if routing or auth matters
+3. one admin flow if permissions are part of the behavior
+
+### Step 3: Write The Failing Spec
+
+Add the browser spec under `apps/web/tests/e2e/`.
+
+Current example:
+
+- `apps/web/tests/e2e/search-landing.spec.ts`
+
+### Step 4: Run Only The Relevant Browser Test
+
+Prefer focused runs while iterating:
+
+```bash
+npm run test:e2e -- --grep "Search landing"
 ```
 
-**Network timing:**
-```typescript
-// Bad: arbitrary timeout
-await page.waitForTimeout(5000)
+The first run should fail for the new behavior.
 
-// Good: wait for specific condition
-await page.waitForResponse(resp => resp.url().includes('/api/data'))
+### Step 5: Implement The Smallest Passing UI Change
+
+Add only the code needed to make the browser test pass.
+
+Keep `frontend-patterns` in mind:
+
+- route modules stay thin
+- feature behavior stays in feature-owned code
+- shared UI is intentional
+- selectors should reflect accessible UI
+
+### Step 6: Re-Run The Spec, Then Refactor
+
+Once the focused Playwright test is green:
+
+- simplify selectors
+- remove duplication
+- tighten naming
+- keep the browser spec readable and small
+
+### Step 7: Verify The Frontend Slice
+
+Before finishing frontend work that changes browser behavior, run:
+
+```bash
+npm run lint
+npm test
+npm run test:e2e
+npm run build
 ```
 
-**Animation timing:**
-```typescript
-// Bad: click during animation
-await page.click('[data-testid="menu-item"]')
+If the task only touched one browser flow and the full E2E suite would be unnecessarily heavy later on, explain which narrower Playwright command you ran instead.
 
-// Good: wait for stability
-await page.locator('[data-testid="menu-item"]').waitFor({ state: 'visible' })
-await page.waitForLoadState('networkidle')
-await page.locator('[data-testid="menu-item"]').click()
-```
+## Patterns To Follow
 
-## Artifact Management
-
-### Screenshots
-
-```typescript
-await page.screenshot({ path: 'artifacts/after-login.png' })
-await page.screenshot({ path: 'artifacts/full-page.png', fullPage: true })
-await page.locator('[data-testid="chart"]').screenshot({ path: 'artifacts/chart.png' })
-```
-
-### Traces
-
-```typescript
-await browser.startTracing(page, {
-  path: 'artifacts/trace.json',
-  screenshots: true,
-  snapshots: true,
-})
-// ... test actions ...
-await browser.stopTracing()
-```
-
-### Video
-
-```typescript
-// In playwright.config.ts
-use: {
-  video: 'retain-on-failure',
-  videosPath: 'artifacts/videos/'
-}
-```
-
-## CI/CD Integration
-
-```yaml
-# .github/workflows/e2e.yml
-name: E2E Tests
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - run: npx playwright test
-        env:
-          BASE_URL: ${{ vars.STAGING_URL }}
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-```
-
-## Test Report Template
-
-```markdown
-# E2E Test Report
-
-**Date:** YYYY-MM-DD HH:MM
-**Duration:** Xm Ys
-**Status:** PASSING / FAILING
-
-## Summary
-- Total: X | Passed: Y (Z%) | Failed: A | Flaky: B | Skipped: C
-
-## Failed Tests
-
-### test-name
-**File:** `tests/e2e/feature.spec.ts:45`
-**Error:** Expected element to be visible
-**Screenshot:** artifacts/failed.png
-**Recommended Fix:** [description]
-
-## Artifacts
-- HTML Report: playwright-report/index.html
-- Screenshots: artifacts/*.png
-- Videos: artifacts/videos/*.webm
-- Traces: artifacts/*.zip
-```
-
-## Wallet / Web3 Testing
+### Route Smoke Pattern
 
 ```typescript
-test('wallet connection', async ({ page, context }) => {
-  // Mock wallet provider
-  await context.addInitScript(() => {
-    window.ethereum = {
-      isMetaMask: true,
-      request: async ({ method }) => {
-        if (method === 'eth_requestAccounts')
-          return ['0x1234567890123456789012345678901234567890']
-        if (method === 'eth_chainId') return '0x1'
-      }
-    }
-  })
+import { expect, test } from "@playwright/test";
 
-  await page.goto('/')
-  await page.locator('[data-testid="connect-wallet"]').click()
-  await expect(page.locator('[data-testid="wallet-address"]')).toContainText('0x1234')
-})
+test.describe("Search landing", () => {
+  test("shows the public entry points", async ({ page }) => {
+    await page.goto("/");
+
+    await expect(page.getByRole("link", { name: "Discover" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Search" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Workspace" })).toBeVisible();
+  });
+});
 ```
 
-## Financial / Critical Flow Testing
+### Protected Route Pattern
 
 ```typescript
-test('trade execution', async ({ page }) => {
-  // Skip on production — real money
-  test.skip(process.env.NODE_ENV === 'production', 'Skip on production')
+import { expect, test } from "@playwright/test";
 
-  await page.goto('/markets/test-market')
-  await page.locator('[data-testid="position-yes"]').click()
-  await page.locator('[data-testid="trade-amount"]').fill('1.0')
+test("redirects unauthenticated users away from workspace routes", async ({ page }) => {
+  await page.goto("/app");
 
-  // Verify preview
-  const preview = page.locator('[data-testid="trade-preview"]')
-  await expect(preview).toContainText('1.0')
-
-  // Confirm and wait for blockchain
-  await page.locator('[data-testid="confirm-trade"]').click()
-  await page.waitForResponse(
-    resp => resp.url().includes('/api/trade') && resp.status() === 200,
-    { timeout: 30000 }
-  )
-
-  await expect(page.locator('[data-testid="trade-success"]')).toBeVisible()
-})
+  await expect(page).toHaveURL(/\/login/);
+});
 ```
+
+### Admin Flow Pattern
+
+```typescript
+import { expect, test } from "@playwright/test";
+
+test("admin can reach manage jobs", async ({ page }) => {
+  // Arrange auth state with a fixture or helper before navigation.
+  await page.goto("/admin/manage-jobs");
+
+  await expect(page.getByRole("heading", { name: "Manage jobs" })).toBeVisible();
+});
+```
+
+## Flaky Test Rules
+
+### Prefer Specific Waiting
+
+Use:
+
+- locator auto-waiting
+- `expect(...).toBeVisible()`
+- `expect(page).toHaveURL(...)`
+
+Avoid:
+
+- arbitrary `waitForTimeout(...)`
+- selectors tied to fragile DOM structure
+
+### Stabilize Browser Intent
+
+If a flow depends on async page work:
+
+- wait for the visible result the user actually sees
+- avoid waiting on private implementation details unless there is no stable UI signal
+
+### Quarantine Only With Context
+
+If you must `fixme` or `skip` a flaky Playwright test, leave a concrete reason and issue reference.
+
+## What Not To Do
+
+- Do not put Playwright specs under `src/`.
+- Do not use E2E to replace normal component, hook, or mapper tests.
+- Do not assert MUI class names or implementation-only DOM wrappers in browser tests.
+- Do not add multiple browsers or mobile projects unless the task explicitly needs them.
+- Do not introduce screenshots, traces, or fixtures everywhere by default.
+
+## Success Criteria
+
+Frontend E2E work is done when:
+
+- the spec lives under `apps/web/tests/e2e/`
+- the test covers a real user-visible workflow
+- selectors are accessible and stable
+- the focused Playwright run passes
+- the normal frontend verification commands still pass
+
+In this repo, good E2E coverage is a small set of reliable smoke and workflow checks that complement Vitest instead of competing with it.
