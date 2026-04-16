@@ -2,7 +2,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import { useEffect } from "react";
 import type { PropsWithChildren } from "react";
 import { theme } from "@/app/theme";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 
 type AppProvidersProps = PropsWithChildren<{
   hydrateSessionOnMount?: boolean;

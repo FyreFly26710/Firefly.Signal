@@ -1,178 +1,72 @@
 ---
 name: frontend-tdd-workflow
-description: Use this skill when writing frontend features, fixing frontend bugs, or refactoring apps/web. Enforces Firefly Signal's frontend TDD workflow with colocated Vitest coverage and focused Playwright smoke flows where browser behavior matters.
+description: Use this skill when writing frontend features, fixing frontend bugs, or refactoring apps/web. Enforces Firefly Signal's frontend TDD workflow: colocated Vitest for logic, hooks, and views; Playwright smoke flows for critical browser paths.
 ---
 
-# Frontend TDD Workflow
+# Frontend TDD Workflow — Firefly Signal
 
-This skill defines the frontend testing workflow for Firefly Signal under `apps/web/`.
-
-Use it together with `frontend-patterns`, `frontend-design`, and `frontend-e2e-testing` when changing frontend behavior.
+This skill defines the frontend testing workflow for `apps/web`. Use it with `frontend-patterns` and `frontend-design` whenever you are changing frontend behavior.
 
 ## When to Activate
 
 - Writing new frontend features in `apps/web`
 - Fixing frontend bugs
-- Refactoring view, hook, route, or shared UI behavior
-- Adding tests or expanding existing frontend coverage
+- Refactoring views, hooks, route behavior, or shared UI
+- Adding or expanding frontend test coverage
 - Changing browser-visible behavior that may need Playwright validation
 
-## Firefly Rules
+## Test Placement Rules
 
-### 1. Tests Before Code
+| Layer | File location | Runner |
+|---|---|---|
+| Pure logic, mappers, helpers | Colocated `*.test.ts` | Vitest |
+| Zustand store transitions | Colocated `*.test.ts` | Vitest |
+| Hooks (TanStack Query, custom) | Colocated `*.test.tsx` | Vitest |
+| View rendering and interactions | Colocated `*.test.tsx` | Vitest |
+| Route smoke, auth redirects, critical flows | `tests/e2e/*.spec.ts` | Playwright |
 
-Always start with a failing test at the lowest layer that owns the behavior.
-
-Use:
-
-- colocated `*.test.ts` for pure logic, mappers, stores, and helpers
-- colocated `*.test.tsx` for hooks, components, and views
-- Playwright specs in `tests/e2e/` for critical browser flows
-
-### 2. Follow The Existing Repo Split
-
-The current frontend standard is:
-
-- feature behavior lives under `apps/web/src/features/<feature>/`
-- shared UI lives under `apps/web/src/components/`
-- shared test helpers live under `apps/web/src/test/`
-- browser tests live under `apps/web/tests/e2e/`
-
-Do not create separate `integration` or `acceptance` folder layers for normal frontend work unless the task explicitly needs them.
-
-### 3. Coverage Means Behavior, Not Metrics Theater
-
-The repo does not currently standardize on a numeric frontend coverage threshold.
-Do not invent one in implementation tasks.
-
-Instead, make coverage meaningful:
-
-- happy path
-- relevant edge cases
-- user-facing error paths
-- routing and auth behavior when the change affects navigation
-
-### 4. Test Real Ownership Boundaries
-
-Place tests where the logic actually lives:
-
-- normalization and pure helpers: colocated `*.test.ts`
-- hooks and store transitions: colocated `*.test.ts` or `*.test.tsx`
-- view behavior and rendering: colocated `*.test.tsx`
-- browser routing and critical workflows: Playwright under `tests/e2e/`
-
-## Firefly Frontend Test Types
-
-### Unit And Logic Tests
-
-Use for:
-
-- search query normalization
-- API response mapping
-- session store behavior
-- small async helpers
-- feature-specific pure utilities
-
-Examples already in the repo:
-
-- `apps/web/src/features/search/lib/search-query.test.ts`
-- `apps/web/src/features/search/mappers/search.mappers.test.ts`
-- `apps/web/src/store/session.store.test.ts`
-
-### View And Component Tests
-
-Use for:
-
-- form interaction
-- retry and error states
-- auth-aware rendering
-- feature view behavior
-- component rendering with shared providers
-
-Examples already in the repo:
-
-- `apps/web/src/components/AppHeader.test.tsx`
-- `apps/web/src/features/profile/views/ProfileView.test.tsx`
-- `apps/web/src/features/jobs/views/JobsListView.test.tsx`
-
-### E2E Tests
-
-Use for:
-
-- route smoke tests
-- protected-route redirects
-- admin flows
-- end-to-end regressions that span multiple page concerns
-
-Current example:
-
-- `apps/web/tests/e2e/search-landing.spec.ts`
+Vitest picks up `src/**/*.test.{ts,tsx}` only. Playwright specs live under `tests/e2e/` and are excluded from the Vitest run.
 
 ## TDD Workflow
 
-### Step 1: State The Frontend Behavior
+### Step 1: State the behavior
 
-Describe the behavior in one or two sentences before coding.
+Write one or two sentences describing what will change and from whose perspective.
 
-Examples:
+> "As a public user, I can search for jobs by keyword and see paginated results."
 
-- "As a public user, I can submit search criteria from the landing page."
-- "As an authenticated user, I can edit my profile and see a saved confirmation."
+### Step 2: Choose the lowest owning layer
 
-### Step 2: Choose The Lowest Owning Layer
+1. If the behavior is pure logic (mapper, normalizer, URL helper) → `*.test.ts`
+2. If the behavior is a Zustand store transition → `*.test.ts`
+3. If the behavior is a TanStack Query hook or custom hook → `*.test.tsx` using `renderHookWithProviders`
+4. If the behavior is view rendering, form interaction, or error state → `*.test.tsx` using `renderWithProviders`
+5. If the behavior requires real routing, auth redirects, or a multi-page flow → Playwright under `tests/e2e/`
 
-Pick the first failing test target with this rule:
+### Step 3: Write the failing test
 
-1. If the behavior is pure logic, start with a colocated `*.test.ts`.
-2. If the behavior is a hook, store, component, or view concern, start with a colocated `*.test.tsx` or hook test.
-3. If the behavior depends on real browser routing or full-page workflow, add a Playwright spec.
+Write the smallest test that expresses the missing behavior. Run it first to confirm it fails.
 
-### Step 3: Write The Failing Test
-
-Write the smallest failing test that proves the missing behavior.
-
-Examples already in the repo:
-
-- `apps/web/src/features/search/components/SearchForm.test.tsx`
-- `apps/web/src/features/search/hooks/useJobSearch.test.tsx`
-- `apps/web/src/features/workspace/views/WorkspaceView.test.tsx`
-- `apps/web/tests/e2e/search-landing.spec.ts`
-
-### Step 4: Run The Smallest Relevant Test Command
-
-Prefer targeted commands while iterating:
+### Step 4: Run the narrowest command
 
 ```bash
 npm test -- SearchForm
 npm test -- useJobSearch
+npm test -- JobDetailView
 npm run test:e2e -- --grep "Search landing"
 ```
 
 The first run should fail for the new behavior.
 
-### Step 5: Implement The Smallest Passing Change
+### Step 5: Implement the minimum passing code
 
-Add only the code needed to make the new test pass.
+Write only what makes the test green. Follow `frontend-patterns` for structure decisions.
 
-Follow `frontend-patterns`:
+### Step 6: Refactor with tests green
 
-- keep route modules thin
-- keep feature behavior with the owning feature
-- prefer composition over large monolithic render blocks
-- use shared test helpers instead of duplicating provider setup
+Clean up naming, remove duplication, simplify helpers. Keep tests green throughout.
 
-### Step 6: Re-Run Focused Tests, Then Refactor
-
-Once the targeted test is green:
-
-- remove duplication
-- improve naming
-- simplify helpers
-- keep the tests green throughout
-
-### Step 7: Verify The Frontend Slice
-
-Before finishing frontend work, run the relevant app commands:
+### Step 7: Verify the frontend slice
 
 ```bash
 npm run lint
@@ -186,14 +80,76 @@ If browser behavior changed, also run:
 npm run test:e2e
 ```
 
-If the task only touched one focused slice, explain which narrower command you ran instead of the whole suite.
+## Test Utilities
 
-## Patterns To Follow
+### renderWithProviders — view and component tests
 
-### Pure Helper Test Pattern
+Located at `src/test/render.tsx`. Wraps with a fresh `QueryClient` (retry: false), `AppProviders` (theme + session), and `MemoryRouter`.
 
 ```typescript
-import { describe, expect, it } from "vitest";
+import { renderWithProviders } from "@/test/render";
+
+renderWithProviders(<JobDetailView jobId="42" />);
+renderWithProviders(<ProfileView />, { route: "/app/profile" });
+renderWithProviders(<WorkspaceView />, { hydrateSessionOnMount: false });
+```
+
+### renderHookWithProviders — TanStack Query and custom hook tests
+
+Also in `src/test/render.tsx`. Same providers as `renderWithProviders` but uses `renderHook`.
+
+```typescript
+import { renderHookWithProviders } from "@/test/render";
+
+const { result } = renderHookWithProviders(() =>
+  useJobSearch({ keyword: "designer", postcode: "EC2A", pageIndex: 0, pageSize: 20 })
+);
+
+await waitFor(() => {
+  expect(result.current.status).toBe("success");
+});
+```
+
+### Test QueryClient behavior
+
+The test `QueryClient` in `createTestQueryClient()` has:
+- `retry: false` — errors surface immediately, no retry delays
+- `staleTime: 0` — no caching between tests
+- `gcTime: 0` — query cache is cleared immediately
+
+This is why query-level `retry` must NOT be set on individual hooks — it would override `retry: false` and cause tests to hang. Let the `QueryClient` govern retry behavior.
+
+### Mocking API modules
+
+Mock at the module level with `vi.mock`. Return typed mock data.
+
+```typescript
+vi.mock("@/api/jobs/jobs.api", () => ({
+  getJobById: vi.fn()
+}));
+
+vi.mocked(getJobById).mockResolvedValueOnce({ id: 42, title: "Senior Engineer", ... });
+```
+
+### Seeding session state in tests
+
+Use `useSessionStore.setState(...)` directly. Do not invoke `signIn`.
+
+```typescript
+useSessionStore.setState({
+  user: { userAccount: "admin", displayName: "Admin", role: "admin", email: "" },
+  isAuthenticated: true
+});
+```
+
+Reset between tests with `useSessionStore.getState().reset()` in `beforeEach`.
+
+## Examples from This Repo
+
+### Pure logic test
+
+```typescript
+// src/features/search/lib/search-query.test.ts
 import { createSearchPath } from "@/features/search/lib/search-query";
 
 describe("search-query", () => {
@@ -205,96 +161,118 @@ describe("search-query", () => {
 });
 ```
 
-### View Test Pattern
+### Zustand store test
 
 ```typescript
-import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { WorkspaceView } from "@/features/workspace/views/WorkspaceView";
-import { renderWithProviders } from "@/test/render";
+// src/features/auth/store/session.store.test.ts
+import { useSessionStore } from "@/features/auth/store/session.store";
 
-describe("WorkspaceView", () => {
-  it("keeps the workspace focused on supported search actions", () => {
-    renderWithProviders(<WorkspaceView />);
+describe("useSessionStore", () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+    useSessionStore.getState().reset();
+    vi.clearAllMocks();
+  });
 
-    expect(screen.getByRole("heading", { name: "Your workspace" })).toBeInTheDocument();
+  it("signs in and updates the store", async () => {
+    vi.mocked(login).mockResolvedValueOnce({ accessToken: "tok", user: { ... } });
+    const user = await useSessionStore.getState().signIn({ userAccount: "ada", password: "secret" });
+    expect(useSessionStore.getState().isAuthenticated).toBe(true);
   });
 });
 ```
 
-### Async View Pattern
+### Hook test (TanStack Query)
 
 ```typescript
-import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
-import { ProfileView } from "@/features/profile/views/ProfileView";
-import { getCurrentProfile } from "@/api/profile/profile.api";
+// src/features/search/hooks/useJobSearch.test.tsx
+import { waitFor } from "@testing-library/react";
+import { renderHookWithProviders } from "@/test/render";
+
+it("surfaces API failures as an error state", async () => {
+  vi.mocked(getJobsPage).mockRejectedValueOnce(new Error("Service unavailable."));
+
+  const { result } = renderHookWithProviders(() =>
+    useJobSearch({ keyword: "engineer", postcode: "M1", pageIndex: 0, pageSize: 20 })
+  );
+
+  await waitFor(() => {
+    expect(result.current.status).toBe("error");
+  });
+
+  expect(result.current.errorMessage).toBe("Service unavailable.");
+});
+```
+
+### View test
+
+```typescript
+// src/features/jobs/views/JobDetailView.test.tsx
 import { renderWithProviders } from "@/test/render";
 
-vi.mock("@/api/profile/profile.api", () => ({
-  getCurrentProfile: vi.fn()
-}));
+it("renders job details from the API", async () => {
+  vi.mocked(getJobById).mockResolvedValueOnce({ id: 42, title: "Senior Product Designer", ... });
 
-describe("ProfileView", () => {
-  it("loads profile data", async () => {
-    vi.mocked(getCurrentProfile).mockResolvedValueOnce(/* ... */);
+  renderWithProviders(<JobDetailView jobId="42" />);
 
-    renderWithProviders(<ProfileView />, { route: "/app/profile" });
+  expect(screen.getByText("Fetching the latest job details...")).toBeInTheDocument();
 
-    expect(await screen.findByLabelText("Preferred title")).toBeInTheDocument();
+  await screen.findByRole("heading", { name: "Senior Product Designer" });
+});
+```
+
+### Async view test with user interaction
+
+```typescript
+// src/features/profile/views/ProfileView.test.tsx
+it("loads the current profile and saves edits", async () => {
+  const user = userEvent.setup();
+  vi.mocked(getCurrentProfile).mockResolvedValueOnce({ preferredTitle: "Senior Developer", ... });
+  vi.mocked(upsertCurrentProfile).mockResolvedValueOnce({ preferredTitle: "Principal Engineer", ... });
+
+  renderWithProviders(<ProfileView />, { route: "/app/profile" });
+
+  expect(await screen.findByDisplayValue("Senior Developer")).toBeInTheDocument();
+
+  await user.clear(screen.getByLabelText("Preferred title"));
+  await user.type(screen.getByLabelText("Preferred title"), "Principal Engineer");
+  await user.click(screen.getByRole("button", { name: "Save profile" }));
+
+  await waitFor(() => {
+    expect(screen.getByText("Profile saved.")).toBeInTheDocument();
   });
 });
 ```
 
-### Browser Smoke Pattern
+### E2E smoke test
 
 ```typescript
+// tests/e2e/search-landing.spec.ts
 import { expect, test } from "@playwright/test";
 
-test("shows the public entry points", async ({ page }) => {
-  await page.goto("/");
-
-  await expect(page.getByRole("link", { name: "Search" })).toBeVisible();
+test.describe("Search landing", () => {
+  test("shows the public entry points", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: "Discover" })).toBeVisible();
+  });
 });
 ```
 
 ## What Not To Do
 
-- Do not build a second provider setup in every test file when `src/test/render.tsx` already fits.
-- Do not default to Playwright when a view or hook test is the real owning layer.
-- Do not assert implementation details such as internal state or brittle DOM wrappers.
-- Do not add frontend tests for untouched behavior just to make a change look bigger.
-- Do not claim TDD if the tests were added only after the implementation was already complete.
-
-## Frontend-Specific Mistakes To Avoid
-
-### Wrong: Testing Through The Wrong Layer
-
-Do not use a browser test for string normalization, mapper logic, or store transitions that belong in Vitest.
-
-### Right: Match The Ownership Boundary
-
-If the change is local to a feature view, test the feature view.
-If the change is a pure utility, test the utility.
-If the change is a real browser journey, use Playwright.
-
-### Wrong: Rebuilding Providers In Every Test
-
-Avoid repeating `ThemeProvider`, `MemoryRouter`, and app setup manually when the shared renderer already supports the case.
-
-### Right: Reuse Shared Test Helpers
-
-Prefer `renderWithProviders(...)` and extend it only when a new cross-test need is truly shared.
+- Do not call `renderHook` from `@testing-library/react` directly for TanStack Query hooks — use `renderHookWithProviders` so the `QueryClient` wrapper is in place.
+- Do not rebuild providers manually in test files — `renderWithProviders` already handles `QueryClient`, theme, session, and router.
+- Do not set `retry` on individual queries or mutations — let the `QueryClient` default govern (retry: 1 in production, retry: false in tests).
+- Do not assert implementation details (internal state, CSS class names, private refs).
+- Do not default to Playwright for behavior that a Vitest view test covers just as well.
+- Do not add tests for behavior you did not change.
 
 ## Success Criteria
 
 Frontend work is done when:
 
-- the first test was written before the behavior change
-- the test sits at the correct ownership layer
+- the first test was written before the implementation
+- the test sits at the correct ownership layer (pure logic / hook / view / E2E)
 - changed behavior is covered by focused Vitest or Playwright tests
-- the relevant frontend commands pass
-- the implementation still follows Firefly's frontend structure
-
-In this repo, good frontend TDD means small red-green-refactor loops with tests placed exactly where the UI architecture says the behavior belongs.
+- `npm run lint`, `npm test`, and `npm run build` all pass
+- the implementation follows the structure in `frontend-patterns`

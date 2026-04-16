@@ -9,7 +9,7 @@ import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
 import { Button } from "@mui/material";
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 
 type AppHeaderProps = {
   variant?: "public" | "authenticated";

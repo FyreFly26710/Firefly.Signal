@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { catalogHideJob, deleteJob, getJobById } from "@/api/jobs/jobs.api";
 import { ManageJobView } from "@/features/jobs/views/ManageJobView";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 import { renderWithProviders } from "@/test/render";
 
 vi.mock("@/api/jobs/jobs.api", () => ({

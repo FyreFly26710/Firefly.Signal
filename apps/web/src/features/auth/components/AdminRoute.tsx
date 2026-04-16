@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 
 export function AdminRoute({ children }: PropsWithChildren) {
   const isAuthenticated = useSessionStore((state) => state.isAuthenticated);

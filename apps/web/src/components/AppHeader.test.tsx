@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { AppHeader } from "@/components/AppHeader";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 import { renderWithProviders } from "@/test/render";
 
 describe("AppHeader", () => {

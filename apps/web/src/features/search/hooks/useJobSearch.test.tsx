@@ -1,7 +1,8 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getJobsPage } from "@/api/jobs/jobs.api";
 import { useJobSearch } from "@/features/search/hooks/useJobSearch";
+import { renderHookWithProviders } from "@/test/render";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
   getJobsPage: vi.fn()
@@ -32,7 +33,7 @@ describe("useJobSearch", () => {
       items: []
     });
 
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProviders(() =>
       useJobSearch({ keyword: "", postcode: "", pageIndex: 0, pageSize: 20 })
     );
 
@@ -53,7 +54,7 @@ describe("useJobSearch", () => {
     const deferred = createDeferred<Awaited<ReturnType<typeof getJobsPage>>>();
     vi.mocked(getJobsPage).mockReturnValueOnce(deferred.promise);
 
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProviders(() =>
       useJobSearch({
         keyword: "designer",
         postcode: "EC2A",
@@ -132,7 +133,7 @@ describe("useJobSearch", () => {
       items: []
     });
 
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProviders(() =>
       useJobSearch({
         keyword: "analyst",
         postcode: "SE1",
@@ -151,7 +152,7 @@ describe("useJobSearch", () => {
   it("surfaces API failures as an error state", async () => {
     vi.mocked(getJobsPage).mockRejectedValueOnce(new Error("Search service is unavailable."));
 
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProviders(() =>
       useJobSearch({
         keyword: "engineer",
         postcode: "M1",

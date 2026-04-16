@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { LoginFormCard } from "@/features/auth/components/LoginFormCard";
 import { LoginHighlightsSection } from "@/features/auth/components/LoginHighlightsSection";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 
 type LocationState = {
   from?: string;

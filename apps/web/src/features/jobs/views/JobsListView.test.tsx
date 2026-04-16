@@ -9,7 +9,7 @@ import {
   importJobsFromProvider
 } from "@/api/jobs/jobs.api";
 import { JobsListView } from "@/features/jobs/views/JobsListView";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 import { renderWithProviders } from "@/test/render";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
@@ -205,6 +205,9 @@ describe("JobsListView", () => {
     await waitFor(() => {
       expect(importJobsFromJson).toHaveBeenCalledWith(file);
     });
+
+    // Wait for the list to reload after import before interacting with the table
+    await screen.findByRole("checkbox", { name: "Select job 99" });
 
     await user.click(screen.getByRole("checkbox", { name: "Select job 99" }));
     await user.click(screen.getByRole("button", { name: "Export JSON" }));

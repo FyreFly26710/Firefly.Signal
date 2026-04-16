@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getCurrentProfile, upsertCurrentProfile } from "@/api/profile/profile.api";
 import { ProfileView } from "@/features/profile/views/ProfileView";
 import { ApiError } from "@/lib/http/api-error";
-import { useSessionStore } from "@/store/session.store";
+import { useSessionStore } from "@/features/auth/store/session.store";
 import { renderWithProviders } from "@/test/render";
 
 vi.mock("@/api/profile/profile.api", () => ({

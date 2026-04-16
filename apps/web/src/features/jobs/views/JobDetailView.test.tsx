@@ -1,16 +1,19 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getJobById } from "@/api/jobs/jobs.api";
 import { JobDetailView } from "@/features/jobs/views/JobDetailView";
-import { AppProviders } from "@/app/AppProviders";
 import { ApiError } from "@/lib/http/api-error";
+import { renderWithProviders } from "@/test/render";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
   getJobById: vi.fn()
 }));
 
 describe("JobDetailView", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders job details from the API", async () => {
     vi.mocked(getJobById).mockResolvedValueOnce({
       id: 42,
@@ -51,13 +54,7 @@ describe("JobDetailView", () => {
       rawPayloadJson: "{}"
     });
 
-    render(
-      <MemoryRouter>
-        <AppProviders>
-          <JobDetailView jobId="42" />
-        </AppProviders>
-      </MemoryRouter>
-    );
+    renderWithProviders(<JobDetailView jobId="42" />);
 
     expect(screen.getByText("Fetching the latest job details...")).toBeInTheDocument();
 
@@ -71,13 +68,7 @@ describe("JobDetailView", () => {
   it("shows the not-found state when the API returns 404", async () => {
     vi.mocked(getJobById).mockRejectedValueOnce(new ApiError("Not found", 404));
 
-    render(
-      <MemoryRouter>
-        <AppProviders>
-          <JobDetailView jobId="999" />
-        </AppProviders>
-      </MemoryRouter>
-    );
+    renderWithProviders(<JobDetailView jobId="999" />);
 
     await screen.findByRole("heading", { name: "Job not found" });
 
@@ -89,16 +80,16 @@ describe("JobDetailView", () => {
   it("shows an error state when the job request fails", async () => {
     vi.mocked(getJobById).mockRejectedValueOnce(new Error("Search service is unavailable."));
 
-    render(
-      <MemoryRouter>
-        <AppProviders>
-          <JobDetailView jobId="42" />
-        </AppProviders>
-      </MemoryRouter>
-    );
+    renderWithProviders(<JobDetailView jobId="42" />);
 
     await waitFor(() => {
       expect(screen.getByText("Search service is unavailable.")).toBeInTheDocument();
     });
+  });
+
+  it("shows the not-found state for an invalid job id", () => {
+    renderWithProviders(<JobDetailView jobId={undefined} />);
+
+    expect(screen.getByRole("heading", { name: "Job not found" })).toBeInTheDocument();
   });
 });

@@ -1,642 +1,233 @@
 ---
 name: frontend-patterns
-description: Frontend development patterns for React, Next.js, state management, performance optimization, and UI best practices.
-origin: ECC
+description: Firefly Signal frontend development patterns for apps/web. Covers folder structure, component composition, TanStack Query data fetching, Zustand state, form handling, and coding conventions specific to this repo.
 ---
 
-# Frontend Development Patterns
+# Frontend Patterns — Firefly Signal
 
-Modern frontend patterns for React, Next.js, and performant user interfaces.
+This skill defines the frontend implementation patterns for `apps/web`. It replaces generic React advice with Firefly-specific conventions. Follow this whenever you are adding, changing, or reviewing frontend code.
 
-## When to Activate
+## Folder Structure
 
-- Building React components (composition, props, rendering)
-- Managing state (useState, useReducer, Zustand, Context)
-- Implementing data fetching (SWR, React Query, server components)
-- Optimizing performance (memoization, virtualization, code splitting)
-- Working with forms (validation, controlled inputs, Zod schemas)
-- Handling client-side routing and navigation
-- Building accessible, responsive UI patterns
-
-## Component Patterns
-
-### Composition Over Inheritance
-
-```typescript
-// PASS: GOOD: Component composition
-interface CardProps {
-  children: React.ReactNode
-  variant?: 'default' | 'outlined'
-}
-
-export function Card({ children, variant = 'default' }: CardProps) {
-  return <div className={`card card-${variant}`}>{children}</div>
-}
-
-export function CardHeader({ children }: { children: React.ReactNode }) {
-  return <div className="card-header">{children}</div>
-}
-
-export function CardBody({ children }: { children: React.ReactNode }) {
-  return <div className="card-body">{children}</div>
-}
-
-// Usage
-<Card>
-  <CardHeader>Title</CardHeader>
-  <CardBody>Content</CardBody>
-</Card>
+```
+apps/web/src/
+  api/                      ← HTTP transport layer — one folder per backend resource
+    auth/                   ← auth.api.ts, auth.types.ts
+    jobs/                   ← jobs.api.ts, jobs.types.ts
+    job-search/             ← job-search.api.ts, user-job-state.api.ts
+    profile/                ← profile.api.ts, profile.types.ts
+  app/                      ← App bootstrap: AppRoot, AppProviders, AppRouter, RouteLoadingScreen, theme
+  components/               ← Shared pure UI: AppHeader, SearchInput, SectionCard
+  features/                 ← Feature modules — primary code boundary
+    auth/
+      components/           ← Route guards (ProtectedRoute, AdminRoute), form components
+      store/                ← session.store.ts — Zustand store for auth session
+      views/                ← LoginView
+    jobs/
+      components/           ← Job cards, panels, editor sections
+      hooks/                ← useJobDetail — TanStack Query data hooks
+      mappers/              ← Response → view model mappers
+      types/                ← Feature-specific TypeScript types
+      views/                ← JobDetailView, JobsListView, ManageJobView
+    profile/
+      views/                ← ProfileView
+    search/
+      components/           ← SearchForm, SearchResults, SearchResultsToolbar
+      hooks/                ← useJobSearch (TanStack Query), useJobState (optimistic)
+      lib/                  ← search-query.ts — pure URL/criteria helpers
+      mappers/              ← search.mappers.ts — response → view model
+      types/                ← search.types.ts
+      views/                ← SearchLandingView, SearchResultsView
+    workspace/
+      components/           ← Workspace panels and cards
+      views/                ← WorkspaceView
+  lib/
+    async/                  ← useAsyncTask (for mutation-style imperatives), async-state
+    auth/                   ← session-storage helpers
+    http/                   ← fetch client (client.ts), ApiError
+    env.ts                  ← VITE_ environment variable access
+  routes/                   ← Thin route wrappers — extract URL params, render the view
+  test/
+    render.tsx              ← renderWithProviders, renderHookWithProviders
+    setupTests.ts           ← @testing-library/jest-dom setup
 ```
 
-### Compound Components
+### Rules
+
+- Feature code belongs inside its feature folder. Do not reach across features.
+- `src/api/` is the HTTP transport layer. API functions return raw DTOs.
+- `src/routes/` files are thin — they extract URL params and render one feature view. No logic.
+- `src/components/` is for shared UI that no single feature owns.
+- `src/lib/` is for framework-agnostic utilities (no business logic).
+- Zustand stores belong colocated with the feature that owns them (`features/auth/store/`).
+
+## Data Fetching — TanStack Query
+
+Use TanStack Query for all server-state reads. Do not reach directly from a view into `src/api/` for queries — wrap them in a feature hook first.
+
+### Query hook pattern
 
 ```typescript
-interface TabsContextValue {
-  activeTab: string
-  setActiveTab: (tab: string) => void
+// src/features/jobs/hooks/useJobDetail.ts
+import { useQuery } from "@tanstack/react-query";
+import { getJobById } from "@/api/jobs/jobs.api";
+import { mapJobDetail } from "@/features/jobs/mappers/job-detail.mappers";
+
+export function useJobDetail(jobId: number | null) {
+  return useQuery({
+    queryKey: ["jobs", jobId],
+    queryFn: () => getJobById(jobId!).then(mapJobDetail),
+    enabled: jobId !== null
+  });
 }
+```
 
-const TabsContext = createContext<TabsContextValue | undefined>(undefined)
+### View consuming a query hook
 
-export function Tabs({ children, defaultTab }: {
-  children: React.ReactNode
-  defaultTab: string
-}) {
-  const [activeTab, setActiveTab] = useState(defaultTab)
+```typescript
+// src/features/jobs/views/JobDetailView.tsx
+export function JobDetailView({ jobId }: { jobId: string | undefined }) {
+  const numericId = jobId && !Number.isNaN(Number(jobId)) ? Number(jobId) : null;
+  const { data, isPending, isError, error } = useJobDetail(numericId);
+
+  if (numericId === null) return <JobDetailNotFound />;
 
   return (
-    <TabsContext.Provider value={{ activeTab, setActiveTab }}>
-      {children}
-    </TabsContext.Provider>
-  )
+    <>
+      {isPending && <LoadingPanel />}
+      {isError && <Alert severity="error">{error.message}</Alert>}
+      {data && <JobDetailHeroCard job={data} />}
+    </>
+  );
 }
+```
 
-export function TabList({ children }: { children: React.ReactNode }) {
-  return <div className="tab-list">{children}</div>
+### Query key conventions
+
+Stable, serialisable query keys:
+
+```typescript
+queryKey: ["jobs", jobId]                              // single entity
+queryKey: ["job-search", { keyword, postcode, pageIndex, pageSize }]  // parameterised list
+queryKey: ["profile", "current"]                       // current-user scoped
+```
+
+### QueryClient setup
+
+- Production client lives in `src/app/AppRoot.tsx` with `staleTime: 30_000` and `retry: 1`.
+- Test clients live in `src/test/render.tsx` via `createTestQueryClient()` with `retry: false` and `staleTime: 0`.
+- `AppProviders` does NOT own a `QueryClient` — it handles session hydration + MUI theme only.
+- This separation ensures test `QueryClient` settings are not overridden by production defaults.
+
+## State Management — Zustand
+
+Use Zustand for client-owned global state (auth session, UI state that spans multiple routes). Do not put server state in Zustand — that belongs in TanStack Query.
+
+```typescript
+// src/features/auth/store/session.store.ts
+export const useSessionStore = create<SessionStore>((set) => ({
+  user: null,
+  isAuthenticated: false,
+  signIn: async ({ userAccount, password }) => { ... },
+  signOut: () => { ... },
+  hydrate: async () => { ... }
+}));
+```
+
+## Mutations — useAsyncTask
+
+For write operations (form submits, imports, deletes) that are not reads, use `useAsyncTask` from `src/lib/async/useAsyncTask.ts`. It handles race conditions, loading state, and error capture.
+
+```typescript
+const { status, errorMessage, execute } = useAsyncTask(submitProfile);
+```
+
+Do not use `useAsyncTask` for data queries — use TanStack Query instead.
+
+## Route Modules
+
+Route files in `src/routes/` extract URL params and render one view. Nothing else.
+
+```typescript
+// src/routes/AppJobDetailPage.tsx
+import { useParams } from "react-router-dom";
+import { ManageJobView } from "@/features/jobs/views/ManageJobView";
+
+export function AppJobDetailPage() {
+  const { jobId } = useParams<{ jobId: string }>();
+  return <ManageJobView jobId={jobId} />;
 }
+```
 
-export function Tab({ id, children }: { id: string, children: React.ReactNode }) {
-  const context = useContext(TabsContext)
-  if (!context) throw new Error('Tab must be used within Tabs')
+## Component Composition
 
+Prefer composition. Views are assembled from smaller, single-responsibility components.
+
+```typescript
+// Good: composed from focused pieces
+export function JobDetailView({ jobId }) {
+  const { data } = useJobDetail(numericId);
   return (
-    <button
-      className={context.activeTab === id ? 'active' : ''}
-      onClick={() => context.setActiveTab(id)}
-    >
-      {children}
-    </button>
-  )
+    <>
+      <JobDetailHeroCard job={data} />
+      <JobDetailContentPanel title="About the role">
+        {paragraphs.map(p => <p key={p}>{p}</p>)}
+      </JobDetailContentPanel>
+    </>
+  );
 }
-
-// Usage
-<Tabs defaultTab="overview">
-  <TabList>
-    <Tab id="overview">Overview</Tab>
-    <Tab id="details">Details</Tab>
-  </TabList>
-</Tabs>
 ```
 
-### Render Props Pattern
+## Lazy Loading
+
+Pages are lazy-loaded in `AppRouter`. Wrap each lazy page with `Suspense` via the `withRouteFallback` helper already in `src/app/AppRouter.tsx`.
 
 ```typescript
-interface DataLoaderProps<T> {
-  url: string
-  children: (data: T | null, loading: boolean, error: Error | null) => React.ReactNode
-}
+const JobDetailPage = lazy(() =>
+  import("@/routes/JobDetailPage").then((m) => ({ default: m.JobDetailPage }))
+);
 
-export function DataLoader<T>({ url, children }: DataLoaderProps<T>) {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-
-  useEffect(() => {
-    fetch(url)
-      .then(res => res.json())
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false))
-  }, [url])
-
-  return <>{children(data, loading, error)}</>
-}
-
-// Usage
-<DataLoader<Market[]> url="/api/markets">
-  {(markets, loading, error) => {
-    if (loading) return <Spinner />
-    if (error) return <Error error={error} />
-    return <MarketList markets={markets!} />
-  }}
-</DataLoader>
+{ path: "/jobs/:jobId", element: withRouteFallback(<JobDetailPage />) }
 ```
 
-## Custom Hooks Patterns
+## HTTP Client
 
-### State Management Hook
+Use the typed helpers in `src/lib/http/client.ts` for all API calls. Do not use raw `fetch` in feature code.
 
 ```typescript
-export function useToggle(initialValue = false): [boolean, () => void] {
-  const [value, setValue] = useState(initialValue)
+import { getJson, postJson, putJson, deleteRequest } from "@/lib/http/client";
 
-  const toggle = useCallback(() => {
-    setValue(v => !v)
-  }, [])
-
-  return [value, toggle]
+export async function getJobById(id: number): Promise<JobDetailResponseDto> {
+  return getJson<JobDetailResponseDto>(`/api/jobs/${id}`);
 }
-
-// Usage
-const [isOpen, toggleOpen] = useToggle()
 ```
 
-### Async Data Fetching Hook
+The client automatically:
+- attaches the `Authorization: Bearer` header from session storage
+- throws `ApiError` with `status` and `message` on non-OK responses
+- handles `Content-Type: application/json` for JSON bodies
+
+## Error Handling
+
+`ApiError` from `src/lib/http/api-error.ts` carries the HTTP status code. Check it in views to distinguish 404 from other failures.
 
 ```typescript
-interface UseQueryOptions<T> {
-  onSuccess?: (data: T) => void
-  onError?: (error: Error) => void
-  enabled?: boolean
-}
-
-export function useQuery<T>(
-  key: string,
-  fetcher: () => Promise<T>,
-  options?: UseQueryOptions<T>
-) {
-  const [data, setData] = useState<T | null>(null)
-  const [error, setError] = useState<Error | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  const refetch = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const result = await fetcher()
-      setData(result)
-      options?.onSuccess?.(result)
-    } catch (err) {
-      const error = err as Error
-      setError(error)
-      options?.onError?.(error)
-    } finally {
-      setLoading(false)
-    }
-  }, [fetcher, options])
-
-  useEffect(() => {
-    if (options?.enabled !== false) {
-      refetch()
-    }
-  }, [key, refetch, options?.enabled])
-
-  return { data, error, loading, refetch }
-}
-
-// Usage
-const { data: markets, loading, error, refetch } = useQuery(
-  'markets',
-  () => fetch('/api/markets').then(r => r.json()),
-  {
-    onSuccess: data => console.log('Fetched', data.length, 'markets'),
-    onError: err => console.error('Failed:', err)
-  }
-)
+const isNotFound = isError && error instanceof ApiError && error.status === 404;
 ```
 
-### Debounce Hook
+## Styling
 
-```typescript
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+The app uses Tailwind CSS (v4) for layout and custom design tokens, and MUI v7 for form controls and feedback components (Alert, TextField, Button, etc.).
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
+- Use Tailwind for layout, spacing, typography, and colour tokens.
+- Use MUI for interactive form controls and feedback elements.
+- Do not mix class-based styling with MUI's `sx` prop for the same concern.
 
-    return () => clearTimeout(handler)
-  }, [value, delay])
+## What Not To Do
 
-  return debouncedValue
-}
-
-// Usage
-const [searchQuery, setSearchQuery] = useState('')
-const debouncedQuery = useDebounce(searchQuery, 500)
-
-useEffect(() => {
-  if (debouncedQuery) {
-    performSearch(debouncedQuery)
-  }
-}, [debouncedQuery])
-```
-
-## State Management Patterns
-
-### Context + Reducer Pattern
-
-```typescript
-interface State {
-  markets: Market[]
-  selectedMarket: Market | null
-  loading: boolean
-}
-
-type Action =
-  | { type: 'SET_MARKETS'; payload: Market[] }
-  | { type: 'SELECT_MARKET'; payload: Market }
-  | { type: 'SET_LOADING'; payload: boolean }
-
-function reducer(state: State, action: Action): State {
-  switch (action.type) {
-    case 'SET_MARKETS':
-      return { ...state, markets: action.payload }
-    case 'SELECT_MARKET':
-      return { ...state, selectedMarket: action.payload }
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload }
-    default:
-      return state
-  }
-}
-
-const MarketContext = createContext<{
-  state: State
-  dispatch: Dispatch<Action>
-} | undefined>(undefined)
-
-export function MarketProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, {
-    markets: [],
-    selectedMarket: null,
-    loading: false
-  })
-
-  return (
-    <MarketContext.Provider value={{ state, dispatch }}>
-      {children}
-    </MarketContext.Provider>
-  )
-}
-
-export function useMarkets() {
-  const context = useContext(MarketContext)
-  if (!context) throw new Error('useMarkets must be used within MarketProvider')
-  return context
-}
-```
-
-## Performance Optimization
-
-### Memoization
-
-```typescript
-// PASS: useMemo for expensive computations
-const sortedMarkets = useMemo(() => {
-  return markets.sort((a, b) => b.volume - a.volume)
-}, [markets])
-
-// PASS: useCallback for functions passed to children
-const handleSearch = useCallback((query: string) => {
-  setSearchQuery(query)
-}, [])
-
-// PASS: React.memo for pure components
-export const MarketCard = React.memo<MarketCardProps>(({ market }) => {
-  return (
-    <div className="market-card">
-      <h3>{market.name}</h3>
-      <p>{market.description}</p>
-    </div>
-  )
-})
-```
-
-### Code Splitting & Lazy Loading
-
-```typescript
-import { lazy, Suspense } from 'react'
-
-// PASS: Lazy load heavy components
-const HeavyChart = lazy(() => import('./HeavyChart'))
-const ThreeJsBackground = lazy(() => import('./ThreeJsBackground'))
-
-export function Dashboard() {
-  return (
-    <div>
-      <Suspense fallback={<ChartSkeleton />}>
-        <HeavyChart data={data} />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <ThreeJsBackground />
-      </Suspense>
-    </div>
-  )
-}
-```
-
-### Virtualization for Long Lists
-
-```typescript
-import { useVirtualizer } from '@tanstack/react-virtual'
-
-export function VirtualMarketList({ markets }: { markets: Market[] }) {
-  const parentRef = useRef<HTMLDivElement>(null)
-
-  const virtualizer = useVirtualizer({
-    count: markets.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 100,  // Estimated row height
-    overscan: 5  // Extra items to render
-  })
-
-  return (
-    <div ref={parentRef} style={{ height: '600px', overflow: 'auto' }}>
-      <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          position: 'relative'
-        }}
-      >
-        {virtualizer.getVirtualItems().map(virtualRow => (
-          <div
-            key={virtualRow.index}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: `${virtualRow.size}px`,
-              transform: `translateY(${virtualRow.start}px)`
-            }}
-          >
-            <MarketCard market={markets[virtualRow.index]} />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-```
-
-## Form Handling Patterns
-
-### Controlled Form with Validation
-
-```typescript
-interface FormData {
-  name: string
-  description: string
-  endDate: string
-}
-
-interface FormErrors {
-  name?: string
-  description?: string
-  endDate?: string
-}
-
-export function CreateMarketForm() {
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    description: '',
-    endDate: ''
-  })
-
-  const [errors, setErrors] = useState<FormErrors>({})
-
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required'
-    } else if (formData.name.length > 200) {
-      newErrors.name = 'Name must be under 200 characters'
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required'
-    }
-
-    if (!formData.endDate) {
-      newErrors.endDate = 'End date is required'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validate()) return
-
-    try {
-      await createMarket(formData)
-      // Success handling
-    } catch (error) {
-      // Error handling
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <input
-        value={formData.name}
-        onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-        placeholder="Market name"
-      />
-      {errors.name && <span className="error">{errors.name}</span>}
-
-      {/* Other fields */}
-
-      <button type="submit">Create Market</button>
-    </form>
-  )
-}
-```
-
-## Error Boundary Pattern
-
-```typescript
-interface ErrorBoundaryState {
-  hasError: boolean
-  error: Error | null
-}
-
-export class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  ErrorBoundaryState
-> {
-  state: ErrorBoundaryState = {
-    hasError: false,
-    error: null
-  }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error boundary caught:', error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="error-fallback">
-          <h2>Something went wrong</h2>
-          <p>{this.state.error?.message}</p>
-          <button onClick={() => this.setState({ hasError: false })}>
-            Try again
-          </button>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
-
-// Usage
-<ErrorBoundary>
-  <App />
-</ErrorBoundary>
-```
-
-## Animation Patterns
-
-### Framer Motion Animations
-
-```typescript
-import { motion, AnimatePresence } from 'framer-motion'
-
-// PASS: List animations
-export function AnimatedMarketList({ markets }: { markets: Market[] }) {
-  return (
-    <AnimatePresence>
-      {markets.map(market => (
-        <motion.div
-          key={market.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-        >
-          <MarketCard market={market} />
-        </motion.div>
-      ))}
-    </AnimatePresence>
-  )
-}
-
-// PASS: Modal animations
-export function Modal({ isOpen, onClose, children }: ModalProps) {
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          <motion.div
-            className="modal-content"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          >
-            {children}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  )
-}
-```
-
-## Accessibility Patterns
-
-### Keyboard Navigation
-
-```typescript
-export function Dropdown({ options, onSelect }: DropdownProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(0)
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault()
-        setActiveIndex(i => Math.min(i + 1, options.length - 1))
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        setActiveIndex(i => Math.max(i - 1, 0))
-        break
-      case 'Enter':
-        e.preventDefault()
-        onSelect(options[activeIndex])
-        setIsOpen(false)
-        break
-      case 'Escape':
-        setIsOpen(false)
-        break
-    }
-  }
-
-  return (
-    <div
-      role="combobox"
-      aria-expanded={isOpen}
-      aria-haspopup="listbox"
-      onKeyDown={handleKeyDown}
-    >
-      {/* Dropdown implementation */}
-    </div>
-  )
-}
-```
-
-### Focus Management
-
-```typescript
-export function Modal({ isOpen, onClose, children }: ModalProps) {
-  const modalRef = useRef<HTMLDivElement>(null)
-  const previousFocusRef = useRef<HTMLElement | null>(null)
-
-  useEffect(() => {
-    if (isOpen) {
-      // Save currently focused element
-      previousFocusRef.current = document.activeElement as HTMLElement
-
-      // Focus modal
-      modalRef.current?.focus()
-    } else {
-      // Restore focus when closing
-      previousFocusRef.current?.focus()
-    }
-  }, [isOpen])
-
-  return isOpen ? (
-    <div
-      ref={modalRef}
-      role="dialog"
-      aria-modal="true"
-      tabIndex={-1}
-      onKeyDown={e => e.key === 'Escape' && onClose()}
-    >
-      {children}
-    </div>
-  ) : null
-}
-```
-
-**Remember**: Modern frontend patterns enable maintainable, performant user interfaces. Choose patterns that fit your project complexity.
+- Do not call `src/api/` directly from a view — go through a feature hook.
+- Do not add `axios` — the fetch client already handles auth, errors, and all HTTP verbs.
+- Do not use Suspense for data fetching with `use()` — TanStack Query handles loading/error states more cleanly and is easier to test.
+- Do not put server state (lists, entities) into Zustand.
+- Do not put route params, loading state, or business logic inside `src/routes/`.
+- Do not create a new provider setup in test files — use `renderWithProviders`.

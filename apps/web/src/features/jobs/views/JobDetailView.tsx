@@ -1,14 +1,12 @@
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { Alert } from "@mui/material";
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
-import { getJobById } from "@/api/jobs/jobs.api";
 import { JobDetailContentPanel } from "@/features/jobs/components/JobDetailContentPanel";
 import { JobDetailHeroCard } from "@/features/jobs/components/JobDetailHeroCard";
 import { JobDetailNotFound } from "@/features/jobs/components/JobDetailNotFound";
 import { JobInsightCard } from "@/features/jobs/components/JobInsightCard";
-import { mapJobDetail } from "@/features/jobs/mappers/job-detail.mappers";
+import { useJobDetail } from "@/features/jobs/hooks/useJobDetail";
 import type { JobDetailModel } from "@/features/jobs/types/job.types";
 import { ApiError } from "@/lib/http/api-error";
 
@@ -17,59 +15,14 @@ type JobDetailViewProps = {
 };
 
 export function JobDetailView({ jobId }: JobDetailViewProps) {
-  const numericJobId = Number(jobId);
-  const hasValidJobId = Boolean(jobId) && !Number.isNaN(numericJobId);
-  const [job, setJob] = useState<JobDetailModel | null>(null);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "not-found" | "error">(
-    "idle"
-  );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const numericJobId = jobId && !Number.isNaN(Number(jobId)) ? Number(jobId) : null;
+  const { data: job, isPending, isError, error } = useJobDetail(numericJobId);
 
-  useEffect(() => {
-    if (!hasValidJobId) {
-      return;
-    }
+  const isNotFound =
+    numericJobId === null ||
+    (isError && error instanceof ApiError && error.status === 404);
 
-    let cancelled = false;
-
-    async function loadJob() {
-      setStatus("loading");
-      setErrorMessage(null);
-
-      try {
-        const response = await getJobById(numericJobId);
-
-        if (cancelled) {
-          return;
-        }
-
-        setJob(mapJobDetail(response));
-        setStatus("success");
-      } catch (error) {
-        if (cancelled) {
-          return;
-        }
-
-        setJob(null);
-
-        if (error instanceof ApiError && error.status === 404) {
-          setStatus("not-found");
-          return;
-        }
-
-        setStatus("error");
-        setErrorMessage(error instanceof Error ? error.message : "Unable to load this job.");
-      }
-    }
-
-    void loadJob();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hasValidJobId, numericJobId]);
-
-  if (!hasValidJobId || status === "not-found") {
+  if (isNotFound) {
     return <JobDetailNotFound />;
   }
 
@@ -91,17 +44,19 @@ export function JobDetailView({ jobId }: JobDetailViewProps) {
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <main className="space-y-8">
-          {status === "loading" ? (
+          {isPending ? (
             <JobDetailContentPanel title="Loading job">
               <p className="text-foreground-secondary">Fetching the latest job details...</p>
             </JobDetailContentPanel>
           ) : null}
 
-          {status === "error" ? (
-            <Alert severity="error">{errorMessage ?? "Unable to load this job."}</Alert>
+          {isError && !isNotFound ? (
+            <Alert severity="error">
+              {error instanceof Error ? error.message : "Unable to load this job."}
+            </Alert>
           ) : null}
 
-          {status === "success" && job ? (
+          {job ? (
             <>
               <JobDetailHeroCard job={job} />
               <JobDetailContentPanel title="About the role">
@@ -115,7 +70,7 @@ export function JobDetailView({ jobId }: JobDetailViewProps) {
           ) : null}
         </main>
 
-        {status === "success" && job ? (
+        {job ? (
           <aside className="space-y-6">
             <JobInsightCard />
           </aside>

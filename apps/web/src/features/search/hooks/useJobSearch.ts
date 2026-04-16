@@ -1,38 +1,36 @@
+import { useQuery } from "@tanstack/react-query";
 import { getJobsPage } from "@/api/jobs/jobs.api";
-import { useCallback, useEffect } from "react";
 import type { SearchCriteria, SearchStatus, SearchViewModel } from "@/features/search/types/search.types";
 import { mapSearchResponse } from "@/features/search/mappers/search.mappers";
-import { createAsyncState, type AsyncState } from "@/lib/async/async-state";
-import { useAsyncTask } from "@/lib/async/useAsyncTask";
-
-type SearchState = AsyncState<SearchViewModel, SearchStatus>;
-
-export const initialSearchState: SearchState = createAsyncState("idle");
 
 export function useJobSearch({ postcode, keyword, pageIndex, pageSize }: SearchCriteria) {
-  const runSearch = useCallback(
-    async (nextPostcode: string, nextKeyword: string, nextPageIndex: number, nextPageSize: number) =>
+  const { data, isPending, isError, error } = useQuery<SearchViewModel>({
+    queryKey: ["job-search", { postcode, keyword, pageIndex, pageSize }],
+    queryFn: async () =>
       mapSearchResponse(
         await getJobsPage({
-          pageIndex: nextPageIndex,
-          pageSize: nextPageSize,
-          postcode: nextPostcode || undefined,
-          keyword: nextKeyword || undefined,
+          pageIndex,
+          pageSize,
+          postcode: postcode || undefined,
+          keyword: keyword || undefined,
           isHidden: false
         }),
-        { postcode: nextPostcode, keyword: nextKeyword }
+        { postcode, keyword }
       ),
-    []
-  );
-  const { status, data, errorMessage, execute } = useAsyncTask(runSearch);
+    staleTime: 30_000
+  });
 
-  useEffect(() => {
-    void execute(postcode, keyword, pageIndex, pageSize);
-  }, [execute, pageIndex, pageSize, postcode, keyword]);
+  const status: SearchStatus = isPending
+    ? "loading"
+    : isError
+      ? "error"
+      : (data?.jobs.length ?? 0) === 0
+        ? "empty"
+        : "success";
 
   return {
-    status: status === "success" && data?.jobs.length === 0 ? "empty" : status,
-    data,
-    errorMessage
-  } satisfies SearchState;
+    status,
+    data: data ?? null,
+    errorMessage: isError ? (error instanceof Error ? error.message : "Search failed.") : null
+  };
 }
