@@ -1,0 +1,7 @@
+interface:
+  display_name: "Frontend Patterns"
+  short_description: "Firefly React structure, state, API, and UI composition rules"
+  brand_color: "#8B5CF6"
+  default_prompt: "Apply Firefly frontend patterns to this React change"
+policy:
+  allow_implicit_invocation: true

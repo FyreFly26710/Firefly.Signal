@@ -1,0 +1,7 @@
+interface:
+  display_name: "Backend Patterns"
+  short_description: "Firefly .NET API structure, contracts, persistence, and eventing"
+  brand_color: "#F59E0B"
+  default_prompt: "Apply Firefly backend patterns to this .NET change"
+policy:
+  allow_implicit_invocation: true

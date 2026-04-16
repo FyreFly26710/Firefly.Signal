@@ -18,7 +18,7 @@ The main features intentionally left beyond the MVP are:
 - The backend will run on a Mac mini in Docker behind Cloudflare Tunnel.
 
 ## Goals For The Current Planning Phase
-- Keep the product requirements and implementation-facing docs aligned.
+- Keep the product requirements and planning docs aligned.
 - Deliver the full personal job-search workflow in small, reviewable issues.
 - Keep backend boundaries explicit while avoiding premature service sprawl.
 - Preserve strong code review quality for both maintainability and recruiter visibility.
@@ -27,7 +27,7 @@ The main features intentionally left beyond the MVP are:
 ### Phase 0: Product And Planning Alignment
 - Clarify the PRD and source-of-truth documentation boundaries.
 - Update roadmap and backlog docs to match the actual MVP.
-- Add a concrete backend data model plan for the MVP workflow.
+- Keep the project explanation docs aligned with the current repo shape.
 
 ### Phase 1: Identity, Roles, And Profile Foundations
 - Keep the existing auth foundation and formalize role behavior for `admin` and `test-admin`.
@@ -54,15 +54,15 @@ The main features intentionally left beyond the MVP are:
 - Support attaching submitted CVs and cover letters to applications.
 
 ### Phase 5: AI-Assisted Review
-- Let admin select jobs and run AI rating against stored user profile/CV context.
+- Let admin select jobs and run AI rating against stored user profile and CV context.
 - Return a 1-5 star rating per job.
 - Support optional detailed explanation and CV improvement guidance.
 - Persist AI outputs and keep them linked to the user they were generated for.
 
 ### Phase 6: Recruiter-Visible Hardening
-- Improve code quality, testing coverage, and operational clarity where needed.
+- Improve code quality and operational clarity where needed.
 - Refine the UI and admin/test-admin flows for demonstration quality.
-- Keep docs, architecture, and code structure aligned for reviewability.
+- Keep product and planning docs aligned with the implemented workflow.
 
 ## Repository Shape To Grow Into
 ```text
@@ -70,13 +70,13 @@ apps/
   web/
 docs/
   backend-designs.md
+  development/
   frontend-designs.md
   plans.md
   product-requirements-document.md
 services/
   api/
-.codex/
-  skills/
+infra/
 .github/
   workflows/
 ```
@@ -85,12 +85,12 @@ services/
 - Prefer vertical slices over abstract platform work.
 - Keep each issue small enough for one focused branch and one reviewable PR.
 - Use real persisted state where the MVP requires it instead of relying on placeholder workflows.
-- Treat docs as active architecture, not passive notes.
+- Keep docs focused on product, planning, and explaining the current system.
 - Keep implementation choices easy to explain in a code-review context.
 
 ## Proposed Issue Themes From Here
 1. Clarify PRD and source-of-truth docs
-2. Add user profile and CV/document metadata persistence
+2. Add user profile and CV and document metadata persistence
 3. Formalize `admin` and `test-admin` authorization behavior
 4. Persist imported jobs and deduplicate provider records
 5. Add admin workflows for job CRUD and moderation
@@ -105,15 +105,14 @@ services/
 - Overcomplicating service boundaries before the workflow is fully implemented
 - Letting document storage and linkage become inconsistent
 - Building AI features without clear user-owned context and auditability
-- Letting product docs lag behind the actual intended MVP
+- Letting product and planning docs lag behind the actual intended MVP
 
 ## Success Criteria For The Planning Phase
 - Product direction is explicit enough to create focused issues without re-deciding scope.
-- MVP boundaries are clear across PRD, plan, backend, and development docs.
-- The backend data model direction is concrete enough to guide implementation.
+- MVP boundaries are clear across the PRD, plan, and development docs.
 - The backlog is prioritized around the real personal-use workflow rather than a smaller demo product.
 
-## Notes For Future Codex Work
+## Notes For Future Planning
 - Read the PRD first for scope.
 - Then read this file for sequencing.
 - Then read `docs/development/roadmap.md` and `docs/development/todo.md` for practical issue planning.

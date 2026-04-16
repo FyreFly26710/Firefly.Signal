@@ -9,7 +9,7 @@ It is being built first for the repository owner, but the product should still f
 
 The MVP is intentionally close to the final product.
 It should include the real end-to-end workflow needed to discover jobs, manage a personal job pipeline, store profile material, and use AI to support decisions.
-The main capabilities that are intentionally deferred beyond the MVP are advanced user management and native mobile apps.
+The main capabilities intentionally deferred beyond the MVP are advanced user management and native mobile apps.
 
 ## Product Intent
 - Help one user find relevant UK developer jobs efficiently.
@@ -47,15 +47,17 @@ The main capabilities that are intentionally deferred beyond the MVP are advance
 - `docs/plans.md`
   Delivery sequencing and phase-level planning
 - `docs/frontend-designs.md`
-  Frontend implementation direction and UI architecture
+  High-level explanation of the current frontend surface
 - `docs/backend-designs.md`
-  Backend service direction, persistence boundaries, and integration design
+  High-level explanation of the current backend shape
+- `docs/development/overview.md`
+  Planning read order
 - `docs/development/roadmap.md`
   Practical implementation order from the current repo baseline
 - `docs/development/todo.md`
   Prioritized working backlog and candidate future issues
 
-If there is a conflict, product scope should be resolved here first and then propagated to the implementation-facing docs.
+If there is a conflict, resolve product scope here first and then propagate the decision to the planning docs.
 
 ## Product Vision
 The final product should let the user:
@@ -180,7 +182,7 @@ The MVP should already include these core capabilities in a practical single-use
 - Saved and applied states are persisted per user.
 - Notes are persisted per application or job workflow record.
 - Uploaded document metadata is persisted in the database.
-- Uploaded document binaries are stored in Amazon S3.
+- Uploaded document binaries are stored separately from relational metadata.
 - AI outputs are persisted and linked to both user and job context.
 
 ## Quality Attributes
@@ -210,7 +212,7 @@ The MVP should already include these core capabilities in a practical single-use
 ## Product Risks
 - Public job source quality, coverage, terms, and rate limits may vary.
 - Postcode-distance filtering depends on reliable geocoding or postcode reference data.
-- File/document storage strategy can become messy if not bounded early.
+- File and document storage strategy can become messy if not bounded early.
 - AI output quality may vary and must be presented as assistance rather than ground truth.
 - Over-fragmenting services too early could slow delivery of the actual MVP workflow.
 

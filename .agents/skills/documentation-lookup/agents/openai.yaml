@@ -1,0 +1,7 @@
+interface:
+  display_name: "Documentation Lookup"
+  short_description: "Use live docs for current library and framework behavior"
+  brand_color: "#6366F1"
+  default_prompt: "Look up current documentation for a library or API"
+policy:
+  allow_implicit_invocation: true

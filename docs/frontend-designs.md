@@ -1,21 +1,19 @@
 # Frontend Design
 
-## Objectives
-- Deliver a fast, clear web-first experience for job discovery.
-- Keep the first client simple: React 18, TypeScript, Vite, client-side rendering only.
-- Build UI patterns that can inform later Android and iOS expansion without pretending to solve mobile-native architecture today.
+## Purpose
+This document explains the current frontend surface of Firefly Signal.
+It exists to help a reader understand what the web app is for, which parts of the product it owns, and how the frontend is currently organized at a high level.
 
-## Detailed Reference Docs
-Use the files in `docs/frontend-designs/` as the detailed frontend source of truth for implementation style:
-- `architecture.md`
-- `overview.md`
-- `coding-style.md`
-- `solution-structure.md`
-- `state-routing-and-api.md`
-- `styling-and-design-system.md`
-- `testing-and-quality.md`
+## Product Role
+The frontend is the web-first client for the personal job-search workflow.
+It covers:
+- public search and job discovery
+- authentication entry
+- protected workspace views
+- profile management
+- admin-facing job management
 
-## Core Stack
+## Current Stack
 - React 18
 - TypeScript
 - Vite
@@ -23,166 +21,49 @@ Use the files in `docs/frontend-designs/` as the detailed frontend source of tru
 - MUI
 - Tailwind CSS
 
-## Frontend Principles
-- Optimize for clear task completion over feature density.
-- Make search, loading, error, and empty states first-class.
-- Keep state localized unless it is shared across routes or sessions.
-- Use MUI for accessible primitives and Tailwind for composition, spacing, and token-driven styling.
-- Avoid over-abstracting UI before repeated patterns emerge.
-- Prefer `Page -> View -> dumb components` for screen structure.
-- Do not let one feature reference another feature directly; promote to shared only by deliberate decision.
+## Current Source Layout
+The app currently uses this high-level structure:
 
-## Initial App Scope
-The MVP frontend should support:
-- a landing/search page
-- postcode input
-- keyword input
-- search submission
-- loading feedback
-- results list
-- empty state
-- error state
-- login and protected routes
-- an authenticated workspace for personal job workflow
-- admin-facing job management flows
-- future saved-job, applied-job, profile, document, and AI-assisted views as part of the real MVP
-
-## Information Architecture
-Recommended early route shape:
-- `/`
-  - landing and search entry
-- `/search`
-  - search results
-- `/jobs/:id`
-  - public job detail
-- `/login`
-  - auth entry
-- `/app`
-  - authenticated workspace
-- `/saved`
-  - saved jobs
-- `/applied`
-  - applied jobs
-- `/profile`
-  - user profile and documents
-- `/admin/*`
-  - admin management and AI workflows
-
-## Suggested Frontend Structure
 ```text
-apps/web/
-  src/
-    app/
-    api/
-    components/
-    features/
-      search/
-    lib/
-    routes/
-    store/
-    styles/
+apps/web/src/
+  api/
+  app/
+  components/
+  features/
+  lib/
+  routes/
+  store/
+  styles/
+  test/
 ```
 
-The concrete architectural operating rules for those folders live in `docs/frontend-designs/architecture.md`.
+## Current Route Surface
+- `/`
+  Search landing page
+- `/search`
+  Search results
+- `/jobs/:id`
+  Public job detail
+- `/login`
+  Auth entry
+- `/app`
+  Authenticated workspace home
+- `/app/jobs`
+  Protected job workflow area
+- `/app/profile`
+  Profile area
+- `/admin/...`
+  Admin management flows
 
-Recommended meaning:
-- `app/` for providers, app shell, theme, and router setup
-- `api/` for shared backend request functions and DTO contracts
-- `components/` for broadly reusable presentational pieces
-- `features/` for feature-owned views, components, hooks, mappers, and local types
-- `lib/` for technical utilities such as HTTP primitives and async-state helpers
-- `routes/` for route entry components
-- `store/` for global Zustand stores only
-- `styles/` for Tailwind entrypoints and theme-level CSS
-
-## State Management Guidance
-Use Zustand for:
-- shared search parameters if they span multiple components
-- lightweight UI preferences
-- future auth/session state if retained client-side
-
-Avoid putting every form field into global state by default.
-Prefer component state for isolated form handling.
-
-## API Integration Guidance
-- Keep shared backend request functions and DTOs under `src/api/`.
-- Keep feature-specific models, mappers, and hooks under the consuming feature by default.
-- Normalize backend responses only where the UI truly benefits.
-- Keep request status handling explicit.
-
-## Design System Direction
-### MUI
-Use MUI for:
-- accessible controls
-- form inputs
-- feedback components
-- dialog and menu primitives later
-
-### Tailwind
-Use Tailwind for:
-- layout composition
-- spacing
-- responsive adjustments
-- utility-driven refinements around MUI components
-
-### Theme Strategy
-- Define a small set of design tokens early.
-- Use a coherent visual identity rather than default library styling.
-- Keep typography, spacing, and color choices intentional and easy to evolve.
-
-## UX Guidance For MVP
-- Prioritize speed to first meaningful result.
-- Keep the main form visible and easy to retry.
-- Present job cards with the minimum useful decision data.
-- Show source, location, and freshness when available.
-- Handle bad postcode input clearly.
-- Make no-results states helpful instead of dead ends.
-
-## Responsive Strategy
-- Design for desktop first, because that is the initial primary usage mode.
-- Ensure the search experience remains comfortable on mobile widths.
-- Prefer stacked layouts and progressive disclosure on smaller screens.
-- Keep touch targets and form spacing mobile-safe from the start.
-
-## Accessibility Guidance
-- Use semantic landmarks.
-- Preserve visible labels for key form controls.
-- Keep keyboard navigation working across search and results.
-- Ensure loading and error states are screen-reader friendly.
-
-## Testing Guidance
-- Prioritize view-level behavior, shared utilities, and important feature logic over low-signal component snapshots.
-- Keep auth, search, job workflow, and permission-sensitive UI covered with focused tests.
-
-## Phased Frontend Implementation
-### Phase 1
-- Scaffold Vite app
-- Add MUI, Tailwind, Zustand, routing, and theme setup
-- Create app shell and search page skeleton
-
-### Phase 2
-- Build the search form and results UI
-- Add API client integration
-- Add error, loading, and empty states
-
-### Phase 3
-- Refine responsiveness and accessibility
-- Add saved state or richer client behavior only if the product requires it
+## UX Direction
+- Fast access to search and job review
+- Clear loading, empty, permission, and error states
+- Desktop-first layouts that remain usable on mobile widths
+- A product surface that feels intentional enough for external review
 
 ## Current Recommendation
-Keep the route surface intentional and tied to the real MVP workflow.
-The frontend should stay feature-oriented and reviewable even as the product grows beyond the initial public search slice.
-
-Current repo frontend direction:
-- `docs/frontend-designs/architecture.md` is the concrete architecture contract for future frontend work
-- `routes/` should stay as thin `Page` files that hand off to feature `View`s
-- `View`s are the smart orchestration layer
-- low-level components should stay dumb and may compose other dumb components
-- `src/api/` owns shared backend request functions and DTOs
-- features should not reference another feature directly for components, hooks, models, mappers, or types
-- promotion into `src/components/`, `src/api/`, or `src/lib/` should happen only by explicit decision
-- feature-based structure inside `apps/web/src`
-- route entries stay thin and compose feature-owned UI
-- Zustand is reserved for cross-route or session-level state
-- MUI provides accessible primitives and Tailwind handles layout, spacing, and token-driven styling
-- frontend code should stay portable enough that future Android and iOS work can reuse contracts, state models, and UX decisions even if UI implementation changes
+Keep the frontend easy to explain:
+- clear feature ownership
+- explicit route surface
+- typed API integration
+- coherent design language across public and protected views

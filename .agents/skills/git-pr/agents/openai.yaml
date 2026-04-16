@@ -1,0 +1,7 @@
+interface:
+  display_name: "Git PR"
+  short_description: "Prepare Firefly pull requests for review"
+  brand_color: "#DC2626"
+  default_prompt: "Prepare a Firefly pull request summary and metadata"
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Frontend Design"
+  short_description: "Create design-led product UI with a clear visual direction"
+  brand_color: "#0F766E"
+  default_prompt: "Design a strong frontend surface with production-grade polish"
+policy:
+  allow_implicit_invocation: true
