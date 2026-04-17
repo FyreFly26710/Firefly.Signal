@@ -2,12 +2,16 @@ import type { JobCardModel } from "@/features/jobs/types/job.types";
 
 export type SearchSortBy = "date-desc" | "date-asc" | "salary-desc" | "salary-asc";
 
+export type DatePosted = "anytime" | "today" | "3days" | "1week" | "2weeks";
+
 export type SearchViewMode = "card" | "table";
 
 export type SearchCriteria = {
-  postcode: string;
   keyword: string;
-  company: string;
+  postcode: string;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  datePosted: DatePosted;
   sortBy: SearchSortBy;
   pageIndex: number;
   pageSize: number;

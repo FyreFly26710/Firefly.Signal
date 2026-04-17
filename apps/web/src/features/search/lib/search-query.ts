@@ -1,16 +1,20 @@
-import type { SearchCriteria, SearchSortBy } from "@/features/search/types/search.types";
+import type { DatePosted, SearchCriteria, SearchSortBy } from "@/features/search/types/search.types";
 
 const defaultPageIndex = 0;
 const defaultPageSize = 20;
 const defaultSortBy: SearchSortBy = "date-desc";
+const defaultDatePosted: DatePosted = "anytime";
 const allowedPageSizes = new Set([20, 50, 100]);
 const allowedSortBy = new Set<SearchSortBy>(["date-desc", "date-asc", "salary-desc", "salary-asc"]);
+const allowedDatePosted = new Set<DatePosted>(["anytime", "today", "3days", "1week", "2weeks"]);
 
 export function normalizeSearchCriteria(criteria: SearchCriteria): SearchCriteria {
   return {
     keyword: criteria.keyword.trim(),
     postcode: criteria.postcode.trim(),
-    company: criteria.company.trim(),
+    salaryMin: normalizeSalary(criteria.salaryMin),
+    salaryMax: normalizeSalary(criteria.salaryMax),
+    datePosted: normalizeDatePosted(criteria.datePosted),
     sortBy: normalizeSortBy(criteria.sortBy),
     pageIndex: normalizePageIndex(criteria.pageIndex),
     pageSize: normalizePageSize(criteria.pageSize)
@@ -18,10 +22,15 @@ export function normalizeSearchCriteria(criteria: SearchCriteria): SearchCriteri
 }
 
 export function readSearchCriteria(searchParams: URLSearchParams): SearchCriteria {
+  const rawMin = searchParams.get("salaryMin");
+  const rawMax = searchParams.get("salaryMax");
+
   return normalizeSearchCriteria({
     keyword: searchParams.get("keyword") ?? "",
     postcode: searchParams.get("postcode") ?? "",
-    company: searchParams.get("company") ?? "",
+    salaryMin: rawMin !== null ? Number(rawMin) : null,
+    salaryMax: rawMax !== null ? Number(rawMax) : null,
+    datePosted: (searchParams.get("datePosted") ?? defaultDatePosted) as DatePosted,
     sortBy: (searchParams.get("sortBy") ?? defaultSortBy) as SearchSortBy,
     pageIndex: Number(searchParams.get("pageIndex") ?? defaultPageIndex),
     pageSize: Number(searchParams.get("pageSize") ?? defaultPageSize)
@@ -40,8 +49,16 @@ export function createSearchParams(criteria: SearchCriteria): URLSearchParams {
     params.set("postcode", normalized.postcode);
   }
 
-  if (normalized.company) {
-    params.set("company", normalized.company);
+  if (normalized.salaryMin !== null) {
+    params.set("salaryMin", String(normalized.salaryMin));
+  }
+
+  if (normalized.salaryMax !== null) {
+    params.set("salaryMax", String(normalized.salaryMax));
+  }
+
+  if (normalized.datePosted !== defaultDatePosted) {
+    params.set("datePosted", normalized.datePosted);
   }
 
   if (normalized.sortBy !== defaultSortBy) {
@@ -67,11 +84,21 @@ export function createSearchPath(criteria: SearchCriteria): string {
 }
 
 export function hasSearchCriteria(criteria: SearchCriteria): boolean {
-  return criteria.keyword.length > 0 || criteria.postcode.length > 0 || criteria.company.length > 0;
+  return criteria.keyword.length > 0 || criteria.postcode.length > 0;
 }
 
 function normalizeSortBy(value: SearchSortBy): SearchSortBy {
   return allowedSortBy.has(value) ? value : defaultSortBy;
+}
+
+function normalizeDatePosted(value: DatePosted): DatePosted {
+  return allowedDatePosted.has(value) ? value : defaultDatePosted;
+}
+
+function normalizeSalary(value: number | null): number | null {
+  if (value === null) return null;
+  const n = Math.floor(value);
+  return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
 function normalizePageIndex(value: number): number {

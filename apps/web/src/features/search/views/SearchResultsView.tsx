@@ -8,7 +8,7 @@ import {
   createSearchParams,
   readSearchCriteria
 } from "@/features/search/lib/search-query";
-import type { SearchSortBy, SearchViewMode } from "@/features/search/types/search.types";
+import type { DatePosted, SearchSortBy, SearchViewMode } from "@/features/search/types/search.types";
 
 export function SearchResultsView() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,20 +35,26 @@ export function SearchResultsView() {
       <div className="sticky top-[73px] z-40 border-b border-divider bg-background">
         <div className="mx-auto max-w-7xl px-5 py-4 sm:px-8">
           <SearchResultsToolbar
-            key={`${criteria.keyword}|${criteria.postcode}|${criteria.company}`}
+            key={`${criteria.keyword}|${criteria.postcode}|${criteria.salaryMin}|${criteria.salaryMax}`}
             initialKeyword={criteria.keyword}
             initialPostcode={criteria.postcode}
-            initialCompany={criteria.company}
+            initialSalaryMin={criteria.salaryMin}
+            initialSalaryMax={criteria.salaryMax}
+            datePosted={criteria.datePosted}
             sortBy={criteria.sortBy}
             viewMode={viewMode}
-            onSearch={(nextKeyword, nextPostcode, nextCompany) => {
+            onSearch={(keyword, postcode, salaryMin, salaryMax) => {
               updateCriteria({
                 ...criteria,
-                keyword: nextKeyword,
-                postcode: nextPostcode,
-                company: nextCompany,
+                keyword,
+                postcode,
+                salaryMin,
+                salaryMax,
                 pageIndex: 0
               });
+            }}
+            onDatePostedChange={(datePosted: DatePosted) => {
+              updateCriteria({ ...criteria, datePosted, pageIndex: 0 });
             }}
             onSortChange={(sortBy: SearchSortBy) => {
               updateCriteria({ ...criteria, sortBy, pageIndex: 0 });
@@ -71,17 +77,10 @@ export function SearchResultsView() {
             pageIndex={data?.pageIndex ?? criteria.pageIndex}
             pageSize={data?.pageSize ?? criteria.pageSize}
             onPageChange={(pageIndex) => {
-              updateCriteria({
-                ...criteria,
-                pageIndex
-              });
+              updateCriteria({ ...criteria, pageIndex });
             }}
             onPageSizeChange={(pageSize) => {
-              updateCriteria({
-                ...criteria,
-                pageSize,
-                pageIndex: 0
-              });
+              updateCriteria({ ...criteria, pageSize, pageIndex: 0 });
             }}
           />
         </main>

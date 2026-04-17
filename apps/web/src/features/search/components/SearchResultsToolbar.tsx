@@ -3,57 +3,78 @@ import ViewAgendaRoundedIcon from "@mui/icons-material/ViewAgendaRounded";
 import { Button, IconButton, MenuItem, TextField, Tooltip } from "@mui/material";
 import { useState } from "react";
 import { SearchInput } from "@/components/SearchInput";
-import type { SearchSortBy, SearchViewMode } from "@/features/search/types/search.types";
+import type { DatePosted, SearchSortBy, SearchViewMode } from "@/features/search/types/search.types";
 
-const sortOptions: { value: SearchSortBy; label: string }[] = [
-  { value: "date-desc", label: "Newest first" },
-  { value: "date-asc", label: "Oldest first" },
-  { value: "salary-desc", label: "Salary: High to low" },
-  { value: "salary-asc", label: "Salary: Low to high" }
+const DATE_POSTED_OPTIONS: { value: DatePosted; label: string }[] = [
+  { value: "anytime",  label: "Anytime" },
+  { value: "today",   label: "Today" },
+  { value: "3days",   label: "Last three days" },
+  { value: "1week",   label: "Last week" },
+  { value: "2weeks",  label: "Last two weeks" }
+];
+
+const SORT_OPTIONS: { value: SearchSortBy; label: string }[] = [
+  { value: "date-desc",    label: "Newest first" },
+  { value: "date-asc",     label: "Oldest first" },
+  { value: "salary-desc",  label: "Salary: High to low" },
+  { value: "salary-asc",   label: "Salary: Low to high" }
 ];
 
 type SearchResultsToolbarProps = {
   initialKeyword: string;
   initialPostcode: string;
-  initialCompany: string;
+  initialSalaryMin: number | null;
+  initialSalaryMax: number | null;
+  datePosted: DatePosted;
   sortBy: SearchSortBy;
   viewMode: SearchViewMode;
-  onSearch: (keyword: string, postcode: string, company: string) => void;
-  onSortChange: (sortBy: SearchSortBy) => void;
+  onSearch: (keyword: string, postcode: string, salaryMin: number | null, salaryMax: number | null) => void;
+  onDatePostedChange: (value: DatePosted) => void;
+  onSortChange: (value: SearchSortBy) => void;
   onViewModeChange: (mode: SearchViewMode) => void;
 };
 
 export function SearchResultsToolbar({
   initialKeyword,
   initialPostcode,
-  initialCompany,
+  initialSalaryMin,
+  initialSalaryMax,
+  datePosted,
   sortBy,
   viewMode,
   onSearch,
+  onDatePostedChange,
   onSortChange,
   onViewModeChange
 }: SearchResultsToolbarProps) {
   const [draftKeyword, setDraftKeyword] = useState(initialKeyword);
   const [draftPostcode, setDraftPostcode] = useState(initialPostcode);
-  const [draftCompany, setDraftCompany] = useState(initialCompany);
+  const [draftSalaryMin, setDraftSalaryMin] = useState(initialSalaryMin !== null ? String(initialSalaryMin) : "");
+  const [draftSalaryMax, setDraftSalaryMax] = useState(initialSalaryMax !== null ? String(initialSalaryMax) : "");
+
+  function parseSalary(value: string): number | null {
+    const n = parseInt(value.replace(/[^0-9]/g, ""), 10);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
 
   function handleSearch() {
-    onSearch(draftKeyword, draftPostcode, draftCompany);
+    onSearch(draftKeyword, draftPostcode, parseSalary(draftSalaryMin), parseSalary(draftSalaryMax));
   }
 
   return (
-    <div className="col-span-full flex flex-col gap-3">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px_auto_auto]">
+    <div className="flex flex-col gap-3">
+      {/* Row 1: What / Where / Search / View toggle */}
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px_auto_auto]">
         <SearchInput
-          ariaLabel="Search roles, companies, skills"
-          placeholder="Search roles, companies, skills..."
+          ariaLabel="Job title, skill or keyword"
+          placeholder="e.g. developer"
           value={draftKeyword}
           onChange={setDraftKeyword}
           onSubmit={handleSearch}
         />
         <SearchInput
-          ariaLabel="Postcode or area"
-          placeholder="Postcode or area"
+          ariaLabel="Town or postcode"
+          placeholder="Town or postcode"
           value={draftPostcode}
           onChange={setDraftPostcode}
           onSubmit={handleSearch}
@@ -103,26 +124,46 @@ export function SearchResultsToolbar({
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
-        <SearchInput
-          ariaLabel="Company name"
-          placeholder="Company name"
-          value={draftCompany}
-          onChange={setDraftCompany}
-          onSubmit={handleSearch}
+      {/* Row 2: Salary range / Date posted / Sort by */}
+      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_200px_200px]">
+        <TextField
+          size="small"
+          label="Min salary"
+          placeholder="e.g. 30000"
+          value={draftSalaryMin}
+          onChange={(e) => setDraftSalaryMin(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+          inputProps={{ inputMode: "numeric", "aria-label": "Minimum salary" }}
         />
+        <TextField
+          size="small"
+          label="Max salary"
+          placeholder="e.g. 80000"
+          value={draftSalaryMax}
+          onChange={(e) => setDraftSalaryMax(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+          inputProps={{ inputMode: "numeric", "aria-label": "Maximum salary" }}
+        />
+        <TextField
+          select
+          size="small"
+          label="Date posted"
+          value={datePosted}
+          onChange={(e) => onDatePostedChange(e.target.value as DatePosted)}
+        >
+          {DATE_POSTED_OPTIONS.map((opt) => (
+            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+          ))}
+        </TextField>
         <TextField
           select
           size="small"
           label="Sort by"
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value as SearchSortBy)}
-          sx={{ minHeight: 48 }}
         >
-          {sortOptions.map((opt) => (
-            <MenuItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </MenuItem>
+          {SORT_OPTIONS.map((opt) => (
+            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
           ))}
         </TextField>
       </div>

@@ -8,6 +8,15 @@ vi.mock("@/api/jobs/jobs.api", () => ({
   getJobsPage: vi.fn()
 }));
 
+const baseCriteria = {
+  salaryMin: null,
+  salaryMax: null,
+  datePosted: "anytime" as const,
+  sortBy: "date-desc" as const,
+  pageIndex: 0,
+  pageSize: 20
+};
+
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason?: unknown) => void;
@@ -34,7 +43,7 @@ describe("useJobSearch", () => {
     });
 
     const { result } = renderHookWithProviders(() =>
-      useJobSearch({ keyword: "", postcode: "", company: "", sortBy: "date-desc", pageIndex: 0, pageSize: 20 })
+      useJobSearch({ keyword: "", postcode: "", ...baseCriteria })
     );
 
     await waitFor(() => {
@@ -46,7 +55,6 @@ describe("useJobSearch", () => {
       pageSize: 20,
       postcode: undefined,
       keyword: undefined,
-      company: undefined,
       isHidden: false
     });
   });
@@ -59,8 +67,7 @@ describe("useJobSearch", () => {
       useJobSearch({
         keyword: "designer",
         postcode: "EC2A",
-        company: "",
-        sortBy: "date-desc",
+        ...baseCriteria,
         pageIndex: 1,
         pageSize: 50
       })
@@ -124,7 +131,6 @@ describe("useJobSearch", () => {
       pageSize: 50,
       postcode: "EC2A",
       keyword: "designer",
-      company: undefined,
       isHidden: false
     });
   });
@@ -138,14 +144,7 @@ describe("useJobSearch", () => {
     });
 
     const { result } = renderHookWithProviders(() =>
-      useJobSearch({
-        keyword: "analyst",
-        postcode: "SE1",
-        company: "",
-        sortBy: "date-desc",
-        pageIndex: 0,
-        pageSize: 20
-      })
+      useJobSearch({ keyword: "analyst", postcode: "SE1", ...baseCriteria })
     );
 
     await waitFor(() => {
@@ -159,14 +158,7 @@ describe("useJobSearch", () => {
     vi.mocked(getJobsPage).mockRejectedValueOnce(new Error("Search service is unavailable."));
 
     const { result } = renderHookWithProviders(() =>
-      useJobSearch({
-        keyword: "engineer",
-        postcode: "M1",
-        company: "",
-        sortBy: "date-desc",
-        pageIndex: 0,
-        pageSize: 20
-      })
+      useJobSearch({ keyword: "engineer", postcode: "M1", ...baseCriteria })
     );
 
     await waitFor(() => {

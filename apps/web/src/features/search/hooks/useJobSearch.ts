@@ -29,16 +29,15 @@ function extractSalaryMax(salary: string | undefined): number {
   return numbers.length > 0 ? Math.max(...numbers) : -1;
 }
 
-export function useJobSearch({ postcode, keyword, company, sortBy, pageIndex, pageSize }: SearchCriteria) {
+export function useJobSearch({ postcode, keyword, sortBy, pageIndex, pageSize }: SearchCriteria) {
   const { data, isPending, isError, error } = useQuery<SearchViewModel>({
-    queryKey: ["job-search", { postcode, keyword, company, sortBy, pageIndex, pageSize }],
+    queryKey: ["job-search", { postcode, keyword, sortBy, pageIndex, pageSize }],
     queryFn: async () => {
       const response = await getJobsPage({
         pageIndex,
         pageSize,
         postcode: postcode || undefined,
         keyword: keyword || undefined,
-        company: company || undefined,
         isHidden: false
       });
       const viewModel = mapSearchResponse(response, { postcode, keyword });
