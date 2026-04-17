@@ -11,10 +11,15 @@ internal sealed class JobSearchApiFactory : WebApplicationFactory<Firefly.Signal
 {
     private readonly string databaseName = $"job-search-api-tests-{Guid.NewGuid():N}";
 
-    public HttpClient CreateAuthenticatedClient(long userId = 42)
+    public HttpClient CreateAuthenticatedClient(long userId = 42, string? role = null)
     {
         var client = CreateClient();
         client.DefaultRequestHeaders.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString());
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            client.DefaultRequestHeaders.Add(TestAuthenticationHandler.RoleHeaderName, role);
+        }
+
         return client;
     }
 

@@ -38,6 +38,10 @@ public sealed class JobRefreshRun : AuditableEntity
     public DateTime StartedAtUtc { get; private set; }
     // Timestamp when the refresh completed or failed.
     public DateTime? CompletedAtUtc { get; private set; }
+    public bool IsTerminal => Status != JobRefreshRunStatus.Running;
+    public bool HasFailures => RecordsFailed > 0 || !string.IsNullOrWhiteSpace(FailureMessage);
+    public int VisibleRecordsInserted => Math.Max(0, RecordsInserted - RecordsHidden);
+    public string? FailureSummary => string.IsNullOrWhiteSpace(FailureMessage) ? null : FailureMessage;
 
     public static JobRefreshRun Start(
         string providerName,
@@ -46,6 +50,26 @@ public sealed class JobRefreshRun : AuditableEntity
         int requestedPageSize,
         int? requestedMaxPages)
     {
+        if (string.IsNullOrWhiteSpace(providerName))
+        {
+            throw new ArgumentException("Provider name is required.", nameof(providerName));
+        }
+
+        if (string.IsNullOrWhiteSpace(countryCode))
+        {
+            throw new ArgumentException("Country code is required.", nameof(countryCode));
+        }
+
+        if (requestedPageSize <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(requestedPageSize), "Requested page size must be greater than zero.");
+        }
+
+        if (requestedMaxPages <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(requestedMaxPages), "Requested max pages must be greater than zero when provided.");
+        }
+
         return new JobRefreshRun
         {
             ProviderName = providerName.Trim(),
@@ -60,6 +84,13 @@ public sealed class JobRefreshRun : AuditableEntity
 
     public void RecordFetchedPage(int recordCount)
     {
+        EnsureRunning();
+
+        if (recordCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(recordCount), "Fetched record count cannot be negative.");
+        }
+
         PagesRequested += 1;
         PagesCompleted += 1;
         RecordsReceived += recordCount;
@@ -68,24 +99,52 @@ public sealed class JobRefreshRun : AuditableEntity
 
     public void RecordInsertedJobs(int insertedCount)
     {
+        EnsureRunning();
+
+        if (insertedCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(insertedCount), "Inserted record count cannot be negative.");
+        }
+
         RecordsInserted += insertedCount;
         Touch();
     }
 
     public void RecordHiddenJobs(int hiddenCount)
     {
+        EnsureRunning();
+
+        if (hiddenCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(hiddenCount), "Hidden record count cannot be negative.");
+        }
+
+        if (RecordsHidden + hiddenCount > RecordsInserted)
+        {
+            throw new InvalidOperationException("Hidden record count cannot exceed inserted record count.");
+        }
+
         RecordsHidden += hiddenCount;
         Touch();
     }
 
     public void RecordFailedItems(int failedCount)
     {
+        EnsureRunning();
+
+        if (failedCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(failedCount), "Failed record count cannot be negative.");
+        }
+
         RecordsFailed += failedCount;
         Touch();
     }
 
     public void Complete(bool partial = false)
     {
+        EnsureRunning();
+
         Status = partial ? JobRefreshRunStatus.PartiallyCompleted : JobRefreshRunStatus.Completed;
         CompletedAtUtc = DateTime.UtcNow;
         Touch();
@@ -93,9 +152,24 @@ public sealed class JobRefreshRun : AuditableEntity
 
     public void Fail(string failureMessage)
     {
+        EnsureRunning();
+
+        if (string.IsNullOrWhiteSpace(failureMessage))
+        {
+            throw new ArgumentException("Failure message is required.", nameof(failureMessage));
+        }
+
         Status = JobRefreshRunStatus.Failed;
         FailureMessage = failureMessage.Trim();
         CompletedAtUtc = DateTime.UtcNow;
         Touch();
+    }
+
+    private void EnsureRunning()
+    {
+        if (IsTerminal)
+        {
+            throw new InvalidOperationException("Job refresh run is already complete.");
+        }
     }
 }

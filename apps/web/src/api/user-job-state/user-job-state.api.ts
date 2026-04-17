@@ -1,10 +1,5 @@
 import { deleteJson, postJson } from "@/lib/http/client";
-
-export type UserJobStateDto = {
-  jobPostingId: number;
-  isSaved: boolean;
-  isHidden: boolean;
-};
+import type { UserJobStateDto } from "@/api/user-job-state/user-job-state.types";
 
 export async function saveJob(jobId: string): Promise<UserJobStateDto> {
   return postJson<UserJobStateDto, Record<string, never>>(`/api/job-search/jobs/${jobId}/save`, {});

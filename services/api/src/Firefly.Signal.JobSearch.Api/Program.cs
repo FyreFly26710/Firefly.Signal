@@ -17,7 +17,7 @@ app.UseFireflyExceptionHandling();
 app.MapDefaultEndpoints();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapJobSearchApi();
+app.MapJobApi();
 app.MapUserJobStateApi();
 app.MapJobApplicationApi();
 

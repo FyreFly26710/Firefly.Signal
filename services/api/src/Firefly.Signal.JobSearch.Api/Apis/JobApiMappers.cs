@@ -3,7 +3,7 @@ using Firefly.Signal.JobSearch.Contracts.Requests;
 
 namespace Firefly.Signal.JobSearch.Api.Apis;
 
-internal static class JobSearchApiMappers
+internal static class JobApiMappers
 {
     public static CreateJobCommand ToCreateCommand(CreateJobRequest request)
         => new(

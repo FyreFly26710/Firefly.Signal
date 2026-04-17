@@ -13,6 +13,7 @@ internal sealed class TestAuthenticationHandler(
 {
     public const string SchemeName = "Test";
     public const string UserIdHeaderName = "X-Test-UserId";
+    public const string RoleHeaderName = "X-Test-Role";
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
@@ -22,12 +23,18 @@ internal sealed class TestAuthenticationHandler(
             return Task.FromResult(AuthenticateResult.NoResult());
         }
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim("sub", userId.ToString()),
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Name, $"test-user-{userId}")
         };
+
+        if (Request.Headers.TryGetValue(RoleHeaderName, out var roleValues)
+            && !string.IsNullOrWhiteSpace(roleValues.ToString()))
+        {
+            claims.Add(new Claim(ClaimTypes.Role, roleValues.ToString()));
+        }
 
         var identity = new ClaimsIdentity(claims, SchemeName);
         var principal = new ClaimsPrincipal(identity);

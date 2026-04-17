@@ -11,13 +11,16 @@ import type {
   DeleteJobsResponseDto,
   ExportJobsRequestDto,
   ExportJobsResponseDto,
+  GetJobImportRunsQueryDto,
   GetJobsPageQueryDto,
   HideJobsResponseDto,
   IdBatchRequestDto,
+  JobImportRunResponseDto,
   ImportJobsFromProviderRequestDto,
   ImportJobsResponseDto,
   JobDetailsResponseDto,
   JobsPageResponseDto,
+  PagedResponseDto,
   UpdateJobRequestDto
 } from "@/api/jobs/jobs.types";
 
@@ -94,6 +97,19 @@ export async function importJobsFromJson(file: File): Promise<ImportJobsResponse
   formData.append("file", file);
 
   return postFormData<ImportJobsResponseDto>("/api/job-search/jobs/import/json", formData);
+}
+
+export async function getRecentImportRuns(
+  query: GetJobImportRunsQueryDto
+): Promise<PagedResponseDto<JobImportRunResponseDto>> {
+  const searchParams = new URLSearchParams({
+    pageIndex: String(query.pageIndex),
+    pageSize: String(query.pageSize)
+  });
+
+  return getJson<PagedResponseDto<JobImportRunResponseDto>>(
+    `/api/job-search/jobs/import-runs?${searchParams.toString()}`
+  );
 }
 
 export async function exportJobs(request: ExportJobsRequestDto): Promise<ExportJobsResponseDto> {
