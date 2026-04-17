@@ -1,6 +1,7 @@
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import { Button, MenuItem, TextField } from "@mui/material";
+import { useState } from "react";
 import type { SearchStatus, SearchViewMode } from "@/features/search/types/search.types";
 import { JobCard } from "@/features/jobs/components/JobCard";
 import type { JobCardModel } from "@/features/jobs/types/job.types";
@@ -136,44 +137,89 @@ export function SearchResults({
         </div>
       )}
 
-      <div className="mt-6 flex flex-col gap-4 rounded-lg border border-border bg-background-elevated px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-foreground-secondary">
-          Page <span className="font-medium text-foreground">{pageIndex + 1}</span> of{" "}
-          <span className="font-medium text-foreground">{Math.max(1, Math.ceil(totalCount / pageSize))}</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <TextField
-            select
-            size="small"
-            label="Per page"
-            value={String(pageSize)}
-            onChange={(event) => onPageSizeChange(Number(event.target.value))}
-            sx={{ minWidth: 120 }}
-          >
-            <MenuItem value="20">20</MenuItem>
-            <MenuItem value="50">50</MenuItem>
-            <MenuItem value="100">100</MenuItem>
-          </TextField>
-          <Button
-            variant="outlined"
-            color="inherit"
-            startIcon={<ChevronLeftRoundedIcon />}
-            disabled={pageIndex === 0}
-            onClick={() => onPageChange(pageIndex - 1)}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outlined"
-            color="inherit"
-            endIcon={<ChevronRightRoundedIcon />}
-            disabled={pageIndex + 1 >= Math.max(1, Math.ceil(totalCount / pageSize))}
-            onClick={() => onPageChange(pageIndex + 1)}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <PaginationBar
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+      />
     </>
+  );
+}
+
+function PaginationBar({
+  pageIndex,
+  pageSize,
+  totalCount,
+  onPageChange,
+  onPageSizeChange
+}: {
+  pageIndex: number;
+  pageSize: number;
+  totalCount: number;
+  onPageChange: (pageIndex: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+}) {
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const [draft, setDraft] = useState("");
+
+  function commitJump() {
+    const n = parseInt(draft, 10);
+    if (!Number.isNaN(n) && n >= 1 && n <= totalPages) {
+      onPageChange(n - 1);
+    }
+    setDraft("");
+  }
+
+  return (
+    <div className="mt-6 flex flex-col gap-4 rounded-lg border border-border bg-background-elevated px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="text-sm text-foreground-secondary">
+        Page <span className="font-medium text-foreground">{pageIndex + 1}</span> of{" "}
+        <span className="font-medium text-foreground">{totalPages}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <TextField
+          select
+          size="small"
+          label="Per page"
+          value={String(pageSize)}
+          onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="20">20</MenuItem>
+          <MenuItem value="50">50</MenuItem>
+          <MenuItem value="100">100</MenuItem>
+        </TextField>
+        <TextField
+          size="small"
+          label="Go to page"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") commitJump(); }}
+          onBlur={commitJump}
+          inputProps={{ inputMode: "numeric", pattern: "[0-9]*", "aria-label": "Go to page" }}
+          sx={{ width: 100 }}
+        />
+        <Button
+          variant="outlined"
+          color="inherit"
+          startIcon={<ChevronLeftRoundedIcon />}
+          disabled={pageIndex === 0}
+          onClick={() => onPageChange(pageIndex - 1)}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outlined"
+          color="inherit"
+          endIcon={<ChevronRightRoundedIcon />}
+          disabled={pageIndex + 1 >= totalPages}
+          onClick={() => onPageChange(pageIndex + 1)}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
   );
 }
