@@ -31,6 +31,7 @@ type JobsImportProviderDialogProps = {
   historyHasNextPage: boolean;
   historyIsLoading: boolean;
   historyPageIndex: number;
+  historyRowsPerPage: number;
   values: JobsImportProviderFormValues;
   onChange: (values: JobsImportProviderFormValues) => void;
   onClose: () => void;
@@ -46,6 +47,7 @@ export function JobsImportProviderDialog({
   historyHasNextPage,
   historyIsLoading,
   historyPageIndex,
+  historyRowsPerPage,
   values,
   onChange,
   onClose,
@@ -64,6 +66,7 @@ export function JobsImportProviderDialog({
             historyHasNextPage={historyHasNextPage}
             historyIsLoading={historyIsLoading}
             historyPageIndex={historyPageIndex}
+            rowsPerPage={historyRowsPerPage}
             onHistoryPageChange={onHistoryPageChange}
           />
         </div>

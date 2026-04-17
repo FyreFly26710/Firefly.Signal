@@ -18,10 +18,9 @@ type JobImportRunsTableProps = {
   historyHasNextPage: boolean;
   historyIsLoading: boolean;
   historyPageIndex: number;
+  rowsPerPage: number;
   onHistoryPageChange: (pageIndex: number) => void;
 };
-
-const rowsPerPage = 4;
 
 export function JobImportRunsTable({
   history,
@@ -29,6 +28,7 @@ export function JobImportRunsTable({
   historyHasNextPage,
   historyIsLoading,
   historyPageIndex,
+  rowsPerPage,
   onHistoryPageChange
 }: JobImportRunsTableProps) {
   return (

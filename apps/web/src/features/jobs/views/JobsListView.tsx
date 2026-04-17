@@ -76,7 +76,7 @@ export function JobsListView() {
   const [historyPageIndex, setHistoryPageIndex] = useState(0);
   const [importForm, setImportForm] = useState<JobsImportProviderFormValues>(defaultImportForm);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const historyPageSize = 5;
+  const historyPageSize = 4;
   const { data: importRunHistory = [], isPending: isHistoryLoading, error: historyError } = useJobImportRuns(
     historyPageIndex,
     isImportDialogOpen && isAdmin,
@@ -280,6 +280,7 @@ export function JobsListView() {
               historyHasNextPage={importRunHistory.length === (historyPageIndex + 1) * historyPageSize}
               historyIsLoading={isHistoryLoading}
               historyPageIndex={historyPageIndex}
+              historyRowsPerPage={historyPageSize}
               values={importForm}
               onChange={setImportForm}
               onClose={() => {
