@@ -108,6 +108,31 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
             Items: items);
     }
 
+    public async Task<IReadOnlyList<JobImportRunResponse>> GetRecentImportRunsAsync(int limit, CancellationToken cancellationToken = default)
+    {
+        var normalizedLimit = Math.Clamp(limit, 1, 50);
+
+        return await dbContext.JobRefreshRuns
+            .AsNoTracking()
+            .OrderByDescending(run => run.StartedAtUtc)
+            .ThenByDescending(run => run.Id)
+            .Take(normalizedLimit)
+            .Select(run => new JobImportRunResponse(
+                Id: run.Id,
+                ProviderName: run.ProviderName,
+                Status: run.Status.ToString(),
+                PagesRequested: run.PagesRequested,
+                PagesCompleted: run.PagesCompleted,
+                RecordsReceived: run.RecordsReceived,
+                RecordsInserted: run.RecordsInserted,
+                RecordsHidden: run.RecordsHidden,
+                RecordsFailed: run.RecordsFailed,
+                StartedAtUtc: run.StartedAtUtc,
+                CompletedAtUtc: run.CompletedAtUtc,
+                FailureSummary: string.IsNullOrWhiteSpace(run.FailureMessage) ? null : run.FailureMessage))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<ExportJobsResponse> ExportAsync(ExportJobsRequest request, CancellationToken cancellationToken = default)
     {
         IQueryable<JobPosting> query;

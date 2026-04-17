@@ -83,6 +83,20 @@ public sealed record ImportJobsResponse(
     int ImportedCount,
     int FailedCount);
 
+public sealed record JobImportRunResponse(
+    long Id,
+    string ProviderName,
+    string Status,
+    int PagesRequested,
+    int PagesCompleted,
+    int RecordsReceived,
+    int RecordsInserted,
+    int RecordsHidden,
+    int RecordsFailed,
+    DateTime StartedAtUtc,
+    DateTime? CompletedAtUtc,
+    string? FailureSummary);
+
 public sealed record ExportJobsResponse(
     DateTime ExportedAtUtc,
     int Count,
