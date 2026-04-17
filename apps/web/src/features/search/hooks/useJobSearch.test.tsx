@@ -1,12 +1,24 @@
 import { waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getJobsPage } from "@/api/jobs/jobs.api";
+import { searchJobsPage } from "@/api/jobs/jobs.api";
 import { useJobSearch } from "@/features/search/hooks/useJobSearch";
 import { renderHookWithProviders } from "@/test/render";
 
 vi.mock("@/api/jobs/jobs.api", () => ({
-  getJobsPage: vi.fn()
+  searchJobsPage: vi.fn()
 }));
+
+const baseCriteria = {
+  keyword: "",
+  where: "",
+  salaryMin: null,
+  salaryMax: null,
+  datePosted: null,
+  sortBy: "date" as const,
+  isAsc: false,
+  pageIndex: 0,
+  pageSize: 20
+};
 
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
@@ -26,7 +38,7 @@ describe("useJobSearch", () => {
   });
 
   it("loads visible jobs even when no criteria are provided", async () => {
-    vi.mocked(getJobsPage).mockResolvedValueOnce({
+    vi.mocked(searchJobsPage).mockResolvedValueOnce({
       pageIndex: 0,
       pageSize: 20,
       totalCount: 0,
@@ -34,30 +46,40 @@ describe("useJobSearch", () => {
     });
 
     const { result } = renderHookWithProviders(() =>
-      useJobSearch({ keyword: "", postcode: "", pageIndex: 0, pageSize: 20 })
+      useJobSearch(baseCriteria)
     );
 
     await waitFor(() => {
       expect(result.current.status).toBe("empty");
     });
 
-    expect(getJobsPage).toHaveBeenCalledWith({
+    expect(searchJobsPage).toHaveBeenCalledWith({
       pageIndex: 0,
       pageSize: 20,
-      postcode: undefined,
       keyword: undefined,
-      isHidden: false
+      where: undefined,
+      salaryMin: undefined,
+      salaryMax: undefined,
+      datePosted: undefined,
+      sortBy: "date",
+      isAsc: false
     });
   });
 
   it("loads and returns mapped results for a populated search", async () => {
-    const deferred = createDeferred<Awaited<ReturnType<typeof getJobsPage>>>();
-    vi.mocked(getJobsPage).mockReturnValueOnce(deferred.promise);
+    const deferred = createDeferred<Awaited<ReturnType<typeof searchJobsPage>>>();
+    vi.mocked(searchJobsPage).mockReturnValueOnce(deferred.promise);
 
     const { result } = renderHookWithProviders(() =>
       useJobSearch({
+        ...baseCriteria,
         keyword: "designer",
-        postcode: "EC2A",
+        where: "London",
+        salaryMin: 50000,
+        salaryMax: 90000,
+        datePosted: 7,
+        sortBy: "salary",
+        isAsc: true,
         pageIndex: 1,
         pageSize: 50
       })
@@ -116,17 +138,21 @@ describe("useJobSearch", () => {
       pageSize: 50
     });
     expect(result.current.errorMessage).toBeNull();
-    expect(getJobsPage).toHaveBeenCalledWith({
+    expect(searchJobsPage).toHaveBeenCalledWith({
       pageIndex: 1,
       pageSize: 50,
-      postcode: "EC2A",
       keyword: "designer",
-      isHidden: false
+      where: "London",
+      salaryMin: 50000,
+      salaryMax: 90000,
+      datePosted: 7,
+      sortBy: "salary",
+      isAsc: true
     });
   });
 
   it("returns the empty state when the search succeeds without jobs", async () => {
-    vi.mocked(getJobsPage).mockResolvedValueOnce({
+    vi.mocked(searchJobsPage).mockResolvedValueOnce({
       pageIndex: 0,
       pageSize: 20,
       totalCount: 0,
@@ -134,12 +160,7 @@ describe("useJobSearch", () => {
     });
 
     const { result } = renderHookWithProviders(() =>
-      useJobSearch({
-        keyword: "analyst",
-        postcode: "SE1",
-        pageIndex: 0,
-        pageSize: 20
-      })
+      useJobSearch({ ...baseCriteria, keyword: "analyst" })
     );
 
     await waitFor(() => {
@@ -150,15 +171,10 @@ describe("useJobSearch", () => {
   });
 
   it("surfaces API failures as an error state", async () => {
-    vi.mocked(getJobsPage).mockRejectedValueOnce(new Error("Search service is unavailable."));
+    vi.mocked(searchJobsPage).mockRejectedValueOnce(new Error("Search service is unavailable."));
 
     const { result } = renderHookWithProviders(() =>
-      useJobSearch({
-        keyword: "engineer",
-        postcode: "M1",
-        pageIndex: 0,
-        pageSize: 20
-      })
+      useJobSearch({ ...baseCriteria, keyword: "engineer" })
     );
 
     await waitFor(() => {

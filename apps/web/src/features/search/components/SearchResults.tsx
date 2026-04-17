@@ -1,10 +1,12 @@
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import { Button, MenuItem, TextField } from "@mui/material";
-import type { SearchStatus } from "@/features/search/types/search.types";
+import { useState } from "react";
+import type { SearchStatus, SearchViewMode } from "@/features/search/types/search.types";
 import { JobCard } from "@/features/jobs/components/JobCard";
 import type { JobCardModel } from "@/features/jobs/types/job.types";
 import { useJobState } from "@/features/search/hooks/useJobState";
+import { JobSearchCompactTable } from "@/features/search/components/JobSearchCompactTable";
 
 function JobCardWithState({ job }: { job: JobCardModel }) {
   const { isSaved, isHidden, toggleSave, toggleHide } = useJobState(job.id, {
@@ -22,13 +24,45 @@ function JobCardWithState({ job }: { job: JobCardModel }) {
   );
 }
 
+function JobTableWithState({ jobs }: { jobs: JobCardModel[] }) {
+  // Collect per-job state. We use a map of id -> hook result by rendering one
+  // stateful row component per job so hooks are called at the top level.
+  return <JobTableRows jobs={jobs} />;
+}
+
+function JobTableRows({ jobs }: { jobs: JobCardModel[] }) {
+  const states = jobs.map((job) => ({
+    job,
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    state: useJobState(job.id, { isSaved: job.isSaved, isHidden: job.isHidden })
+  }));
+
+  const savedIds = new Set(states.filter((s) => s.state.isSaved).map((s) => s.job.id));
+  const hiddenIds = new Set(states.filter((s) => s.state.isHidden).map((s) => s.job.id));
+
+  return (
+    <JobSearchCompactTable
+      jobs={jobs}
+      savedIds={savedIds}
+      hiddenIds={hiddenIds}
+      onToggleSave={(id) => {
+        const entry = states.find((s) => s.job.id === id);
+        if (entry) void entry.state.toggleSave();
+      }}
+      onToggleHide={(id) => {
+        const entry = states.find((s) => s.job.id === id);
+        if (entry) void entry.state.toggleHide();
+      }}
+    />
+  );
+}
+
 type SearchResultsProps = {
   status: SearchStatus;
   errorMessage: string | null;
   results: JobCardModel[];
   totalCount: number;
-  keyword: string;
-  postcode: string;
+  viewMode: SearchViewMode;
   pageIndex: number;
   pageSize: number;
   onPageChange: (pageIndex: number) => void;
@@ -40,8 +74,7 @@ export function SearchResults({
   errorMessage,
   results,
   totalCount,
-  keyword,
-  postcode,
+  viewMode,
   pageIndex,
   pageSize,
   onPageChange,
@@ -52,7 +85,7 @@ export function SearchResults({
       <div className="rounded-lg border border-border bg-background-elevated px-6 py-14 text-center">
         <h3 className="font-serif text-2xl font-semibold text-foreground">Start a search</h3>
         <p className="mx-auto mt-3 max-w-xl text-foreground-secondary">
-          Enter a role, company, skill, or postcode to explore available opportunities.
+          Enter a role, skill or keyword to explore available opportunities.
         </p>
       </div>
     );
@@ -81,7 +114,7 @@ export function SearchResults({
       <div className="rounded-lg border border-border bg-background-elevated px-6 py-14 text-center">
         <h3 className="font-serif text-2xl font-semibold text-foreground">No results found</h3>
         <p className="mx-auto mt-3 max-w-xl text-foreground-secondary">
-          Try adjusting your keyword or postcode to broaden the search.
+          Try adjusting your keyword or filters to broaden the search.
         </p>
       </div>
     );
@@ -89,68 +122,101 @@ export function SearchResults({
 
   return (
     <>
-      <div className="mb-6">
-        <h2 className="font-serif text-3xl font-semibold text-foreground">
-          {keyword || postcode ? (
-            <>
-              {keyword || "All roles"}
-              {keyword && postcode ? <span className="text-foreground-tertiary"> in </span> : null}
-              {postcode || null}
-            </>
-          ) : (
-            "All jobs"
-          )}
-        </h2>
-        <p className="mt-2 text-sm text-foreground-secondary">
-          <span className="font-medium text-foreground">{totalCount}</span> opportunities found
-          {keyword || postcode ? " matching your search" : ""}
-        </p>
-      </div>
 
-      <div className="overflow-hidden rounded-lg border border-border bg-background-elevated">
-        {results.map((job) => (
-          <JobCardWithState key={job.id} job={job} />
-        ))}
-      </div>
+      {viewMode === "table" ? (
+        <JobTableWithState jobs={results} />
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-border bg-background-elevated">
+          {results.map((job) => (
+            <JobCardWithState key={job.id} job={job} />
+          ))}
+        </div>
+      )}
 
-      <div className="mt-6 flex flex-col gap-4 rounded-lg border border-border bg-background-elevated px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-foreground-secondary">
-          Page <span className="font-medium text-foreground">{pageIndex + 1}</span> of{" "}
-          <span className="font-medium text-foreground">{Math.max(1, Math.ceil(totalCount / pageSize))}</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <TextField
-            select
-            size="small"
-            label="Per page"
-            value={String(pageSize)}
-            onChange={(event) => onPageSizeChange(Number(event.target.value))}
-            sx={{ minWidth: 120 }}
-          >
-            <MenuItem value="20">20</MenuItem>
-            <MenuItem value="50">50</MenuItem>
-            <MenuItem value="100">100</MenuItem>
-          </TextField>
-          <Button
-            variant="outlined"
-            color="inherit"
-            startIcon={<ChevronLeftRoundedIcon />}
-            disabled={pageIndex === 0}
-            onClick={() => onPageChange(pageIndex - 1)}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outlined"
-            color="inherit"
-            endIcon={<ChevronRightRoundedIcon />}
-            disabled={pageIndex + 1 >= Math.max(1, Math.ceil(totalCount / pageSize))}
-            onClick={() => onPageChange(pageIndex + 1)}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <PaginationBar
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+      />
     </>
+  );
+}
+
+function PaginationBar({
+  pageIndex,
+  pageSize,
+  totalCount,
+  onPageChange,
+  onPageSizeChange
+}: {
+  pageIndex: number;
+  pageSize: number;
+  totalCount: number;
+  onPageChange: (pageIndex: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+}) {
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const [draft, setDraft] = useState("");
+
+  function commitJump() {
+    const n = parseInt(draft, 10);
+    if (!Number.isNaN(n) && n >= 1 && n <= totalPages) {
+      onPageChange(n - 1);
+    }
+    setDraft("");
+  }
+
+  return (
+    <div className="mt-6 flex flex-col gap-4 rounded-lg border border-border bg-background-elevated px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="text-sm text-foreground-secondary">
+        Page <span className="font-medium text-foreground">{pageIndex + 1}</span> of{" "}
+        <span className="font-medium text-foreground">{totalPages}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <TextField
+          select
+          size="small"
+          label="Per page"
+          value={String(pageSize)}
+          onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="20">20</MenuItem>
+          <MenuItem value="50">50</MenuItem>
+          <MenuItem value="100">100</MenuItem>
+        </TextField>
+        <TextField
+          size="small"
+          type="number"
+          label="Go to page"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") commitJump(); }}
+          onBlur={commitJump}
+          inputProps={{ inputMode: "numeric", pattern: "[0-9]*", "aria-label": "Go to page" }}
+          sx={{ width: 130 }}
+        />
+        <Button
+          variant="outlined"
+          color="inherit"
+          startIcon={<ChevronLeftRoundedIcon />}
+          disabled={pageIndex === 0}
+          onClick={() => onPageChange(pageIndex - 1)}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outlined"
+          color="inherit"
+          endIcon={<ChevronRightRoundedIcon />}
+          disabled={pageIndex + 1 >= totalPages}
+          onClick={() => onPageChange(pageIndex + 1)}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
   );
 }

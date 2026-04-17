@@ -7,79 +7,109 @@ import {
   readSearchCriteria
 } from "@/features/search/lib/search-query";
 
+const base = {
+  where: "",
+  salaryMin: null,
+  salaryMax: null,
+  datePosted: null,
+  sortBy: "date" as const,
+  isAsc: false,
+  pageIndex: 0,
+  pageSize: 20
+};
+
 describe("search-query", () => {
-  it("trims whitespace when normalizing search criteria", () => {
-    expect(
-      normalizeSearchCriteria({
-        keyword: "  frontend engineer  ",
-        postcode: "  SW1A 1AA  ",
-        pageIndex: 2,
-        pageSize: 50
-      })
-    ).toEqual({
-      keyword: "frontend engineer",
-      postcode: "SW1A 1AA",
+  it("trims whitespace when normalizing", () => {
+    expect(normalizeSearchCriteria({ ...base, keyword: "  frontend  ", where: "  London  " }))
+      .toMatchObject({ keyword: "frontend", where: "London" });
+  });
+
+  it("reads criteria from URL params", () => {
+    const params = new URLSearchParams({
+      keyword: " designer ",
+      where: " London ",
+      salaryMin: "30000",
+      salaryMax: "70000",
+      datePosted: "7",
+      sortBy: "salary",
+      isAsc: "true",
+      pageIndex: "2",
+      pageSize: "50"
+    });
+
+    expect(readSearchCriteria(params)).toEqual({
+      keyword: "designer",
+      where: "London",
+      salaryMin: 30000,
+      salaryMax: 70000,
+      datePosted: 7,
+      sortBy: "salary",
+      isAsc: true,
       pageIndex: 2,
       pageSize: 50
     });
   });
 
-  it("reads and trims criteria from URL search params", () => {
-    const params = new URLSearchParams({
-      keyword: "  designer ",
-      postcode: " EC2A ",
-      pageIndex: "3",
-      pageSize: "100"
-    });
-
-    expect(readSearchCriteria(params)).toEqual({
-      keyword: "designer",
-      postcode: "EC2A",
-      pageIndex: 3,
-      pageSize: 100
-    });
+  it("defaults to null salary, null datePosted, date-desc when params absent", () => {
+    const criteria = readSearchCriteria(new URLSearchParams({ keyword: "engineer" }));
+    expect(criteria.salaryMin).toBeNull();
+    expect(criteria.salaryMax).toBeNull();
+    expect(criteria.datePosted).toBeNull();
+    expect(criteria.sortBy).toBe("date");
+    expect(criteria.isAsc).toBe(false);
+    expect(criteria.where).toBe("");
   });
 
-  it("creates search params without blank values", () => {
+  it("omits default and blank values from params", () => {
+    expect(
+      createSearchParams({ ...base, keyword: "  product manager  " }).toString()
+    ).toBe("keyword=product+manager");
+  });
+
+  it("serialises non-default salary, datePosted, sortBy, isAsc", () => {
     expect(
       createSearchParams({
-        keyword: "  product manager  ",
-        postcode: "   ",
-        pageIndex: 0,
-        pageSize: 50
+        ...base,
+        keyword: "engineer",
+        salaryMin: 50000,
+        salaryMax: 90000,
+        datePosted: 7,
+        sortBy: "salary",
+        isAsc: true
       }).toString()
-    ).toBe("keyword=product+manager&pageSize=50");
+    ).toBe("keyword=engineer&salaryMin=50000&salaryMax=90000&datePosted=7&sortBy=salary&isAsc=true");
   });
 
-  it("builds the search path from normalized criteria", () => {
+  it("builds the search path", () => {
     expect(
-      createSearchPath({
-        keyword: "  data scientist ",
-        postcode: " E1 ",
-        pageIndex: 2,
-        pageSize: 100
-      })
-    ).toBe("/search?keyword=data+scientist&postcode=E1&pageIndex=2&pageSize=100");
+      createSearchPath({ ...base, keyword: "data scientist", pageIndex: 1, pageSize: 50 })
+    ).toBe("/search?keyword=data+scientist&pageIndex=1&pageSize=50");
+  });
+
+  it("returns /search with no params when criteria are all defaults", () => {
+    expect(createSearchPath({ ...base, keyword: "" })).toBe("/search");
   });
 
   it("detects whether any search criteria are present", () => {
-    expect(hasSearchCriteria({ keyword: "", postcode: "", pageIndex: 0, pageSize: 20 })).toBe(false);
-    expect(hasSearchCriteria({ keyword: "", postcode: "SE1", pageIndex: 0, pageSize: 20 })).toBe(true);
+    expect(hasSearchCriteria({ ...base, keyword: "" })).toBe(false);
+    expect(hasSearchCriteria({ ...base, keyword: "dev" })).toBe(true);
+    expect(hasSearchCriteria({ ...base, keyword: "", where: "London" })).toBe(true);
   });
 
-  it("normalizes invalid paging values back to defaults", () => {
-    expect(
-      normalizeSearchCriteria({
-        keyword: "",
-        postcode: "",
-        pageIndex: -3,
-        pageSize: 999
-      })
-    ).toEqual({
-      keyword: "",
-      postcode: "",
-      pageIndex: 0,
-      pageSize: 20
-    });
+  it("normalises invalid page values to defaults", () => {
+    expect(normalizeSearchCriteria({ ...base, keyword: "", pageIndex: -1, pageSize: 999 }))
+      .toMatchObject({ pageIndex: 0, pageSize: 20 });
+  });
+
+  it("normalises non-positive datePosted to null", () => {
+    expect(normalizeSearchCriteria({ ...base, keyword: "", datePosted: 0 }))
+      .toMatchObject({ datePosted: null });
+    expect(normalizeSearchCriteria({ ...base, keyword: "", datePosted: -3 }))
+      .toMatchObject({ datePosted: null });
+  });
+
+  it("normalises unknown sortBy to date", () => {
+    expect(normalizeSearchCriteria({ ...base, keyword: "", sortBy: "unknown" as never }))
+      .toMatchObject({ sortBy: "date" });
   });
 });

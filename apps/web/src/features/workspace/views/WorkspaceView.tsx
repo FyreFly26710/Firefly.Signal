@@ -15,7 +15,7 @@ export function WorkspaceView() {
       return;
     }
 
-    void navigate(createSearchPath({ keyword, postcode: "", pageIndex: 0, pageSize: 20 }));
+    void navigate(createSearchPath({ keyword, where: "", salaryMin: null, salaryMax: null, datePosted: null, sortBy: "date", isAsc: false, pageIndex: 0, pageSize: 20 }));
   }
 
   return (

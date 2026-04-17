@@ -36,12 +36,10 @@ describe("mapSearchResponse", () => {
         }
       ]
     }, {
-      postcode: "EC2A",
       keyword: "designer"
     });
 
     expect(result).toEqual({
-      postcode: "EC2A",
       keyword: "designer",
       pageIndex: 0,
       pageSize: 20,
@@ -99,7 +97,6 @@ describe("mapSearchResponse", () => {
         }
       ]
     }, {
-      postcode: "M1",
       keyword: "engineer"
     });
 
