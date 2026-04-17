@@ -125,23 +125,6 @@ export function SearchResults({
 
   return (
     <>
-      <div className="mb-6">
-        <h2 className="font-serif text-3xl font-semibold text-foreground">
-          {keyword || postcode ? (
-            <>
-              {keyword || "All roles"}
-              {keyword && postcode ? <span className="text-foreground-tertiary"> in </span> : null}
-              {postcode || null}
-            </>
-          ) : (
-            "All jobs"
-          )}
-        </h2>
-        <p className="mt-2 text-sm text-foreground-secondary">
-          <span className="font-medium text-foreground">{totalCount}</span> opportunities found
-          {keyword || postcode ? " matching your search" : ""}
-        </p>
-      </div>
 
       {viewMode === "table" ? (
         <JobTableWithState jobs={results} />
