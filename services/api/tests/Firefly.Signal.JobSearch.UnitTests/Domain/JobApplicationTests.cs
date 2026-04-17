@@ -23,4 +23,14 @@ public sealed class JobApplicationTests
 
         Assert.IsNull(application.Note);
     }
+
+    [TestMethod]
+    public void UserJobState_MarkApplied_SetsAppliedFlag()
+    {
+        var state = UserJobState.Create(userAccountId: 42, jobPostingId: 99);
+
+        state.MarkApplied();
+
+        Assert.IsTrue(state.IsApplied);
+    }
 }

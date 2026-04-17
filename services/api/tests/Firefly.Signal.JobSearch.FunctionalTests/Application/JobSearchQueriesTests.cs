@@ -37,6 +37,7 @@ public sealed class JobSearchQueriesTests
         var projectedState = Firefly.Signal.JobSearch.Domain.UserJobState.Create(userAccountId: 42, jobPostingId: visibleJobs[^1].Id);
         projectedState.MarkSaved();
         projectedState.Hide();
+        projectedState.MarkApplied();
 
         dbContext.UserJobStates.Add(projectedState);
         await dbContext.SaveChangesAsync();
@@ -55,7 +56,32 @@ public sealed class JobSearchQueriesTests
         Assert.AreEqual(visibleJobs[^1].Id, page.Items[0].Id);
         Assert.IsTrue(page.Items[0].IsSaved);
         Assert.IsTrue(page.Items[0].IsUserHidden);
+        Assert.IsTrue(page.Items[0].IsApplied);
         Assert.IsFalse(page.Items.Any(item => item.Id == hiddenJob.Id));
+    }
+
+    [TestMethod]
+    public async Task GetByIdAsync_WhenUserHasAppliedState_ProjectsIsApplied()
+    {
+        await using var database = new JobSearchSqliteTestDatabase();
+        await using var dbContext = database.CreateDbContext();
+
+        var job = JobSearchTestData.CreateJob(
+            title: "Role 01",
+            postedAtUtc: new DateTime(2026, 4, 1, 12, 0, 0, DateTimeKind.Utc));
+        var projectedState = Firefly.Signal.JobSearch.Domain.UserJobState.Create(userAccountId: 42, jobPostingId: job.Id);
+        projectedState.MarkApplied();
+
+        dbContext.Jobs.Add(job);
+        dbContext.UserJobStates.Add(projectedState);
+        await dbContext.SaveChangesAsync();
+
+        var queries = new JobSearchQueries(dbContext);
+
+        var detail = await queries.GetByIdAsync(job.Id, userId: 42, cancellationToken: CancellationToken.None);
+
+        Assert.IsNotNull(detail);
+        Assert.IsTrue(detail.IsApplied);
     }
 
     [TestMethod]

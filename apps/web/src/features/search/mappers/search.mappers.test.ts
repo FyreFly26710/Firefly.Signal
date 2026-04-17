@@ -32,7 +32,8 @@ describe("mapSearchResponse", () => {
           sourceName: "Reed",
           postedAtUtc: "2025-01-02T09:00:00.000Z",
           isSaved: false,
-          isUserHidden: false
+          isUserHidden: false,
+          isApplied: false
         }
       ]
     }, {
@@ -57,7 +58,8 @@ describe("mapSearchResponse", () => {
           salary: "£80,000 - £95,000",
           type: "permanent",
           isSaved: false,
-          isHidden: false
+          isHidden: false,
+          isApplied: false
         }
       ]
     });
@@ -93,7 +95,8 @@ describe("mapSearchResponse", () => {
           sourceName: "LinkedIn",
           postedAtUtc: "not-a-date",
           isSaved: false,
-          isUserHidden: false
+          isUserHidden: false,
+          isApplied: false
         }
       ]
     }, {

@@ -4,7 +4,7 @@ namespace Firefly.Signal.JobSearch.Domain;
 
 /// <summary>
 /// Stores a user-specific lightweight workflow state for a job.
-/// IsSaved and IsHidden are independent flags; application stage tracking lives on JobApplication.
+/// IsSaved, IsHidden, and IsApplied are fast UI flags; canonical application history lives on JobApplication.
 /// </summary>
 public sealed class UserJobState : AuditableEntity
 {
@@ -16,6 +16,7 @@ public sealed class UserJobState : AuditableEntity
     public long JobPostingId { get; private set; }
     public bool IsSaved { get; private set; }
     public bool IsHidden { get; private set; }
+    public bool IsApplied { get; private set; }
     public DateTime LastUpdatedAtUtc { get; private set; }
 
     public static UserJobState Create(long userAccountId, long jobPostingId)
@@ -52,6 +53,13 @@ public sealed class UserJobState : AuditableEntity
     public void Unhide()
     {
         IsHidden = false;
+        LastUpdatedAtUtc = DateTime.UtcNow;
+        Touch();
+    }
+
+    public void MarkApplied()
+    {
+        IsApplied = true;
         LastUpdatedAtUtc = DateTime.UtcNow;
         Touch();
     }

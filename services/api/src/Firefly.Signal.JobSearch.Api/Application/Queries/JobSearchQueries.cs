@@ -10,11 +10,67 @@ namespace Firefly.Signal.JobSearch.Application.Queries;
 
 public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQueries
 {
-    public async Task<JobDetailsResponse?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
-        => await dbContext.Jobs
+    public async Task<JobDetailsResponse?> GetByIdAsync(long id, long? userId, CancellationToken cancellationToken = default)
+    {
+        if (userId.HasValue)
+        {
+            var userStates = dbContext.UserJobStates.Where(state => state.UserAccountId == userId.Value);
+            var applications = dbContext.JobApplications.Where(application => application.UserAccountId == userId.Value);
+
+            return await (
+                from job in dbContext.Jobs
+                where job.Id == id
+                join state in userStates on job.Id equals state.JobPostingId into joined
+                from state in joined.DefaultIfEmpty()
+                join application in applications on job.Id equals application.JobPostingId into applicationJoined
+                from application in applicationJoined.DefaultIfEmpty()
+                select new JobDetailsResponse(
+                    Id: job.Id,
+                    JobRefreshRunId: job.JobRefreshRunId,
+                    SourceName: job.SourceName,
+                    SourceJobId: job.SourceJobId,
+                    SourceAdReference: job.SourceAdReference,
+                    Title: job.Title,
+                    Description: job.Description,
+                    Summary: job.Summary,
+                    Url: job.Url,
+                    Company: job.Company,
+                    CompanyDisplayName: job.CompanyDisplayName,
+                    CompanyCanonicalName: job.CompanyCanonicalName,
+                    Postcode: job.Postcode,
+                    LocationName: job.LocationName,
+                    LocationDisplayName: job.LocationDisplayName,
+                    LocationAreaJson: job.LocationAreaJson,
+                    Latitude: job.Latitude,
+                    Longitude: job.Longitude,
+                    CategoryTag: job.CategoryTag,
+                    CategoryLabel: job.CategoryLabel,
+                    SalaryMin: job.SalaryMin,
+                    SalaryMax: job.SalaryMax,
+                    SalaryCurrency: job.SalaryCurrency,
+                    SalaryIsPredicted: job.SalaryIsPredicted,
+                    ContractTime: job.ContractTime,
+                    ContractType: job.ContractType,
+                    IsFullTime: job.IsFullTime,
+                    IsPartTime: job.IsPartTime,
+                    IsPermanent: job.IsPermanent,
+                    IsContract: job.IsContract,
+                    IsRemote: job.IsRemote,
+                    PostedAtUtc: job.PostedAtUtc,
+                    ImportedAtUtc: job.ImportedAtUtc,
+                    LastSeenAtUtc: job.LastSeenAtUtc,
+                    IsHidden: job.IsHidden,
+                    ApplicationId: application != null ? application.Id : null,
+                    IsApplied: state != null && state.IsApplied,
+                    RawPayloadJson: job.RawPayloadJson))
+                .SingleOrDefaultAsync(cancellationToken);
+        }
+
+        return await dbContext.Jobs
             .Where(job => job.Id == id)
             .Select(JobResponseMappers.ToDetailsResponse())
             .SingleOrDefaultAsync(cancellationToken);
+    }
 
     public async Task<Paged<JobSearchResultResponse>> SearchPageAsync(
         SearchJobsPageRequest request,
@@ -62,7 +118,8 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
                     SourceName: job.SourceName,
                     PostedAtUtc: job.PostedAtUtc,
                     IsSaved: state != null && state.IsSaved,
-                    IsUserHidden: state != null && state.IsHidden))
+                    IsUserHidden: state != null && state.IsHidden,
+                    IsApplied: state != null && state.IsApplied))
                 .Skip(pageIndex * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
@@ -96,7 +153,8 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
                     SourceName: job.SourceName,
                     PostedAtUtc: job.PostedAtUtc,
                     IsSaved: false,
-                    IsUserHidden: false))
+                    IsUserHidden: false,
+                    IsApplied: false))
                 .ToListAsync(cancellationToken);
         }
 

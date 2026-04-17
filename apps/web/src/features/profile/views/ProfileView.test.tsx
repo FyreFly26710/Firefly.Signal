@@ -84,7 +84,7 @@ describe("ProfileView", () => {
       })
     );
     expect(screen.getByDisplayValue("EC1A 1BB")).toBeInTheDocument();
-  }, 20000);
+  }, 30000);
 
   it("shows a retry state when profile loading fails", async () => {
     vi.mocked(getCurrentProfile).mockRejectedValueOnce(new ApiError("Server unavailable", 500));

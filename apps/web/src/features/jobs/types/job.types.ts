@@ -15,9 +15,11 @@ export type JobCardModel = {
   type?: string;
   isSaved?: boolean;
   isHidden?: boolean;
+  isApplied?: boolean;
 };
 
 export type JobDetailModel = JobCardModel & {
   postcode: string;
   description: string;
+  applicationId?: number | null;
 };

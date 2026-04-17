@@ -16,7 +16,9 @@ export function mapJobDetail(job: JobDetailsResponseDto): JobDetailModel {
     url: job.url,
     postedDate: formatPostedDate(job.postedAtUtc),
     salary: formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency),
-    type: formatJobType(job.contractType, job.isPermanent, job.isContract, job.isFullTime, job.isPartTime)
+    type: formatJobType(job.contractType, job.isPermanent, job.isContract, job.isFullTime, job.isPartTime),
+    isApplied: job.isApplied,
+    applicationId: job.applicationId
   };
 }
 

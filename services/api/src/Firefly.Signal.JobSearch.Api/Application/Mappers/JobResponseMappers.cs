@@ -82,6 +82,8 @@ internal static class JobResponseMappers
             ImportedAtUtc: job.ImportedAtUtc,
             LastSeenAtUtc: job.LastSeenAtUtc,
             IsHidden: job.IsHidden,
+            ApplicationId: null,
+            IsApplied: false,
             RawPayloadJson: job.RawPayloadJson);
 
     public static JobDetailsResponse ToDetailsResponse(JobPosting job)
@@ -121,5 +123,7 @@ internal static class JobResponseMappers
             ImportedAtUtc: job.ImportedAtUtc,
             LastSeenAtUtc: job.LastSeenAtUtc,
             IsHidden: job.IsHidden,
+            ApplicationId: null,
+            IsApplied: false,
             RawPayloadJson: job.RawPayloadJson);
 }

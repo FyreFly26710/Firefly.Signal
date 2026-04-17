@@ -38,6 +38,8 @@ public sealed record JobDetailsResponse(
     DateTime ImportedAtUtc,
     DateTime LastSeenAtUtc,
     bool IsHidden,
+    long? ApplicationId,
+    bool IsApplied,
     string RawPayloadJson);
 
 public sealed record JobSearchResultResponse(
@@ -64,7 +66,8 @@ public sealed record JobSearchResultResponse(
     string SourceName,
     DateTime PostedAtUtc,
     bool IsSaved,
-    bool IsUserHidden);
+    bool IsUserHidden,
+    bool IsApplied);
 
 public sealed record HideJobsResponse(
     int HiddenCount,

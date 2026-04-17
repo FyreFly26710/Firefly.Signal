@@ -30,7 +30,8 @@ function mapJobCard(job: JobSearchResultDto): JobCardModel {
     salary: formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency),
     type: formatJobType(job.contractType, job.isPermanent, job.isContract, job.isFullTime, job.isPartTime),
     isSaved: job.isSaved,
-    isHidden: job.isUserHidden
+    isHidden: job.isUserHidden,
+    isApplied: job.isApplied
   };
 }
 

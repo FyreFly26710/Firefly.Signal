@@ -25,6 +25,7 @@ export type JobSearchResultDto = {
   postedAtUtc: string;
   isSaved: boolean;           // user's saved state
   isUserHidden: boolean;      // user's personal hide state
+  isApplied: boolean;         // user's applied state
 };
 
 export type JobDetailsResponseDto = {
@@ -63,6 +64,8 @@ export type JobDetailsResponseDto = {
   importedAtUtc: string;
   lastSeenAtUtc: string;
   isHidden: boolean;
+  applicationId: number | null;
+  isApplied: boolean;
   rawPayloadJson: string;
 };
 
