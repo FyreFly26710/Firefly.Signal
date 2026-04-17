@@ -78,9 +78,11 @@ public sealed class JobImportRunsApiTests
         Assert.HasCount(2, body.Items);
         Assert.AreEqual(failedRun.Id, body.Items[0].Id);
         Assert.AreEqual(JobRefreshRunStatus.Failed.ToString(), body.Items[0].Status);
+        Assert.AreEqual("{\"where\":\"leeds\"}", body.Items[0].JsonFilter);
         Assert.AreEqual("Provider import failed.", body.Items[0].FailureSummary);
         Assert.AreEqual(completedRun.Id, body.Items[1].Id);
         Assert.AreEqual(JobRefreshRunStatus.Completed.ToString(), body.Items[1].Status);
+        Assert.AreEqual("{\"where\":\"london\"}", body.Items[1].JsonFilter);
         Assert.IsNull(body.Items[1].FailureSummary);
     }
 }

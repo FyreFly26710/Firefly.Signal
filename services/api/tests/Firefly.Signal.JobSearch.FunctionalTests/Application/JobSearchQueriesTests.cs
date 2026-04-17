@@ -116,12 +116,14 @@ public sealed class JobSearchQueriesTests
         Assert.AreEqual(newerRun.Id, runs.Items[0].Id);
         Assert.AreEqual("Adzuna", runs.Items[0].ProviderName);
         Assert.AreEqual(JobRefreshRunStatus.Failed.ToString(), runs.Items[0].Status);
+        Assert.AreEqual("{\"where\":\"manchester\"}", runs.Items[0].JsonFilter);
         Assert.AreEqual(2, runs.Items[0].RecordsReceived);
         Assert.AreEqual(0, runs.Items[0].RecordsInserted);
         Assert.AreEqual(1, runs.Items[0].RecordsFailed);
         Assert.AreEqual("Provider rate limit hit.", runs.Items[0].FailureSummary);
         Assert.AreEqual(olderRun.Id, runs.Items[1].Id);
         Assert.AreEqual(JobRefreshRunStatus.Completed.ToString(), runs.Items[1].Status);
+        Assert.AreEqual("{\"where\":\"london\"}", runs.Items[1].JsonFilter);
         Assert.AreEqual(3, runs.Items[1].RecordsInserted);
         Assert.AreEqual(1, runs.Items[1].RecordsHidden);
         Assert.IsNull(runs.Items[1].FailureSummary);

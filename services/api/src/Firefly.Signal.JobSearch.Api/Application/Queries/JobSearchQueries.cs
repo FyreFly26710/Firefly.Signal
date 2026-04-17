@@ -125,6 +125,7 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
                 Id: run.Id,
                 ProviderName: run.ProviderName,
                 Status: run.Status.ToString(),
+                JsonFilter: run.RequestFiltersJson,
                 PagesRequested: run.PagesRequested,
                 PagesCompleted: run.PagesCompleted,
                 RecordsReceived: run.RecordsReceived,

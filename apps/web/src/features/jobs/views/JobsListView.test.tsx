@@ -161,11 +161,12 @@ describe("JobsListView", () => {
       failedCount: 0
     });
 
-    vi.mocked(getRecentImportRuns).mockImplementation((limit: number) => {
+    vi.mocked(getRecentImportRuns).mockImplementation(({ pageIndex, pageSize }) => {
       const allRuns = Array.from({ length: 6 }, (_, index) => ({
         id: index + 1,
         providerName: "Adzuna",
         status: index === 0 ? "Failed" : "Completed",
+        jsonFilter: JSON.stringify({ where: `location-${index + 1}` }),
         pagesRequested: 1,
         pagesCompleted: 1,
         recordsReceived: 10 - index,
@@ -177,7 +178,14 @@ describe("JobsListView", () => {
         failureSummary: index === 0 ? "Provider import failed." : null
       }));
 
-      return Promise.resolve(allRuns.slice(0, limit));
+      const start = pageIndex * pageSize;
+
+      return Promise.resolve({
+        pageIndex,
+        pageSize,
+        totalCount: allRuns.length,
+        items: allRuns.slice(start, start + pageSize)
+      });
     });
 
     vi.mocked(exportJobs).mockResolvedValue({
@@ -194,13 +202,13 @@ describe("JobsListView", () => {
 
     await user.click(screen.getByRole("button", { name: "Import from provider" }));
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Provider run history" })).toBeInTheDocument();
+      expect(screen.getByText("RECENT IMPORTS")).toBeInTheDocument();
       expect(screen.getByText("Provider import failed.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
     });
     await user.click(screen.getByRole("button", { name: "Next" }));
     await waitFor(() => {
-      expect(getRecentImportRuns).toHaveBeenLastCalledWith(10);
+      expect(getRecentImportRuns).toHaveBeenLastCalledWith({ pageIndex: 1, pageSize: 4 });
     });
     await user.type(screen.getByRole("textbox", { name: "Keyword" }), "frontend engineer");
     const whereInput = screen.getByRole("textbox", { name: "Where" });

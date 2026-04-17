@@ -73,6 +73,13 @@ export type JobsPageResponseDto = {
   items: JobSearchResultDto[];
 };
 
+export type PagedResponseDto<TItem> = {
+  pageIndex: number;
+  pageSize: number;
+  totalCount: number;
+  items: TItem[];
+};
+
 export type GetJobsPageQueryDto = {
   pageIndex: number;
   pageSize: number;
@@ -168,6 +175,7 @@ export type JobImportRunResponseDto = {
   id: number;
   providerName: string;
   status: string;
+  jsonFilter: string;
   pagesRequested: number;
   pagesCompleted: number;
   recordsReceived: number;
@@ -177,6 +185,11 @@ export type JobImportRunResponseDto = {
   startedAtUtc: string;
   completedAtUtc: string | null;
   failureSummary: string | null;
+};
+
+export type GetJobImportRunsQueryDto = {
+  pageIndex: number;
+  pageSize: number;
 };
 
 export type ExportJobsRequestDto = {

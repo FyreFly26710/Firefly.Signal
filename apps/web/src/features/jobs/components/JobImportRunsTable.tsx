@@ -8,7 +8,8 @@ import {
   TableContainer,
   TableHead,
   TablePagination,
-  TableRow
+  TableRow,
+  Tooltip
 } from "@mui/material";
 import type { JobImportRunResponseDto } from "@/api/jobs/jobs.types";
 
@@ -74,29 +75,37 @@ export function JobImportRunsTable({
                 </TableHead>
                 <TableBody>
                   {history.map((run) => (
-                    <TableRow key={run.id} hover>
-                      <TableCell>
-                        <div className="font-medium text-foreground">{run.providerName}</div>
-                        <div className="mt-1 text-xs text-foreground-tertiary">#{run.id}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          size="small"
-                          label={formatStatus(run.status)}
-                          color={mapStatusColor(run.status)}
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell align="right">{run.recordsInserted}</TableCell>
-                      <TableCell align="right">{run.recordsReceived}</TableCell>
-                      <TableCell align="right">{run.recordsFailed}</TableCell>
-                      <TableCell>{formatDateTime(run.startedAtUtc)}</TableCell>
-                      <TableCell>
-                        <div className="max-w-[260px] text-xs text-foreground-secondary">
-                          {run.failureSummary ?? "None"}
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                    <Tooltip
+                      key={run.id}
+                      title={hasJsonFilter(run.jsonFilter) ? formatJsonFilterTooltip(run.jsonFilter) : ""}
+                      placement="top-start"
+                      arrow
+                      disableHoverListener={!hasJsonFilter(run.jsonFilter)}
+                    >
+                      <TableRow hover>
+                        <TableCell>
+                          <div className="font-medium text-foreground">{run.providerName}</div>
+                          <div className="mt-1 text-xs text-foreground-tertiary">#{run.id}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={formatStatus(run.status)}
+                            color={mapStatusColor(run.status)}
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell align="right">{run.recordsInserted}</TableCell>
+                        <TableCell align="right">{run.recordsReceived}</TableCell>
+                        <TableCell align="right">{run.recordsFailed}</TableCell>
+                        <TableCell>{formatDateTime(run.startedAtUtc)}</TableCell>
+                        <TableCell>
+                          <div className="max-w-[260px] text-xs text-foreground-secondary">
+                            {run.failureSummary ?? "None"}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </Tooltip>
                   ))}
                 </TableBody>
               </Table>
@@ -176,4 +185,20 @@ function formatDateTime(value: string) {
     hour: "2-digit",
     minute: "2-digit"
   }).format(date);
+}
+
+function hasJsonFilter(value: string) {
+  const trimmed = value.trim();
+  return trimmed.length > 0 && trimmed !== "{}";
+}
+
+function formatJsonFilterTooltip(value: string) {
+  try
+  {
+    return JSON.stringify(JSON.parse(value), null, 2);
+  }
+  catch
+  {
+    return value;
+  }
 }

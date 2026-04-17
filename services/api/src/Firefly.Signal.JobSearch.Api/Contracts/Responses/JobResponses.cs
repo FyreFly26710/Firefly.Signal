@@ -87,6 +87,7 @@ public sealed record JobImportRunResponse(
     long Id,
     string ProviderName,
     string Status,
+    string JsonFilter,
     int PagesRequested,
     int PagesCompleted,
     int RecordsReceived,

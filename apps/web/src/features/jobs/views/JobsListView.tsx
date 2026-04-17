@@ -15,7 +15,6 @@ import {
 } from "@/api/jobs/jobs.api";
 import type {
   DeleteJobsResponseDto,
-  JobImportRunResponseDto,
   ImportJobsFromProviderRequestDto
 } from "@/api/jobs/jobs.types";
 import { JobsManagementHeader } from "@/features/jobs/components/JobsManagementHeader";
@@ -77,11 +76,13 @@ export function JobsListView() {
   const [importForm, setImportForm] = useState<JobsImportProviderFormValues>(defaultImportForm);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const historyPageSize = 4;
-  const { data: importRunHistory = [], isPending: isHistoryLoading, error: historyError } = useJobImportRuns(
+  const { data: importRunHistoryPage, isPending: isHistoryLoading, error: historyError } = useJobImportRuns(
     historyPageIndex,
     isImportDialogOpen && isAdmin,
     historyPageSize
   );
+  const importRunHistory = importRunHistoryPage?.items ?? [];
+  const importRunHistoryTotalCount = importRunHistoryPage?.totalCount ?? 0;
 
   const loadJobs = useCallback(async (
     nextPageIndex: number,
@@ -275,9 +276,9 @@ export function JobsListView() {
             <JobsImportProviderDialog
               isOpen={isImportDialogOpen}
               isSubmitting={isProcessing}
-              history={sliceHistoryPage(importRunHistory, historyPageIndex, historyPageSize)}
+              history={importRunHistory}
               historyError={historyError instanceof Error ? historyError.message : null}
-              historyHasNextPage={importRunHistory.length === (historyPageIndex + 1) * historyPageSize}
+              historyHasNextPage={(historyPageIndex + 1) * historyPageSize < importRunHistoryTotalCount}
               historyIsLoading={isHistoryLoading}
               historyPageIndex={historyPageIndex}
               historyRowsPerPage={historyPageSize}
@@ -386,15 +387,6 @@ export function JobsListView() {
       </div>
     </div>
   );
-}
-
-function sliceHistoryPage(
-  history: readonly JobImportRunResponseDto[],
-  pageIndex: number,
-  pageSize: number
-) {
-  const start = pageIndex * pageSize;
-  return history.slice(start, start + pageSize);
 }
 
 function mapVisibilityToHiddenFlag(value: VisibilityFilter): boolean | undefined {
