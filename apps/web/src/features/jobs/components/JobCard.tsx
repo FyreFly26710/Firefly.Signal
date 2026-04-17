@@ -4,6 +4,7 @@ import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded";
 import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
+import TaskAltRoundedIcon from "@mui/icons-material/TaskAltRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 import { IconButton, Tooltip } from "@mui/material";
 import { Link } from "react-router-dom";
@@ -13,6 +14,8 @@ type JobCardProps = {
   job: JobCardModel;
   isSaved?: boolean;
   isHidden?: boolean;
+  isApplied?: boolean;
+  onApply?: () => void;
   onToggleSave?: () => void;
   onToggleHide?: () => void;
 };
@@ -29,7 +32,15 @@ const freshnessLabels = {
   older: ""
 } as const;
 
-export function JobCard({ job, isSaved = false, isHidden = false, onToggleSave, onToggleHide }: JobCardProps) {
+export function JobCard({
+  job,
+  isSaved = false,
+  isHidden = false,
+  isApplied = false,
+  onApply,
+  onToggleSave,
+  onToggleHide
+}: JobCardProps) {
   if (isHidden) return null;
 
   const freshnessLabel = job.freshness ? freshnessLabels[job.freshness] : "";
@@ -44,6 +55,8 @@ export function JobCard({ job, isSaved = false, isHidden = false, onToggleSave, 
           freshnessLabel={freshnessLabel}
           freshnessClassName={freshnessClassName}
           featured={Boolean(job.featured)}
+          isApplied={isApplied}
+          onApply={onApply}
           isSaved={isSaved}
           onToggleSave={onToggleSave}
           onToggleHide={onToggleHide}
@@ -68,6 +81,8 @@ function JobCardHeader({
   freshnessLabel,
   freshnessClassName,
   featured,
+  isApplied,
+  onApply,
   isSaved,
   onToggleSave,
   onToggleHide
@@ -77,6 +92,8 @@ function JobCardHeader({
   freshnessLabel: string;
   freshnessClassName: string;
   featured: boolean;
+  isApplied: boolean;
+  onApply?: () => void;
   isSaved: boolean;
   onToggleSave?: () => void;
   onToggleHide?: () => void;
@@ -109,11 +126,31 @@ function JobCardHeader({
       </div>
 
       <div className="flex items-center gap-1">
+        {onApply && (
+          <Tooltip title={isApplied ? "Applied" : "Mark as applied"}>
+            <IconButton
+              size="small"
+              onClick={onApply}
+              disabled={isApplied}
+              aria-label={isApplied ? "Applied" : "Mark as applied"}
+              sx={{
+                color: isApplied ? "var(--color-signal-fresh)" : "var(--color-accent-primary)",
+                bgcolor: isApplied ? "var(--color-signal-fresh-bg)" : "rgba(217,119,6,0.12)",
+                "&:hover": {
+                  bgcolor: isApplied ? "var(--color-signal-fresh-bg)" : "rgba(217,119,6,0.2)"
+                }
+              }}
+            >
+              <TaskAltRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
         {onToggleSave && (
           <Tooltip title={isSaved ? "Unsave job" : "Save job"}>
             <IconButton
               size="small"
               onClick={onToggleSave}
+              aria-label={isSaved ? "Unsave job" : "Save job"}
               sx={{ color: isSaved ? "var(--color-accent-primary)" : "var(--color-foreground-tertiary)" }}
             >
               {isSaved ? (
@@ -129,6 +166,7 @@ function JobCardHeader({
             <IconButton
               size="small"
               onClick={onToggleHide}
+              aria-label="Hide job"
               sx={{ color: "var(--color-foreground-tertiary)" }}
             >
               <VisibilityOffRoundedIcon fontSize="small" />

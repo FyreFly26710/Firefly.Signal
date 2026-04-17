@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import { Button } from "@mui/material";
 import { SectionCard } from "@/components/SectionCard";
@@ -5,9 +6,11 @@ import type { JobDetailModel } from "@/features/jobs/types/job.types";
 
 type JobDetailHeroCardProps = {
   job: JobDetailModel;
+  statusSlot?: ReactNode;
+  actionSlot?: ReactNode;
 };
 
-export function JobDetailHeroCard({ job }: JobDetailHeroCardProps) {
+export function JobDetailHeroCard({ job, statusSlot = null, actionSlot = null }: JobDetailHeroCardProps) {
   return (
     <SectionCard className="p-8">
       <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-metadata">
@@ -36,20 +39,24 @@ export function JobDetailHeroCard({ job }: JobDetailHeroCardProps) {
         {job.type ? <span className="rounded bg-muted px-3 py-1.5 text-foreground">{job.type}</span> : null}
       </div>
 
-      <Button
-        href={job.url}
-        target="_blank"
-        rel="noreferrer"
-        variant="contained"
-        endIcon={<LaunchRoundedIcon />}
-        sx={{
-          mt: 4,
-          bgcolor: "accent.main",
-          "&:hover": { bgcolor: "accent.dark" }
-        }}
-      >
-        Apply on {job.source}
-      </Button>
+      {statusSlot}
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        {actionSlot}
+        <Button
+          href={job.url}
+          target="_blank"
+          rel="noreferrer"
+          variant="contained"
+          endIcon={<LaunchRoundedIcon />}
+          sx={{
+            bgcolor: "accent.main",
+            "&:hover": { bgcolor: "accent.dark" }
+          }}
+        >
+          Apply on {job.source}
+        </Button>
+      </div>
     </SectionCard>
   );
 }

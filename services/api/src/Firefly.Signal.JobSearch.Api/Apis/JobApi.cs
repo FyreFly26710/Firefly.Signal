@@ -49,10 +49,12 @@ public static class JobApi
 
     private static async Task<Results<Ok<JobDetailsResponse>, NotFound>> GetByIdAsync(
         long id,
+        [FromServices] IIdentityService identityService,
         [FromServices] IJobSearchQueries queries,
         CancellationToken cancellationToken)
     {
-        var job = await queries.GetByIdAsync(id, cancellationToken);
+        var userId = identityService.GetUserId();
+        var job = await queries.GetByIdAsync(id, userId, cancellationToken);
         return job is null ? TypedResults.NotFound() : TypedResults.Ok(job);
     }
 

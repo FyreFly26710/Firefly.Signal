@@ -73,7 +73,8 @@ describe("JobsListView", () => {
           sourceName: "Adzuna",
           postedAtUtc: "2025-04-03T10:00:00Z",
           isSaved: false,
-          isUserHidden: false
+          isUserHidden: false,
+          isApplied: false
         }
       ]
     });
@@ -142,7 +143,8 @@ describe("JobsListView", () => {
           sourceName: "Adzuna",
           postedAtUtc: "2025-04-03T10:00:00Z",
           isSaved: false,
-          isUserHidden: false
+          isUserHidden: false,
+          isApplied: false
         }
       ]
     });

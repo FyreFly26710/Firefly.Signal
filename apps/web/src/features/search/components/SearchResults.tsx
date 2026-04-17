@@ -9,13 +9,16 @@ import { useJobState } from "@/features/search/hooks/useJobState";
 import { JobSearchCompactTable } from "@/features/search/components/JobSearchCompactTable";
 
 function JobCardWithState({ job }: { job: JobCardModel }) {
-  const { isSaved, isHidden, toggleSave, toggleHide } = useJobState(job.id, {
+  const { isSaved, isHidden, isApplied, toggleSave, toggleHide, apply } = useJobState(job.id, {
     isSaved: job.isSaved,
-    isHidden: job.isHidden
+    isHidden: job.isHidden,
+    isApplied: job.isApplied
   });
   return (
     <JobCard
       job={job}
+      isApplied={isApplied}
+      onApply={() => { void apply(); }}
       isSaved={isSaved}
       isHidden={isHidden}
       onToggleSave={() => { void toggleSave(); }}
@@ -34,17 +37,27 @@ function JobTableRows({ jobs }: { jobs: JobCardModel[] }) {
   const states = jobs.map((job) => ({
     job,
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    state: useJobState(job.id, { isSaved: job.isSaved, isHidden: job.isHidden })
+    state: useJobState(job.id, {
+      isSaved: job.isSaved,
+      isHidden: job.isHidden,
+      isApplied: job.isApplied
+    })
   }));
 
   const savedIds = new Set(states.filter((s) => s.state.isSaved).map((s) => s.job.id));
   const hiddenIds = new Set(states.filter((s) => s.state.isHidden).map((s) => s.job.id));
+  const appliedIds = new Set(states.filter((s) => s.state.isApplied).map((s) => s.job.id));
 
   return (
     <JobSearchCompactTable
       jobs={jobs}
       savedIds={savedIds}
       hiddenIds={hiddenIds}
+      appliedIds={appliedIds}
+      onApply={(id) => {
+        const entry = states.find((s) => s.job.id === id);
+        if (entry) void entry.state.apply();
+      }}
       onToggleSave={(id) => {
         const entry = states.find((s) => s.job.id === id);
         if (entry) void entry.state.toggleSave();

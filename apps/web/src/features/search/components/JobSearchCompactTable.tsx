@@ -1,6 +1,7 @@
 import BookmarkBorderRoundedIcon from "@mui/icons-material/BookmarkBorderRounded";
 import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
+import TaskAltRoundedIcon from "@mui/icons-material/TaskAltRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 import { IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip } from "@mui/material";
 import { Link } from "react-router-dom";
@@ -10,6 +11,8 @@ type JobSearchCompactTableProps = {
   jobs: JobCardModel[];
   savedIds: Set<string>;
   hiddenIds: Set<string>;
+  appliedIds: Set<string>;
+  onApply: (jobId: string) => void;
   onToggleSave: (jobId: string) => void;
   onToggleHide: (jobId: string) => void;
 };
@@ -18,6 +21,8 @@ export function JobSearchCompactTable({
   jobs,
   savedIds,
   hiddenIds,
+  appliedIds,
+  onApply,
   onToggleSave,
   onToggleHide
 }: JobSearchCompactTableProps) {
@@ -41,6 +46,8 @@ export function JobSearchCompactTable({
             <CompactRow
               key={job.id}
               job={job}
+              isApplied={appliedIds.has(job.id)}
+              onApply={() => onApply(job.id)}
               isSaved={savedIds.has(job.id)}
               onToggleSave={() => onToggleSave(job.id)}
               onToggleHide={() => onToggleHide(job.id)}
@@ -54,11 +61,15 @@ export function JobSearchCompactTable({
 
 function CompactRow({
   job,
+  isApplied,
+  onApply,
   isSaved,
   onToggleSave,
   onToggleHide
 }: {
   job: JobCardModel;
+  isApplied: boolean;
+  onApply: () => void;
   isSaved: boolean;
   onToggleSave: () => void;
   onToggleHide: () => void;
@@ -87,10 +98,28 @@ function CompactRow({
       </TableCell>
       <TableCell align="right" padding="none">
         <div className="flex items-center justify-end gap-0.5 pr-1">
+          <Tooltip title={isApplied ? "Applied" : "Mark as applied"}>
+            <IconButton
+              size="small"
+              onClick={onApply}
+              disabled={isApplied}
+              aria-label={isApplied ? "Applied" : "Mark as applied"}
+              sx={{
+                color: isApplied ? "var(--color-signal-fresh)" : "var(--color-accent-primary)",
+                bgcolor: isApplied ? "var(--color-signal-fresh-bg)" : "rgba(217,119,6,0.12)",
+                "&:hover": {
+                  bgcolor: isApplied ? "var(--color-signal-fresh-bg)" : "rgba(217,119,6,0.2)"
+                }
+              }}
+            >
+              <TaskAltRoundedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
           <Tooltip title={isSaved ? "Unsave job" : "Save job"}>
             <IconButton
               size="small"
               onClick={onToggleSave}
+              aria-label={isSaved ? "Unsave job" : "Save job"}
               sx={{ color: isSaved ? "var(--color-accent-primary)" : "var(--color-foreground-tertiary)" }}
             >
               {isSaved ? (
@@ -104,6 +133,7 @@ function CompactRow({
             <IconButton
               size="small"
               onClick={onToggleHide}
+              aria-label="Hide job"
               sx={{ color: "var(--color-foreground-tertiary)" }}
             >
               <VisibilityOffRoundedIcon sx={{ fontSize: 16 }} />
@@ -116,6 +146,7 @@ function CompactRow({
               href={job.url}
               target="_blank"
               rel="noreferrer"
+              aria-label={`Apply on ${job.source}`}
               sx={{ color: "var(--color-foreground-tertiary)" }}
             >
               <LaunchRoundedIcon sx={{ fontSize: 16 }} />

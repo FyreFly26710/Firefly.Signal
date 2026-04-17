@@ -21,7 +21,6 @@ export function JobDetailView({ jobId }: JobDetailViewProps) {
   const isNotFound =
     numericJobId === null ||
     (isError && error instanceof ApiError && error.status === 404);
-
   if (isNotFound) {
     return <JobDetailNotFound />;
   }

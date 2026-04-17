@@ -105,12 +105,14 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
             entity.Property(x => x.JobPostingId).IsRequired();
             entity.Property(x => x.IsSaved).IsRequired();
             entity.Property(x => x.IsHidden).IsRequired();
+            entity.Property(x => x.IsApplied).IsRequired();
             entity.Property(x => x.LastUpdatedAtUtc).IsRequired();
             entity.Property(x => x.CreatedAtUtc).IsRequired();
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
             entity.HasIndex(x => new { x.UserAccountId, x.JobPostingId }).IsUnique();
             entity.HasIndex(x => new { x.UserAccountId, x.IsSaved });
             entity.HasIndex(x => new { x.UserAccountId, x.IsHidden });
+            entity.HasIndex(x => new { x.UserAccountId, x.IsApplied });
             entity.HasOne<JobPosting>()
                 .WithMany()
                 .HasForeignKey(x => x.JobPostingId)
@@ -141,6 +143,7 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
             entity.Property(x => x.Id).ValueGeneratedNever();
             entity.Property(x => x.JobApplicationId).IsRequired();
             entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
+            entity.Property(x => x.RoundNumber);
             entity.Property(x => x.StatusAtUtc).IsRequired();
             entity.Property(x => x.CreatedAtUtc).IsRequired();
             entity.Property(x => x.UpdatedAtUtc).IsRequired();

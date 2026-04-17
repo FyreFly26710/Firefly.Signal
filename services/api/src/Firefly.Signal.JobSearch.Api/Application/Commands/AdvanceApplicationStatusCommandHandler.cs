@@ -29,23 +29,39 @@ public sealed class AdvanceApplicationStatusCommandHandler(JobSearchDbContext db
             .ToListAsync(cancellationToken);
 
         var currentStatus = entries.Count > 0 ? entries[0].Status : JobApplicationStatus.Applied;
+        var nextRoundNumber = request.NewStatus == JobApplicationStatus.FaceToFaceInterview
+            ? entries.Count(entry => entry.Status == JobApplicationStatus.FaceToFaceInterview) + 1
+            : (int?)null;
 
-        if (currentStatus == JobApplicationStatus.Rejected)
+        if (currentStatus is JobApplicationStatus.Rejected or JobApplicationStatus.Offered)
         {
-            throw new InvalidApplicationStatusTransitionException("Cannot advance status from Rejected.");
+            throw new InvalidApplicationStatusTransitionException($"Cannot advance status from {currentStatus}.");
         }
 
-        if ((int)request.NewStatus <= (int)currentStatus)
+        if (!IsValidTransition(currentStatus, request.NewStatus))
         {
             throw new InvalidApplicationStatusTransitionException(
                 $"Cannot transition from {currentStatus} to {request.NewStatus}.");
         }
 
-        var newEntry = JobApplicationStatusEntry.Create(application.Id, request.NewStatus);
+        var newEntry = JobApplicationStatusEntry.Create(application.Id, request.NewStatus, nextRoundNumber);
         dbContext.JobApplicationStatusEntries.Add(newEntry);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         entries.Insert(0, newEntry);
         return JobApplicationResponseMappers.ToJobApplicationResponse(application.Id, application.JobPostingId, application.Note, entries);
     }
+
+    private static bool IsValidTransition(JobApplicationStatus currentStatus, JobApplicationStatus newStatus)
+        => (currentStatus, newStatus) switch
+        {
+            (JobApplicationStatus.Applied, JobApplicationStatus.TelephoneInterview) => true,
+            (JobApplicationStatus.Applied, JobApplicationStatus.Rejected) => true,
+            (JobApplicationStatus.TelephoneInterview, JobApplicationStatus.FaceToFaceInterview) => true,
+            (JobApplicationStatus.TelephoneInterview, JobApplicationStatus.Rejected) => true,
+            (JobApplicationStatus.FaceToFaceInterview, JobApplicationStatus.FaceToFaceInterview) => true,
+            (JobApplicationStatus.FaceToFaceInterview, JobApplicationStatus.Offered) => true,
+            (JobApplicationStatus.FaceToFaceInterview, JobApplicationStatus.Rejected) => true,
+            _ => false
+        };
 }

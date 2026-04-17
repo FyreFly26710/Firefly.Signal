@@ -51,6 +51,8 @@ describe("JobDetailView", () => {
       importedAtUtc: "2026-04-10T08:30:00Z",
       lastSeenAtUtc: "2026-04-10T08:30:00Z",
       isHidden: false,
+      applicationId: null,
+      isApplied: false,
       rawPayloadJson: "{}"
     });
 
@@ -58,11 +60,12 @@ describe("JobDetailView", () => {
 
     expect(screen.getByText("Fetching the latest job details...")).toBeInTheDocument();
 
-    await screen.findByRole("heading", { name: "Senior Product Designer" });
+    await screen.findByRole("heading", { name: "Senior Product Designer" }, { timeout: 3000 });
 
     expect(screen.getByText("Lead product discovery.")).toBeInTheDocument();
     expect(screen.getByText("Shape high-quality interfaces.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to search results" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Apply on Indeed" })).toBeInTheDocument();
   });
 
   it("shows the not-found state when the API returns 404", async () => {

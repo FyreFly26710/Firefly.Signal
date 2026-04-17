@@ -15,6 +15,9 @@ public sealed class ApplyJobCommandHandler(JobSearchDbContext dbContext) : IRequ
             return null;
         }
 
+        var userState = await UserJobStateCommandSupport.UpsertAsync(dbContext, request.JobId, request.UserAccountId, cancellationToken);
+        userState.MarkApplied();
+
         var existing = await dbContext.JobApplications
             .SingleOrDefaultAsync(
                 application => application.UserAccountId == request.UserAccountId && application.JobPostingId == request.JobId,
@@ -22,6 +25,18 @@ public sealed class ApplyJobCommandHandler(JobSearchDbContext dbContext) : IRequ
 
         if (existing is not null)
         {
+            var hasAppliedEntry = await dbContext.JobApplicationStatusEntries
+                .AnyAsync(
+                    entry => entry.JobApplicationId == existing.Id && entry.Status == JobApplicationStatus.Applied,
+                    cancellationToken);
+
+            if (!hasAppliedEntry)
+            {
+                dbContext.JobApplicationStatusEntries.Add(JobApplicationStatusEntry.Create(existing.Id, JobApplicationStatus.Applied));
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
             return await JobApplicationCommandSupport.BuildApplicationResponseAsync(
                 dbContext,
                 existing.Id,
@@ -31,9 +46,8 @@ public sealed class ApplyJobCommandHandler(JobSearchDbContext dbContext) : IRequ
         }
 
         var application = JobApplication.Create(request.UserAccountId, request.JobId, request.Note);
-        var initialEntry = JobApplicationStatusEntry.Create(application.Id, JobApplicationStatus.Applied);
-
         dbContext.JobApplications.Add(application);
+        var initialEntry = JobApplicationStatusEntry.Create(application.Id, JobApplicationStatus.Applied);
         dbContext.JobApplicationStatusEntries.Add(initialEntry);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -42,6 +56,14 @@ public sealed class ApplyJobCommandHandler(JobSearchDbContext dbContext) : IRequ
             JobPostingId: application.JobPostingId,
             Note: application.Note,
             CurrentStatus: JobApplicationStatus.Applied.ToString(),
-            StatusHistory: [new JobApplicationStatusEntryResponse(Status: JobApplicationStatus.Applied.ToString(), StatusAtUtc: initialEntry.StatusAtUtc)]);
+            AppliedAtUtc: initialEntry.StatusAtUtc,
+            LatestStatusAtUtc: initialEntry.StatusAtUtc,
+            StatusHistory:
+            [
+                new JobApplicationStatusEntryResponse(
+                    Status: JobApplicationStatus.Applied.ToString(),
+                    RoundNumber: null,
+                    StatusAtUtc: initialEntry.StatusAtUtc)
+            ]);
     }
 }

@@ -118,7 +118,8 @@ describe("useJobSearch", () => {
           sourceName: "Reed",
           postedAtUtc: "2025-01-02T09:00:00.000Z",
           isSaved: false,
-          isUserHidden: false
+          isUserHidden: false,
+          isApplied: false
         }
       ]
     });

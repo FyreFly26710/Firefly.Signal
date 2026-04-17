@@ -14,17 +14,20 @@ public sealed class JobApplicationStatusEntry : AuditableEntity
 
     public long JobApplicationId { get; private set; }
     public JobApplicationStatus Status { get; private set; }
+    public int? RoundNumber { get; private set; }
     public DateTime StatusAtUtc { get; private set; }
 
     public static JobApplicationStatusEntry Create(
         long jobApplicationId,
         JobApplicationStatus status,
+        int? roundNumber = null,
         DateTime? statusAtUtc = null)
     {
         return new JobApplicationStatusEntry
         {
             JobApplicationId = jobApplicationId,
             Status = status,
+            RoundNumber = roundNumber,
             StatusAtUtc = statusAtUtc ?? DateTime.UtcNow
         };
     }

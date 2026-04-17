@@ -68,6 +68,8 @@ describe("ManageJobView", () => {
       importedAtUtc: "2025-04-03T12:00:00Z",
       lastSeenAtUtc: "2025-04-03T12:00:00Z",
       isHidden: false,
+      applicationId: null,
+      isApplied: false,
       rawPayloadJson: "{}"
     });
     vi.mocked(deleteJob).mockRejectedValueOnce(
