@@ -1,4 +1,7 @@
 using System.Text.Json.Serialization;
+using Firefly.Signal.Ai.Api.Options;
+using Firefly.Signal.Ai.Domain;
+using Firefly.Signal.Ai.Infrastructure.AiProviders;
 using Firefly.Signal.Ai.Infrastructure.Persistence;
 using Firefly.Signal.EventBus;
 using Firefly.Signal.EventBusRabbitMQ;
@@ -20,6 +23,11 @@ internal static class ApplicationServiceExtensions
         });
 
         services.AddFireflyMediator(typeof(Program).Assembly);
+
+        services.Configure<AiProvidersOptions>(builder.Configuration.GetSection(AiProvidersOptions.SectionName));
+        services.AddKeyedSingleton<IAiChatProvider, ChatGptProvider>(AiProvider.ChatGpt);
+        services.AddKeyedSingleton<IAiChatProvider, DeepSeekProvider>(AiProvider.DeepSeek);
+        services.AddSingleton<AiProviderResolver>();
 
         services.AddDbContext<AiDbContext>(options =>
         {
