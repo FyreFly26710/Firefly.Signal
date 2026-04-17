@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { hideJob, saveJob, unhideJob, unsaveJob } from "@/api/job-search/user-job-state.api";
+import { hideJob, saveJob, unhideJob, unsaveJob } from "@/api/user-job-state/user-job-state.api";
 
 export type JobState = {
   isSaved: boolean;
