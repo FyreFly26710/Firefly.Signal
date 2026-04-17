@@ -14,6 +14,7 @@ import type {
   GetJobsPageQueryDto,
   HideJobsResponseDto,
   IdBatchRequestDto,
+  JobImportRunResponseDto,
   ImportJobsFromProviderRequestDto,
   ImportJobsResponseDto,
   JobDetailsResponseDto,
@@ -94,6 +95,12 @@ export async function importJobsFromJson(file: File): Promise<ImportJobsResponse
   formData.append("file", file);
 
   return postFormData<ImportJobsResponseDto>("/api/job-search/jobs/import/json", formData);
+}
+
+export async function getRecentImportRuns(limit: number): Promise<JobImportRunResponseDto[]> {
+  return getJson<JobImportRunResponseDto[]>(
+    `/api/job-search/jobs/import-runs/recent?limit=${encodeURIComponent(String(limit))}`
+  );
 }
 
 export async function exportJobs(request: ExportJobsRequestDto): Promise<ExportJobsResponseDto> {

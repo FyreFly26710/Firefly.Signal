@@ -5,6 +5,7 @@ import {
   catalogHideJobs,
   exportJobs,
   getJobsPage,
+  getRecentImportRuns,
   importJobsFromJson,
   importJobsFromProvider
 } from "@/api/jobs/jobs.api";
@@ -17,6 +18,7 @@ vi.mock("@/api/jobs/jobs.api", () => ({
   deleteJobs: vi.fn(),
   exportJobs: vi.fn(),
   getJobsPage: vi.fn(),
+  getRecentImportRuns: vi.fn(),
   importJobsFromJson: vi.fn(),
   importJobsFromProvider: vi.fn()
 }));
@@ -159,6 +161,25 @@ describe("JobsListView", () => {
       failedCount: 0
     });
 
+    vi.mocked(getRecentImportRuns).mockImplementation((limit: number) => {
+      const allRuns = Array.from({ length: 6 }, (_, index) => ({
+        id: index + 1,
+        providerName: "Adzuna",
+        status: index === 0 ? "Failed" : "Completed",
+        pagesRequested: 1,
+        pagesCompleted: 1,
+        recordsReceived: 10 - index,
+        recordsInserted: 8 - index,
+        recordsHidden: index % 2,
+        recordsFailed: index === 0 ? 1 : 0,
+        startedAtUtc: `2026-04-1${index}T10:00:00Z`,
+        completedAtUtc: `2026-04-1${index}T10:05:00Z`,
+        failureSummary: index === 0 ? "Provider import failed." : null
+      }));
+
+      return Promise.resolve(allRuns.slice(0, limit));
+    });
+
     vi.mocked(exportJobs).mockResolvedValue({
       exportedAtUtc: "2026-04-11T10:00:00Z",
       count: 1,
@@ -172,6 +193,15 @@ describe("JobsListView", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "Import from provider" }));
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Provider run history" })).toBeInTheDocument();
+      expect(screen.getByText("Provider import failed.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
+    });
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await waitFor(() => {
+      expect(getRecentImportRuns).toHaveBeenLastCalledWith(10);
+    });
     await user.type(screen.getByRole("textbox", { name: "Keyword" }), "frontend engineer");
     const whereInput = screen.getByRole("textbox", { name: "Where" });
     await user.clear(whereInput);

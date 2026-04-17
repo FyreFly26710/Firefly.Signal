@@ -1,4 +1,13 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle
+} from "@mui/material";
+import type { JobImportRunResponseDto } from "@/api/jobs/jobs.types";
+import { JobImportRunsTable } from "@/features/jobs/components/JobImportRunsTable";
+import { JobsImportProviderFilters } from "@/features/jobs/components/JobsImportProviderFilters";
 
 export type JobsImportProviderFormValues = {
   where: string;
@@ -17,103 +26,45 @@ export type JobsImportProviderFormValues = {
 type JobsImportProviderDialogProps = {
   isOpen: boolean;
   isSubmitting: boolean;
+  history: JobImportRunResponseDto[];
+  historyError: string | null;
+  historyHasNextPage: boolean;
+  historyIsLoading: boolean;
+  historyPageIndex: number;
   values: JobsImportProviderFormValues;
   onChange: (values: JobsImportProviderFormValues) => void;
   onClose: () => void;
+  onHistoryPageChange: (pageIndex: number) => void;
   onSubmit: () => void;
 };
 
 export function JobsImportProviderDialog({
   isOpen,
   isSubmitting,
+  history,
+  historyError,
+  historyHasNextPage,
+  historyIsLoading,
+  historyPageIndex,
   values,
   onChange,
   onClose,
+  onHistoryPageChange,
   onSubmit
 }: JobsImportProviderDialogProps) {
   return (
-    <Dialog open={isOpen} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+    <Dialog open={isOpen} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="lg">
       <DialogTitle>Import jobs from provider</DialogTitle>
       <DialogContent>
-        <div className="grid gap-4 pt-2 md:grid-cols-2">
-          <TextField
-            label="Where"
-            required
-            size="small"
-            helperText="Location or postcode, for example London or SW1A 1AA."
-            value={values.where}
-            onChange={(event) => onChange({ ...values, where: event.target.value })}
-          />
-          <TextField
-            label="Keyword"
-            size="small"
-            value={values.keyword}
-            onChange={(event) => onChange({ ...values, keyword: event.target.value })}
-          />
-          <TextField
-            select
-            label="Provider"
-            size="small"
-            value={values.provider}
-            onChange={(event) =>
-              onChange({ ...values, provider: event.target.value as "Adzuna" })
-            }
-          >
-            <MenuItem value="Adzuna">Adzuna</MenuItem>
-          </TextField>
-          <TextField
-            label="Excluded keyword"
-            size="small"
-            value={values.excludedKeyword}
-            onChange={(event) => onChange({ ...values, excludedKeyword: event.target.value })}
-          />
-          <TextField
-            label="Page index"
-            size="small"
-            type="number"
-            value={values.pageIndex}
-            onChange={(event) => onChange({ ...values, pageIndex: event.target.value })}
-          />
-          <TextField
-            label="Page size"
-            size="small"
-            type="number"
-            value={values.pageSize}
-            onChange={(event) => onChange({ ...values, pageSize: event.target.value })}
-          />
-          <TextField
-            label="Distance (km)"
-            size="small"
-            type="number"
-            value={values.distanceKilometers}
-            onChange={(event) => onChange({ ...values, distanceKilometers: event.target.value })}
-          />
-          <TextField
-            label="Max days old"
-            size="small"
-            type="number"
-            value={values.maxDaysOld}
-            onChange={(event) => onChange({ ...values, maxDaysOld: event.target.value })}
-          />
-          <TextField
-            label="Category"
-            size="small"
-            value={values.category}
-            onChange={(event) => onChange({ ...values, category: event.target.value })}
-          />
-          <TextField
-            label="Salary min"
-            size="small"
-            type="number"
-            value={values.salaryMin}
-            onChange={(event) => onChange({ ...values, salaryMin: event.target.value })}
-          />
-          <TextField
-            label="Salary max"
-            size="small"
-            type="number"
-            value={values.salaryMax}
-            onChange={(event) => onChange({ ...values, salaryMax: event.target.value })}
+        <div className="space-y-5 pt-2">
+          <JobsImportProviderFilters values={values} onChange={onChange} />
+          <JobImportRunsTable
+            history={history}
+            historyError={historyError}
+            historyHasNextPage={historyHasNextPage}
+            historyIsLoading={historyIsLoading}
+            historyPageIndex={historyPageIndex}
+            onHistoryPageChange={onHistoryPageChange}
           />
         </div>
       </DialogContent>

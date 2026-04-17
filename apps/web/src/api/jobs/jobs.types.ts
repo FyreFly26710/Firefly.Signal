@@ -164,6 +164,21 @@ export type ImportJobsResponseDto = {
   failedCount: number;
 };
 
+export type JobImportRunResponseDto = {
+  id: number;
+  providerName: string;
+  status: string;
+  pagesRequested: number;
+  pagesCompleted: number;
+  recordsReceived: number;
+  recordsInserted: number;
+  recordsHidden: number;
+  recordsFailed: number;
+  startedAtUtc: string;
+  completedAtUtc: string | null;
+  failureSummary: string | null;
+};
+
 export type ExportJobsRequestDto = {
   jobIds: number[];
 };

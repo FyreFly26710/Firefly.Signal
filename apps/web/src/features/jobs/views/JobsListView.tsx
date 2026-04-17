@@ -1,5 +1,6 @@
 import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
 import { Alert } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
@@ -14,6 +15,7 @@ import {
 } from "@/api/jobs/jobs.api";
 import type {
   DeleteJobsResponseDto,
+  JobImportRunResponseDto,
   ImportJobsFromProviderRequestDto
 } from "@/api/jobs/jobs.types";
 import { JobsManagementHeader } from "@/features/jobs/components/JobsManagementHeader";
@@ -22,6 +24,7 @@ import {
   JobsImportProviderDialog,
   type JobsImportProviderFormValues
 } from "@/features/jobs/components/JobsImportProviderDialog";
+import { useJobImportRuns } from "@/features/jobs/hooks/useJobImportRuns";
 import {
   JobsManagementToolbar,
   type JobsListFilters,
@@ -58,6 +61,7 @@ const defaultImportForm: JobsImportProviderFormValues = {
 
 export function JobsListView() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = useSessionStore((state) => state.user);
   const isAdmin = user?.role === "admin";
   const [draftFilters, setDraftFilters] = useState<JobsListFilters>(emptyFilters);
@@ -69,8 +73,15 @@ export function JobsListView() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [historyPageIndex, setHistoryPageIndex] = useState(0);
   const [importForm, setImportForm] = useState<JobsImportProviderFormValues>(defaultImportForm);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const historyPageSize = 5;
+  const { data: importRunHistory = [], isPending: isHistoryLoading, error: historyError } = useJobImportRuns(
+    historyPageIndex,
+    isImportDialogOpen && isAdmin,
+    historyPageSize
+  );
 
   const loadJobs = useCallback(async (
     nextPageIndex: number,
@@ -177,6 +188,7 @@ export function JobsListView() {
 
     try {
       const result = await importJobsFromProvider(buildImportRequest(importForm, where));
+      await queryClient.invalidateQueries({ queryKey: ["job-import-runs"] });
       setActionMessage(`Imported ${result.importedCount} jobs from ${result.source}.`);
       setIsImportDialogOpen(false);
       await execute(pageIndex, pageSize, filters);
@@ -255,11 +267,19 @@ export function JobsListView() {
               onCreateJob={() => void navigate("/admin/manage-jobs/new")}
               onExportJson={() => void handleExport()}
               onImportJson={() => fileInputRef.current?.click()}
-              onImportProvider={() => setIsImportDialogOpen(true)}
+              onImportProvider={() => {
+                setHistoryPageIndex(0);
+                setIsImportDialogOpen(true);
+              }}
             />
             <JobsImportProviderDialog
               isOpen={isImportDialogOpen}
               isSubmitting={isProcessing}
+              history={sliceHistoryPage(importRunHistory, historyPageIndex, historyPageSize)}
+              historyError={historyError instanceof Error ? historyError.message : null}
+              historyHasNextPage={importRunHistory.length === (historyPageIndex + 1) * historyPageSize}
+              historyIsLoading={isHistoryLoading}
+              historyPageIndex={historyPageIndex}
               values={importForm}
               onChange={setImportForm}
               onClose={() => {
@@ -267,6 +287,7 @@ export function JobsListView() {
                   setIsImportDialogOpen(false);
                 }
               }}
+              onHistoryPageChange={setHistoryPageIndex}
               onSubmit={() => void handleProviderImport()}
             />
             <input
@@ -364,6 +385,15 @@ export function JobsListView() {
       </div>
     </div>
   );
+}
+
+function sliceHistoryPage(
+  history: readonly JobImportRunResponseDto[],
+  pageIndex: number,
+  pageSize: number
+) {
+  const start = pageIndex * pageSize;
+  return history.slice(start, start + pageSize);
 }
 
 function mapVisibilityToHiddenFlag(value: VisibilityFilter): boolean | undefined {
