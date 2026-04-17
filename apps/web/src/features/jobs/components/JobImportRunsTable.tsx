@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   Button,
   Chip,
   Table,
@@ -9,6 +10,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Typography,
   Tooltip
 } from "@mui/material";
 import type { JobImportRunResponseDto } from "@/api/jobs/jobs.types";
@@ -77,9 +79,31 @@ export function JobImportRunsTable({
                   {history.map((run) => (
                     <Tooltip
                       key={run.id}
-                      title={hasJsonFilter(run.jsonFilter) ? formatJsonFilterTooltip(run.jsonFilter) : ""}
+                      title={hasJsonFilter(run.jsonFilter) ? buildJsonFilterTooltip(run.jsonFilter) : ""}
                       placement="top-start"
                       arrow
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            maxWidth: 520,
+                            bgcolor: "background.paper",
+                            color: "text.primary",
+                            border: "1px solid",
+                            borderColor: "divider",
+                            boxShadow: 3,
+                            p: 0
+                          }
+                        },
+                        arrow: {
+                          sx: {
+                            color: "background.paper",
+                            "&:before": {
+                              border: "1px solid",
+                              borderColor: "divider"
+                            }
+                          }
+                        }
+                      }}
                       disableHoverListener={!hasJsonFilter(run.jsonFilter)}
                     >
                       <TableRow hover>
@@ -192,13 +216,40 @@ function hasJsonFilter(value: string) {
   return trimmed.length > 0 && trimmed !== "{}";
 }
 
-function formatJsonFilterTooltip(value: string) {
-  try
-  {
+function buildJsonFilterTooltip(value: string) {
+  return (
+    <Box sx={{ p: 1.5 }}>
+      <Typography sx={{ fontSize: 11, letterSpacing: "0.16em", color: "text.secondary", fontFamily: "monospace" }}>
+        APPLIED FILTER
+      </Typography>
+      <Box
+        component="pre"
+        sx={{
+          mt: 1,
+          mb: 0,
+          maxWidth: 520,
+          overflowX: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          borderRadius: 1.5,
+          bgcolor: "rgba(15, 23, 42, 0.06)",
+          px: 1.5,
+          py: 1.25,
+          fontSize: 12,
+          lineHeight: 1.5,
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace"
+        }}
+      >
+        {formatJsonFilter(value)}
+      </Box>
+    </Box>
+  );
+}
+
+function formatJsonFilter(value: string) {
+  try {
     return JSON.stringify(JSON.parse(value), null, 2);
-  }
-  catch
-  {
+  } catch {
     return value;
   }
 }

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Firefly.Signal.JobSearch.Application.Mappers;
 using Firefly.Signal.JobSearch.Contracts.Requests;
 using Firefly.Signal.JobSearch.Contracts.Responses;
@@ -10,6 +12,8 @@ namespace Firefly.Signal.JobSearch.Application.Queries;
 
 public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQueries
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     public async Task<JobDetailsResponse?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
         => await dbContext.Jobs
             .Where(job => job.Id == id)
@@ -125,7 +129,7 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
                 Id: run.Id,
                 ProviderName: run.ProviderName,
                 Status: run.Status.ToString(),
-                JsonFilter: run.RequestFiltersJson,
+                JsonFilter: NormalizeJsonFilter(run.RequestFiltersJson),
                 PagesRequested: run.PagesRequested,
                 PagesCompleted: run.PagesCompleted,
                 RecordsReceived: run.RecordsReceived,
@@ -176,6 +180,69 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
             .ToListAsync(cancellationToken);
 
         return new ExportJobsResponse(ExportedAtUtc: DateTime.UtcNow, Count: jobs.Count, Jobs: jobs);
+    }
+
+    private static string NormalizeJsonFilter(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "{}";
+        }
+
+        try
+        {
+            var node = JsonNode.Parse(value);
+            if (node is null)
+            {
+                return "{}";
+            }
+
+            RemoveNullProperties(node);
+            return node.ToJsonString(JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return value;
+        }
+    }
+
+    private static void RemoveNullProperties(JsonNode node)
+    {
+        switch (node)
+        {
+            case JsonObject jsonObject:
+            {
+                var propertyNames = jsonObject
+                    .Where(property => property.Value is null)
+                    .Select(property => property.Key)
+                    .ToArray();
+
+                foreach (var propertyName in propertyNames)
+                {
+                    jsonObject.Remove(propertyName);
+                }
+
+                foreach (var property in jsonObject.ToList())
+                {
+                    if (property.Value is not null)
+                    {
+                        RemoveNullProperties(property.Value);
+                    }
+                }
+
+                break;
+            }
+            case JsonArray jsonArray:
+                foreach (var child in jsonArray)
+                {
+                    if (child is not null)
+                    {
+                        RemoveNullProperties(child);
+                    }
+                }
+
+                break;
+        }
     }
 
     private static IQueryable<JobPosting> ApplyFilters(IQueryable<JobPosting> query, GetJobsPageRequest request)

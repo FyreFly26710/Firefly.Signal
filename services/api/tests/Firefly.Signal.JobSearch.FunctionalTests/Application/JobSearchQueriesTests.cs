@@ -92,7 +92,7 @@ public sealed class JobSearchQueriesTests
         var newerRun = JobRefreshRun.Start(
             providerName: "Adzuna",
             countryCode: "gb",
-            requestFiltersJson: "{\"where\":\"manchester\"}",
+            requestFiltersJson: "{\"sortBy\":null,\"keyword\":\"Developer\",\"pageSize\":50,\"postcode\":\"E15\",\"provider\":0,\"pageIndex\":1,\"titleOnly\":false,\"distanceKilometers\":null}",
             requestedPageSize: 25,
             requestedMaxPages: 1);
         newerRun.RecordFetchedPage(2);
@@ -116,7 +116,7 @@ public sealed class JobSearchQueriesTests
         Assert.AreEqual(newerRun.Id, runs.Items[0].Id);
         Assert.AreEqual("Adzuna", runs.Items[0].ProviderName);
         Assert.AreEqual(JobRefreshRunStatus.Failed.ToString(), runs.Items[0].Status);
-        Assert.AreEqual("{\"where\":\"manchester\"}", runs.Items[0].JsonFilter);
+        Assert.AreEqual("{\"keyword\":\"Developer\",\"pageSize\":50,\"postcode\":\"E15\",\"provider\":0,\"pageIndex\":1,\"titleOnly\":false}", runs.Items[0].JsonFilter);
         Assert.AreEqual(2, runs.Items[0].RecordsReceived);
         Assert.AreEqual(0, runs.Items[0].RecordsInserted);
         Assert.AreEqual(1, runs.Items[0].RecordsFailed);
