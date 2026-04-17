@@ -9,13 +9,6 @@ vi.mock("@/api/jobs/jobs.api", () => ({
   getJobById: vi.fn()
 }));
 
-vi.mock("@/api/applications/applications.api", () => ({
-  applyToJob: vi.fn(),
-  advanceApplicationStatus: vi.fn(),
-  updateApplicationNote: vi.fn(),
-  getApplicationDetail: vi.fn()
-}));
-
 describe("JobDetailView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,7 +65,7 @@ describe("JobDetailView", () => {
     expect(screen.getByText("Lead product discovery.")).toBeInTheDocument();
     expect(screen.getByText("Shape high-quality interfaces.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to search results" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Mark as applied" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Apply on Indeed" })).toBeInTheDocument();
   });
 
   it("shows the not-found state when the API returns 404", async () => {
