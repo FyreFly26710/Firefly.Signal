@@ -78,7 +78,7 @@ public sealed class JobImportRunsApiTests
         Assert.HasCount(2, body.Items);
         Assert.AreEqual(failedRun.Id, body.Items[0].Id);
         Assert.AreEqual(JobRefreshRunStatus.Failed.ToString(), body.Items[0].Status);
-        Assert.AreEqual("{\"keyword\":\"Developer\",\"pageSize\":50,\"postcode\":\"E15\",\"provider\":0,\"pageIndex\":1,\"titleOnly\":false}", body.Items[0].JsonFilter);
+        Assert.AreEqual("{\"keyword\":\"Developer\",\"pageSize\":50,\"postcode\":\"E15\",\"provider\":\"Adzuna\",\"pageIndex\":1,\"titleOnly\":false}", body.Items[0].JsonFilter);
         Assert.AreEqual("Provider import failed.", body.Items[0].FailureSummary);
         Assert.AreEqual(completedRun.Id, body.Items[1].Id);
         Assert.AreEqual(JobRefreshRunStatus.Completed.ToString(), body.Items[1].Status);
