@@ -31,10 +31,8 @@ export function JobSearchCompactTable({
             <TableCell>Title</TableCell>
             <TableCell>Company</TableCell>
             <TableCell>Location</TableCell>
-            <TableCell>Type</TableCell>
             <TableCell>Salary</TableCell>
             <TableCell>Posted</TableCell>
-            <TableCell>Source</TableCell>
             <TableCell align="right" padding="checkbox" />
           </TableRow>
         </TableHead>
@@ -82,16 +80,10 @@ function CompactRow({
         <span className="line-clamp-1 max-w-[140px] block text-foreground-secondary">{job.location}</span>
       </TableCell>
       <TableCell>
-        <span className="text-foreground-secondary">{job.type ?? "—"}</span>
-      </TableCell>
-      <TableCell>
         <span className="font-mono text-foreground-secondary">{job.salary ?? "—"}</span>
       </TableCell>
       <TableCell>
-        <span className="text-foreground-secondary">{job.postedDate}</span>
-      </TableCell>
-      <TableCell>
-        <span className="text-foreground-secondary">{job.source}</span>
+        <span className="text-foreground-secondary">{formatShortDate(job.postedDate)}</span>
       </TableCell>
       <TableCell align="right" padding="none">
         <div className="flex items-center justify-end gap-0.5 pr-1">
@@ -133,4 +125,10 @@ function CompactRow({
       </TableCell>
     </TableRow>
   );
+}
+
+function formatShortDate(value: string): string {
+  // value is already formatted by the mapper, e.g. "2 Jan 2025"
+  // Strip the year part: "2 Jan 2025" → "2 Jan"
+  return value.replace(/\s+\d{4}$/, "");
 }

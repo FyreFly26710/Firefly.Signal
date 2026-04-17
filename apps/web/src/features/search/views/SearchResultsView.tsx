@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchResults } from "@/features/search/components/SearchResults";
@@ -14,7 +14,15 @@ export function SearchResultsView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const criteria = readSearchCriteria(searchParams);
   const { status, data, errorMessage } = useJobSearch(criteria);
-  const [viewMode, setViewMode] = useState<SearchViewMode>("card");
+  const [viewMode, setViewModeState] = useState<SearchViewMode>(() => {
+    const stored = localStorage.getItem("search:viewMode");
+    return stored === "table" ? "table" : "card";
+  });
+
+  const setViewMode = useCallback((mode: SearchViewMode) => {
+    localStorage.setItem("search:viewMode", mode);
+    setViewModeState(mode);
+  }, []);
 
   function updateCriteria(nextCriteria: typeof criteria) {
     setSearchParams(createSearchParams(nextCriteria));
