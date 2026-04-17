@@ -1,13 +1,17 @@
-import type { SearchCriteria } from "@/features/search/types/search.types";
+import type { SearchCriteria, SearchSortBy } from "@/features/search/types/search.types";
 
 const defaultPageIndex = 0;
 const defaultPageSize = 20;
+const defaultSortBy: SearchSortBy = "date-desc";
 const allowedPageSizes = new Set([20, 50, 100]);
+const allowedSortBy = new Set<SearchSortBy>(["date-desc", "date-asc", "salary-desc", "salary-asc"]);
 
 export function normalizeSearchCriteria(criteria: SearchCriteria): SearchCriteria {
   return {
     keyword: criteria.keyword.trim(),
     postcode: criteria.postcode.trim(),
+    company: criteria.company.trim(),
+    sortBy: normalizeSortBy(criteria.sortBy),
     pageIndex: normalizePageIndex(criteria.pageIndex),
     pageSize: normalizePageSize(criteria.pageSize)
   };
@@ -17,6 +21,8 @@ export function readSearchCriteria(searchParams: URLSearchParams): SearchCriteri
   return normalizeSearchCriteria({
     keyword: searchParams.get("keyword") ?? "",
     postcode: searchParams.get("postcode") ?? "",
+    company: searchParams.get("company") ?? "",
+    sortBy: (searchParams.get("sortBy") ?? defaultSortBy) as SearchSortBy,
     pageIndex: Number(searchParams.get("pageIndex") ?? defaultPageIndex),
     pageSize: Number(searchParams.get("pageSize") ?? defaultPageSize)
   });
@@ -32,6 +38,14 @@ export function createSearchParams(criteria: SearchCriteria): URLSearchParams {
 
   if (normalized.postcode) {
     params.set("postcode", normalized.postcode);
+  }
+
+  if (normalized.company) {
+    params.set("company", normalized.company);
+  }
+
+  if (normalized.sortBy !== defaultSortBy) {
+    params.set("sortBy", normalized.sortBy);
   }
 
   if (normalized.pageIndex > 0) {
@@ -53,7 +67,11 @@ export function createSearchPath(criteria: SearchCriteria): string {
 }
 
 export function hasSearchCriteria(criteria: SearchCriteria): boolean {
-  return criteria.keyword.length > 0 || criteria.postcode.length > 0;
+  return criteria.keyword.length > 0 || criteria.postcode.length > 0 || criteria.company.length > 0;
+}
+
+function normalizeSortBy(value: SearchSortBy): SearchSortBy {
+  return allowedSortBy.has(value) ? value : defaultSortBy;
 }
 
 function normalizePageIndex(value: number): number {

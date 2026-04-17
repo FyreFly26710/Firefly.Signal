@@ -34,7 +34,7 @@ describe("useJobSearch", () => {
     });
 
     const { result } = renderHookWithProviders(() =>
-      useJobSearch({ keyword: "", postcode: "", pageIndex: 0, pageSize: 20 })
+      useJobSearch({ keyword: "", postcode: "", company: "", sortBy: "date-desc", pageIndex: 0, pageSize: 20 })
     );
 
     await waitFor(() => {
@@ -46,6 +46,7 @@ describe("useJobSearch", () => {
       pageSize: 20,
       postcode: undefined,
       keyword: undefined,
+      company: undefined,
       isHidden: false
     });
   });
@@ -58,6 +59,8 @@ describe("useJobSearch", () => {
       useJobSearch({
         keyword: "designer",
         postcode: "EC2A",
+        company: "",
+        sortBy: "date-desc",
         pageIndex: 1,
         pageSize: 50
       })
@@ -121,6 +124,7 @@ describe("useJobSearch", () => {
       pageSize: 50,
       postcode: "EC2A",
       keyword: "designer",
+      company: undefined,
       isHidden: false
     });
   });
@@ -137,6 +141,8 @@ describe("useJobSearch", () => {
       useJobSearch({
         keyword: "analyst",
         postcode: "SE1",
+        company: "",
+        sortBy: "date-desc",
         pageIndex: 0,
         pageSize: 20
       })
@@ -156,6 +162,8 @@ describe("useJobSearch", () => {
       useJobSearch({
         keyword: "engineer",
         postcode: "M1",
+        company: "",
+        sortBy: "date-desc",
         pageIndex: 0,
         pageSize: 20
       })

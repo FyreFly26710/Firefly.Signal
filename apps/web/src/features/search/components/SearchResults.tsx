@@ -1,10 +1,11 @@
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import { Button, MenuItem, TextField } from "@mui/material";
-import type { SearchStatus } from "@/features/search/types/search.types";
+import type { SearchStatus, SearchViewMode } from "@/features/search/types/search.types";
 import { JobCard } from "@/features/jobs/components/JobCard";
 import type { JobCardModel } from "@/features/jobs/types/job.types";
 import { useJobState } from "@/features/search/hooks/useJobState";
+import { JobSearchCompactTable } from "@/features/search/components/JobSearchCompactTable";
 
 function JobCardWithState({ job }: { job: JobCardModel }) {
   const { isSaved, isHidden, toggleSave, toggleHide } = useJobState(job.id, {
@@ -22,6 +23,39 @@ function JobCardWithState({ job }: { job: JobCardModel }) {
   );
 }
 
+function JobTableWithState({ jobs }: { jobs: JobCardModel[] }) {
+  // Collect per-job state. We use a map of id -> hook result by rendering one
+  // stateful row component per job so hooks are called at the top level.
+  return <JobTableRows jobs={jobs} />;
+}
+
+function JobTableRows({ jobs }: { jobs: JobCardModel[] }) {
+  const states = jobs.map((job) => ({
+    job,
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    state: useJobState(job.id, { isSaved: job.isSaved, isHidden: job.isHidden })
+  }));
+
+  const savedIds = new Set(states.filter((s) => s.state.isSaved).map((s) => s.job.id));
+  const hiddenIds = new Set(states.filter((s) => s.state.isHidden).map((s) => s.job.id));
+
+  return (
+    <JobSearchCompactTable
+      jobs={jobs}
+      savedIds={savedIds}
+      hiddenIds={hiddenIds}
+      onToggleSave={(id) => {
+        const entry = states.find((s) => s.job.id === id);
+        if (entry) void entry.state.toggleSave();
+      }}
+      onToggleHide={(id) => {
+        const entry = states.find((s) => s.job.id === id);
+        if (entry) void entry.state.toggleHide();
+      }}
+    />
+  );
+}
+
 type SearchResultsProps = {
   status: SearchStatus;
   errorMessage: string | null;
@@ -29,6 +63,7 @@ type SearchResultsProps = {
   totalCount: number;
   keyword: string;
   postcode: string;
+  viewMode: SearchViewMode;
   pageIndex: number;
   pageSize: number;
   onPageChange: (pageIndex: number) => void;
@@ -42,6 +77,7 @@ export function SearchResults({
   totalCount,
   keyword,
   postcode,
+  viewMode,
   pageIndex,
   pageSize,
   onPageChange,
@@ -107,11 +143,15 @@ export function SearchResults({
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-border bg-background-elevated">
-        {results.map((job) => (
-          <JobCardWithState key={job.id} job={job} />
-        ))}
-      </div>
+      {viewMode === "table" ? (
+        <JobTableWithState jobs={results} />
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-border bg-background-elevated">
+          {results.map((job) => (
+            <JobCardWithState key={job.id} job={job} />
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 flex flex-col gap-4 rounded-lg border border-border bg-background-elevated px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-foreground-secondary">
