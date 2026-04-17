@@ -79,7 +79,7 @@ public sealed class JobImportRunsApiTests
         Assert.AreEqual(failedRun.Id, body.Items[0].Id);
         Assert.AreEqual(JobRefreshRunStatus.Failed.ToString(), body.Items[0].Status);
         Assert.AreEqual("Provider import failed.", body.Items[0].FailureSummary);
-        Assert.AreEqual(olderRun.Id, body.Items[1].Id);
+        Assert.AreEqual(completedRun.Id, body.Items[1].Id);
         Assert.AreEqual(JobRefreshRunStatus.Completed.ToString(), body.Items[1].Status);
         Assert.IsNull(body.Items[1].FailureSummary);
     }
