@@ -23,13 +23,13 @@ public sealed class AiMessage : Entity
 
     public DateTime CreatedAtUtc { get; private set; }
 
-    public AiMessage (AiMessageType type, string content)
+    public AiMessage(AiMessageType type, string content)
     {
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Content is required.", nameof(content));
 
-            Type = type;
-            Content = content.Trim();
-            CreatedAtUtc = DateTime.UtcNow;
+        Type = type;
+        Content = content.Trim();
+        CreatedAtUtc = DateTime.UtcNow;
     }
 }

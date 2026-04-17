@@ -34,16 +34,22 @@ public sealed class AiResponse : AuditableEntity
         : null;
 
 
+    // ── Navigation ─────────────────────────────────────────────────────────────
+
+    public AiMessage Message { get; private set; } = null!;
+
     // ── Factory ────────────────────────────────────────────────────────────────
 
     public static AiResponse Create(
         long aiRequestId,
+        string aiResponseMessage,
         int? promptTokens = null,
         int? completionTokens = null)
     {
         return new AiResponse
         {
-            AiRequestId = aiRequestId,
+            AiRequestId = aiRequestId, 
+            Message = new AiMessage(AiMessageType.AgentResponse, aiResponseMessage),
             PromptTokens = promptTokens,
             CompletionTokens = completionTokens,
             GeneratedAtUtc = DateTime.UtcNow

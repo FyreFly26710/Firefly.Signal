@@ -31,7 +31,7 @@ public sealed class AiRequest : AuditableEntity
     /// <summary>
     /// model supplied by the caller (e.g. "gpt-4o").
     /// </summary>
-    public string Model { get; private set; }
+    public string Model { get; private set; } = string.Empty;
 
     // ── MQ routing ─────────────────────────────────────────────────────────────
 
@@ -72,29 +72,34 @@ public sealed class AiRequest : AuditableEntity
     // ── Navigation ─────────────────────────────────────────────────────────────
 
     public AiResponse? Response { get; private set; }
-
+    public AiMessage? SystemPromptMessage { get; private set; }
+    public AiMessage? UserPromptMessage { get; private set; }
 
     // ── Factory ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Creates an HTTP-sourced request. Starts in Queued status.
     /// </summary>
-    public static AiRequest QueueHttp(string modelHint)
+    public static AiRequest QueueHttp(string model, string? systemPromptMessage, string? userPromptMessage)
     {
         return new AiRequest
         {
             Source = AiRequestSource.Http,
             Status = AiRequestStatus.Queued,
-            Model = Normalize(modelHint),
+            Model = Normalize(model),
+            SystemPromptMessage = new AiMessage(AiMessageType.SystemPrompt, systemPromptMessage ?? string.Empty),
+            UserPromptMessage = new AiMessage(AiMessageType.UserPrompt, userPromptMessage ?? string.Empty),
             QueuedAtUtc = DateTime.UtcNow
         };
     }
 
     /// <summary>
     /// Creates an MQ-sourced request. Starts in Queued status.
+    /// The full task context is encoded in the system prompt — no user prompt message.
     /// </summary>
     public static AiRequest QueueFromEvent(
         string model,
+        string systemPromptMessage,
         string correlationId,
         string callerService,
         string replyEventType)
@@ -113,6 +118,8 @@ public sealed class AiRequest : AuditableEntity
             Source = AiRequestSource.MqEvent,
             Status = AiRequestStatus.Queued,
             Model = Normalize(model),
+            SystemPromptMessage = new AiMessage(AiMessageType.SystemPrompt, systemPromptMessage),
+            UserPromptMessage = null,
             CorrelationId = correlationId.Trim(),
             CallerService = callerService.Trim(),
             ReplyEventType = replyEventType.Trim(),
