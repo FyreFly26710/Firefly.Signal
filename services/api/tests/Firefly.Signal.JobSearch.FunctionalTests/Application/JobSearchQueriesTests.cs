@@ -42,7 +42,7 @@ public sealed class JobSearchQueriesTests
         var queries = new JobSearchQueries(dbContext);
 
         var page = await queries.SearchPageAsync(
-            new GetJobsPageRequest(PageIndex: -5, PageSize: 0),
+            new SearchJobsPageRequest(PageIndex: -5, PageSize: 0),
             userId: 42,
             cancellationToken: CancellationToken.None);
 

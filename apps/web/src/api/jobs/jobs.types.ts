@@ -85,6 +85,22 @@ export type GetJobsPageQueryDto = {
   isHidden?: boolean;
 };
 
+/** Matches the backend SearchJobsPageRequest contract. */
+export type SearchJobsPageQueryDto = {
+  pageIndex: number;
+  pageSize: number;
+  keyword?: string;
+  /** Stored for round-trip but not applied server-side yet (needs distance search). */
+  where?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  /** Days window: N = last N days. Omit for no date filter. */
+  datePosted?: number;
+  /** "date" (default) | "salary" */
+  sortBy?: string;
+  isAsc?: boolean;
+};
+
 export type JobWriteRequestDto = {
   jobRefreshRunId: number | null;
   sourceName: string;

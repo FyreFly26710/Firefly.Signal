@@ -12,8 +12,8 @@ const popularLocations = ["EC2A", "W1F", "E14", "SW1A"];
 export function SearchLandingView() {
   const navigate = useNavigate();
 
-  function handleSearch(postcode: string, keyword: string) {
-    void navigate(createSearchPath({ keyword, postcode, salaryMin: null, salaryMax: null, datePosted: "anytime", sortBy: "date-desc", pageIndex: 0, pageSize: 20 }));
+  function handleSearch(_where: string, keyword: string) {
+    void navigate(createSearchPath({ keyword, where: "", salaryMin: null, salaryMax: null, datePosted: null, sortBy: "date", isAsc: false, pageIndex: 0, pageSize: 20 }));
   }
 
   return (

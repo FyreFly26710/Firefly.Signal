@@ -1,21 +1,21 @@
-import type { DatePosted, SearchCriteria, SearchSortBy } from "@/features/search/types/search.types";
+import type { SearchCriteria, SearchSortBy } from "@/features/search/types/search.types";
 
 const defaultPageIndex = 0;
 const defaultPageSize = 20;
-const defaultSortBy: SearchSortBy = "date-desc";
-const defaultDatePosted: DatePosted = "anytime";
+const defaultSortBy: SearchSortBy = "date";
+const defaultIsAsc = false;
 const allowedPageSizes = new Set([20, 50, 100]);
-const allowedSortBy = new Set<SearchSortBy>(["date-desc", "date-asc", "salary-desc", "salary-asc"]);
-const allowedDatePosted = new Set<DatePosted>(["anytime", "today", "3days", "1week", "2weeks"]);
+const allowedSortBy = new Set<SearchSortBy>(["date", "salary"]);
 
 export function normalizeSearchCriteria(criteria: SearchCriteria): SearchCriteria {
   return {
     keyword: criteria.keyword.trim(),
-    postcode: criteria.postcode.trim(),
+    where: criteria.where.trim(),
     salaryMin: normalizeSalary(criteria.salaryMin),
     salaryMax: normalizeSalary(criteria.salaryMax),
     datePosted: normalizeDatePosted(criteria.datePosted),
     sortBy: normalizeSortBy(criteria.sortBy),
+    isAsc: Boolean(criteria.isAsc),
     pageIndex: normalizePageIndex(criteria.pageIndex),
     pageSize: normalizePageSize(criteria.pageSize)
   };
@@ -24,14 +24,16 @@ export function normalizeSearchCriteria(criteria: SearchCriteria): SearchCriteri
 export function readSearchCriteria(searchParams: URLSearchParams): SearchCriteria {
   const rawMin = searchParams.get("salaryMin");
   const rawMax = searchParams.get("salaryMax");
+  const rawDatePosted = searchParams.get("datePosted");
 
   return normalizeSearchCriteria({
     keyword: searchParams.get("keyword") ?? "",
-    postcode: searchParams.get("postcode") ?? "",
+    where: searchParams.get("where") ?? "",
     salaryMin: rawMin !== null ? Number(rawMin) : null,
     salaryMax: rawMax !== null ? Number(rawMax) : null,
-    datePosted: (searchParams.get("datePosted") ?? defaultDatePosted) as DatePosted,
+    datePosted: rawDatePosted !== null ? Number(rawDatePosted) : null,
     sortBy: (searchParams.get("sortBy") ?? defaultSortBy) as SearchSortBy,
+    isAsc: searchParams.get("isAsc") === "true",
     pageIndex: Number(searchParams.get("pageIndex") ?? defaultPageIndex),
     pageSize: Number(searchParams.get("pageSize") ?? defaultPageSize)
   });
@@ -45,8 +47,8 @@ export function createSearchParams(criteria: SearchCriteria): URLSearchParams {
     params.set("keyword", normalized.keyword);
   }
 
-  if (normalized.postcode) {
-    params.set("postcode", normalized.postcode);
+  if (normalized.where) {
+    params.set("where", normalized.where);
   }
 
   if (normalized.salaryMin !== null) {
@@ -57,12 +59,16 @@ export function createSearchParams(criteria: SearchCriteria): URLSearchParams {
     params.set("salaryMax", String(normalized.salaryMax));
   }
 
-  if (normalized.datePosted !== defaultDatePosted) {
-    params.set("datePosted", normalized.datePosted);
+  if (normalized.datePosted !== null) {
+    params.set("datePosted", String(normalized.datePosted));
   }
 
   if (normalized.sortBy !== defaultSortBy) {
     params.set("sortBy", normalized.sortBy);
+  }
+
+  if (normalized.isAsc !== defaultIsAsc) {
+    params.set("isAsc", "true");
   }
 
   if (normalized.pageIndex > 0) {
@@ -79,20 +85,21 @@ export function createSearchParams(criteria: SearchCriteria): URLSearchParams {
 export function createSearchPath(criteria: SearchCriteria): string {
   const params = createSearchParams(criteria);
   const query = params.toString();
-
   return query ? `/search?${query}` : "/search";
 }
 
 export function hasSearchCriteria(criteria: SearchCriteria): boolean {
-  return criteria.keyword.length > 0 || criteria.postcode.length > 0;
+  return criteria.keyword.length > 0 || criteria.where.length > 0;
 }
 
 function normalizeSortBy(value: SearchSortBy): SearchSortBy {
   return allowedSortBy.has(value) ? value : defaultSortBy;
 }
 
-function normalizeDatePosted(value: DatePosted): DatePosted {
-  return allowedDatePosted.has(value) ? value : defaultDatePosted;
+function normalizeDatePosted(value: number | null): number | null {
+  if (value === null) return null;
+  const n = Math.floor(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 function normalizeSalary(value: number | null): number | null {

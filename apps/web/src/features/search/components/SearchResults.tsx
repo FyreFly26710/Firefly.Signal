@@ -62,8 +62,6 @@ type SearchResultsProps = {
   errorMessage: string | null;
   results: JobCardModel[];
   totalCount: number;
-  keyword: string;
-  postcode: string;
   viewMode: SearchViewMode;
   pageIndex: number;
   pageSize: number;
@@ -76,8 +74,6 @@ export function SearchResults({
   errorMessage,
   results,
   totalCount,
-  keyword,
-  postcode,
   viewMode,
   pageIndex,
   pageSize,
@@ -89,7 +85,7 @@ export function SearchResults({
       <div className="rounded-lg border border-border bg-background-elevated px-6 py-14 text-center">
         <h3 className="font-serif text-2xl font-semibold text-foreground">Start a search</h3>
         <p className="mx-auto mt-3 max-w-xl text-foreground-secondary">
-          Enter a role, company, skill, or postcode to explore available opportunities.
+          Enter a role, skill or keyword to explore available opportunities.
         </p>
       </div>
     );
@@ -118,7 +114,7 @@ export function SearchResults({
       <div className="rounded-lg border border-border bg-background-elevated px-6 py-14 text-center">
         <h3 className="font-serif text-2xl font-semibold text-foreground">No results found</h3>
         <p className="mx-auto mt-3 max-w-xl text-foreground-secondary">
-          Try adjusting your keyword or postcode to broaden the search.
+          Try adjusting your keyword or filters to broaden the search.
         </p>
       </div>
     );

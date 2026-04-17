@@ -36,34 +36,13 @@ public static class JobSearchApi
     }
 
     private static async Task<Ok<Paged<JobSearchResultResponse>>> GetPageAsync(
-        [FromQuery] int pageIndex,
-        [FromQuery] int pageSize,
-        [FromQuery] string? keyword,
-        [FromQuery] string? company,
-        [FromQuery] string? postcode,
-        [FromQuery] string? location,
-        [FromQuery] string? sourceName,
-        [FromQuery] string? categoryTag,
-        [FromQuery] bool? isHidden,
+        [AsParameters] SearchJobsPageRequest request,
         [FromServices] IIdentityService identityService,
         [FromServices] IJobSearchQueries queries,
         CancellationToken cancellationToken)
     {
         var userId = identityService.GetUserId();
-        var result = await queries.SearchPageAsync(
-            new GetJobsPageRequest(
-                Math.Max(pageIndex, 0),
-                pageSize <= 0 ? 20 : pageSize,
-                keyword,
-                company,
-                postcode,
-                location,
-                sourceName,
-                categoryTag,
-                isHidden),
-            userId,
-            cancellationToken);
-
+        var result = await queries.SearchPageAsync(request, userId, cancellationToken);
         return TypedResults.Ok(result);
     }
 

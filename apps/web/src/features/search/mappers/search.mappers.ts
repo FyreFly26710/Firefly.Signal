@@ -4,10 +4,9 @@ import type { SearchViewModel } from "@/features/search/types/search.types";
 
 export function mapSearchResponse(
   response: JobsPageResponseDto,
-  criteria: { postcode: string; keyword: string }
+  criteria: { keyword: string }
 ): SearchViewModel {
   return {
-    postcode: criteria.postcode,
     keyword: criteria.keyword,
     pageIndex: response.pageIndex,
     pageSize: response.pageSize,

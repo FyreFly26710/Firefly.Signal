@@ -7,166 +7,109 @@ import {
   readSearchCriteria
 } from "@/features/search/lib/search-query";
 
+const base = {
+  where: "",
+  salaryMin: null,
+  salaryMax: null,
+  datePosted: null,
+  sortBy: "date" as const,
+  isAsc: false,
+  pageIndex: 0,
+  pageSize: 20
+};
+
 describe("search-query", () => {
-  it("trims whitespace when normalizing search criteria", () => {
-    expect(
-      normalizeSearchCriteria({
-        keyword: "  frontend engineer  ",
-        postcode: "  SW1A 1AA  ",
-        salaryMin: 40000,
-        salaryMax: 80000,
-        datePosted: "anytime",
-        sortBy: "date-desc",
-        pageIndex: 2,
-        pageSize: 50
-      })
-    ).toEqual({
-      keyword: "frontend engineer",
-      postcode: "SW1A 1AA",
-      salaryMin: 40000,
-      salaryMax: 80000,
-      datePosted: "anytime",
-      sortBy: "date-desc",
+  it("trims whitespace when normalizing", () => {
+    expect(normalizeSearchCriteria({ ...base, keyword: "  frontend  ", where: "  London  " }))
+      .toMatchObject({ keyword: "frontend", where: "London" });
+  });
+
+  it("reads criteria from URL params", () => {
+    const params = new URLSearchParams({
+      keyword: " designer ",
+      where: " London ",
+      salaryMin: "30000",
+      salaryMax: "70000",
+      datePosted: "7",
+      sortBy: "salary",
+      isAsc: "true",
+      pageIndex: "2",
+      pageSize: "50"
+    });
+
+    expect(readSearchCriteria(params)).toEqual({
+      keyword: "designer",
+      where: "London",
+      salaryMin: 30000,
+      salaryMax: 70000,
+      datePosted: 7,
+      sortBy: "salary",
+      isAsc: true,
       pageIndex: 2,
       pageSize: 50
     });
   });
 
-  it("reads and trims criteria from URL search params", () => {
-    const params = new URLSearchParams({
-      keyword: "  designer ",
-      postcode: " EC2A ",
-      salaryMin: "30000",
-      salaryMax: "70000",
-      datePosted: "1week",
-      sortBy: "date-asc",
-      pageIndex: "3",
-      pageSize: "100"
-    });
-
-    expect(readSearchCriteria(params)).toEqual({
-      keyword: "designer",
-      postcode: "EC2A",
-      salaryMin: 30000,
-      salaryMax: 70000,
-      datePosted: "1week",
-      sortBy: "date-asc",
-      pageIndex: 3,
-      pageSize: 100
-    });
-  });
-
-  it("reads null salary when params are absent", () => {
-    const params = new URLSearchParams({ keyword: "engineer" });
-    const criteria = readSearchCriteria(params);
+  it("defaults to null salary, null datePosted, date-desc when params absent", () => {
+    const criteria = readSearchCriteria(new URLSearchParams({ keyword: "engineer" }));
     expect(criteria.salaryMin).toBeNull();
     expect(criteria.salaryMax).toBeNull();
-    expect(criteria.datePosted).toBe("anytime");
+    expect(criteria.datePosted).toBeNull();
+    expect(criteria.sortBy).toBe("date");
+    expect(criteria.isAsc).toBe(false);
+    expect(criteria.where).toBe("");
   });
 
-  it("creates search params without blank or default values", () => {
+  it("omits default and blank values from params", () => {
     expect(
-      createSearchParams({
-        keyword: "  product manager  ",
-        postcode: "   ",
-        salaryMin: null,
-        salaryMax: null,
-        datePosted: "anytime",
-        sortBy: "date-desc",
-        pageIndex: 0,
-        pageSize: 50
-      }).toString()
-    ).toBe("keyword=product+manager&pageSize=50");
+      createSearchParams({ ...base, keyword: "  product manager  " }).toString()
+    ).toBe("keyword=product+manager");
   });
 
-  it("includes salary, datePosted and non-default sortBy in search params", () => {
+  it("serialises non-default salary, datePosted, sortBy, isAsc", () => {
     expect(
       createSearchParams({
+        ...base,
         keyword: "engineer",
-        postcode: "",
         salaryMin: 50000,
         salaryMax: 90000,
-        datePosted: "1week",
-        sortBy: "salary-desc",
-        pageIndex: 0,
-        pageSize: 20
+        datePosted: 7,
+        sortBy: "salary",
+        isAsc: true
       }).toString()
-    ).toBe("keyword=engineer&salaryMin=50000&salaryMax=90000&datePosted=1week&sortBy=salary-desc");
+    ).toBe("keyword=engineer&salaryMin=50000&salaryMax=90000&datePosted=7&sortBy=salary&isAsc=true");
   });
 
-  it("builds the search path from normalized criteria", () => {
+  it("builds the search path", () => {
     expect(
-      createSearchPath({
-        keyword: "  data scientist ",
-        postcode: " E1 ",
-        salaryMin: null,
-        salaryMax: null,
-        datePosted: "anytime",
-        sortBy: "date-desc",
-        pageIndex: 2,
-        pageSize: 100
-      })
-    ).toBe("/search?keyword=data+scientist&postcode=E1&pageIndex=2&pageSize=100");
+      createSearchPath({ ...base, keyword: "data scientist", pageIndex: 1, pageSize: 50 })
+    ).toBe("/search?keyword=data+scientist&pageIndex=1&pageSize=50");
+  });
+
+  it("returns /search with no params when criteria are all defaults", () => {
+    expect(createSearchPath({ ...base, keyword: "" })).toBe("/search");
   });
 
   it("detects whether any search criteria are present", () => {
-    const base = { salaryMin: null, salaryMax: null, datePosted: "anytime" as const, sortBy: "date-desc" as const, pageIndex: 0, pageSize: 20 };
-    expect(hasSearchCriteria({ keyword: "", postcode: "", ...base })).toBe(false);
-    expect(hasSearchCriteria({ keyword: "", postcode: "SE1", ...base })).toBe(true);
-    expect(hasSearchCriteria({ keyword: "dev", postcode: "", ...base })).toBe(true);
+    expect(hasSearchCriteria({ ...base, keyword: "" })).toBe(false);
+    expect(hasSearchCriteria({ ...base, keyword: "dev" })).toBe(true);
+    expect(hasSearchCriteria({ ...base, keyword: "", where: "London" })).toBe(true);
   });
 
-  it("normalizes invalid paging values back to defaults", () => {
-    expect(
-      normalizeSearchCriteria({
-        keyword: "",
-        postcode: "",
-        salaryMin: null,
-        salaryMax: null,
-        datePosted: "anytime",
-        sortBy: "date-desc",
-        pageIndex: -3,
-        pageSize: 999
-      })
-    ).toEqual({
-      keyword: "",
-      postcode: "",
-      salaryMin: null,
-      salaryMax: null,
-      datePosted: "anytime",
-      sortBy: "date-desc",
-      pageIndex: 0,
-      pageSize: 20
-    });
+  it("normalises invalid page values to defaults", () => {
+    expect(normalizeSearchCriteria({ ...base, keyword: "", pageIndex: -1, pageSize: 999 }))
+      .toMatchObject({ pageIndex: 0, pageSize: 20 });
   });
 
-  it("normalizes unknown sortBy and datePosted values to defaults", () => {
-    expect(
-      normalizeSearchCriteria({
-        keyword: "",
-        postcode: "",
-        salaryMin: null,
-        salaryMax: null,
-        datePosted: "unknown" as never,
-        sortBy: "unknown" as never,
-        pageIndex: 0,
-        pageSize: 20
-      })
-    ).toMatchObject({ sortBy: "date-desc", datePosted: "anytime" });
+  it("normalises non-positive datePosted to null", () => {
+    expect(normalizeSearchCriteria({ ...base, keyword: "", datePosted: 0 }))
+      .toMatchObject({ datePosted: null });
+    expect(normalizeSearchCriteria({ ...base, keyword: "", datePosted: -3 }))
+      .toMatchObject({ datePosted: null });
   });
 
-  it("normalizes negative salary values to null", () => {
-    expect(
-      normalizeSearchCriteria({
-        keyword: "",
-        postcode: "",
-        salaryMin: -1000,
-        salaryMax: -500,
-        datePosted: "anytime",
-        sortBy: "date-desc",
-        pageIndex: 0,
-        pageSize: 20
-      })
-    ).toMatchObject({ salaryMin: null, salaryMax: null });
+  it("normalises unknown sortBy to date", () => {
+    expect(normalizeSearchCriteria({ ...base, keyword: "", sortBy: "unknown" as never }))
+      .toMatchObject({ sortBy: "date" });
   });
 });

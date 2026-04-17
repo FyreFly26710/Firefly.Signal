@@ -8,7 +8,7 @@ import {
   createSearchParams,
   readSearchCriteria
 } from "@/features/search/lib/search-query";
-import type { DatePosted, SearchSortBy, SearchViewMode } from "@/features/search/types/search.types";
+import type { SearchSortBy, SearchViewMode } from "@/features/search/types/search.types";
 
 export function SearchResultsView() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,29 +35,26 @@ export function SearchResultsView() {
       <div className="sticky top-[73px] z-40 border-b border-divider bg-background">
         <div className="mx-auto max-w-7xl px-5 py-4 sm:px-8">
           <SearchResultsToolbar
-            key={`${criteria.keyword}|${criteria.postcode}|${criteria.salaryMin}|${criteria.salaryMax}`}
+            key={`${criteria.keyword}|${criteria.where}|${criteria.salaryMin}|${criteria.salaryMax}`}
             initialKeyword={criteria.keyword}
-            initialPostcode={criteria.postcode}
+            initialWhere={criteria.where}
             initialSalaryMin={criteria.salaryMin}
             initialSalaryMax={criteria.salaryMax}
             datePosted={criteria.datePosted}
             sortBy={criteria.sortBy}
+            isAsc={criteria.isAsc}
             viewMode={viewMode}
-            onSearch={(keyword, postcode, salaryMin, salaryMax) => {
-              updateCriteria({
-                ...criteria,
-                keyword,
-                postcode,
-                salaryMin,
-                salaryMax,
-                pageIndex: 0
-              });
+            onSearch={(keyword, where, salaryMin, salaryMax) => {
+              updateCriteria({ ...criteria, keyword, where, salaryMin, salaryMax, pageIndex: 0 });
             }}
-            onDatePostedChange={(datePosted: DatePosted) => {
+            onDatePostedChange={(datePosted) => {
               updateCriteria({ ...criteria, datePosted, pageIndex: 0 });
             }}
             onSortChange={(sortBy: SearchSortBy) => {
               updateCriteria({ ...criteria, sortBy, pageIndex: 0 });
+            }}
+            onIsAscChange={(isAsc) => {
+              updateCriteria({ ...criteria, isAsc, pageIndex: 0 });
             }}
             onViewModeChange={setViewMode}
           />
@@ -71,8 +68,6 @@ export function SearchResultsView() {
             errorMessage={errorMessage}
             results={data?.jobs ?? []}
             totalCount={data?.totalCount ?? 0}
-            keyword={criteria.keyword}
-            postcode={criteria.postcode}
             viewMode={viewMode}
             pageIndex={data?.pageIndex ?? criteria.pageIndex}
             pageSize={data?.pageSize ?? criteria.pageSize}

@@ -18,6 +18,7 @@ import type {
   ImportJobsResponseDto,
   JobDetailsResponseDto,
   JobsPageResponseDto,
+  SearchJobsPageQueryDto,
   UpdateJobRequestDto
 } from "@/api/jobs/jobs.types";
 
@@ -39,6 +40,24 @@ export async function getJobsPage(query: GetJobsPageQueryDto): Promise<JobsPageR
   }
 
   return getJson<JobsPageResponseDto>(`/api/job-search/jobs?${searchParams.toString()}`);
+}
+
+export async function searchJobsPage(query: SearchJobsPageQueryDto): Promise<JobsPageResponseDto> {
+  const params = new URLSearchParams({
+    pageIndex: String(query.pageIndex),
+    pageSize: String(query.pageSize)
+  });
+
+  appendOptional(params, "keyword", query.keyword);
+  appendOptional(params, "where", query.where);
+
+  if (query.salaryMin !== undefined) params.set("salaryMin", String(query.salaryMin));
+  if (query.salaryMax !== undefined) params.set("salaryMax", String(query.salaryMax));
+  if (query.datePosted !== undefined) params.set("datePosted", String(query.datePosted));
+  if (query.sortBy !== undefined) params.set("sortBy", query.sortBy);
+  if (query.isAsc) params.set("isAsc", "true");
+
+  return getJson<JobsPageResponseDto>(`/api/job-search/jobs?${params.toString()}`);
 }
 
 export async function getJobById(jobId: number): Promise<JobDetailsResponseDto> {

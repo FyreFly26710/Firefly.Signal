@@ -17,14 +17,16 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
             .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<Paged<JobSearchResultResponse>> SearchPageAsync(
-        GetJobsPageRequest request,
+        SearchJobsPageRequest request,
         long? userId,
         CancellationToken cancellationToken = default)
     {
         var pageIndex = Math.Max(request.PageIndex, 0);
         var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
-        var query = ApplyFilters(dbContext.Jobs.AsQueryable(), request with { IsHidden = false });
+
+        var query = ApplySearchFilters(dbContext.Jobs.AsQueryable(), request);
         var totalCount = await query.LongCountAsync(cancellationToken);
+        var orderedQuery = ApplySearchOrdering(query, request.SortBy, request.IsAsc);
 
         List<JobSearchResultResponse> items;
 
@@ -33,10 +35,9 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
             var userStates = dbContext.UserJobStates.Where(state => state.UserAccountId == userId.Value);
 
             items = await (
-                from job in query
+                from job in orderedQuery
                 join state in userStates on job.Id equals state.JobPostingId into joined
                 from state in joined.DefaultIfEmpty()
-                orderby job.PostedAtUtc descending, job.Id descending
                 select new JobSearchResultResponse(
                     Id: job.Id,
                     SourceJobId: job.SourceJobId,
@@ -68,9 +69,7 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
         }
         else
         {
-            items = await query
-                .OrderByDescending(job => job.PostedAtUtc)
-                .ThenByDescending(job => job.Id)
+            items = await orderedQuery
                 .Skip(pageIndex * pageSize)
                 .Take(pageSize)
                 .Select(job => new JobSearchResultResponse(
@@ -140,6 +139,66 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
             .ToListAsync(cancellationToken);
 
         return new ExportJobsResponse(ExportedAtUtc: DateTime.UtcNow, Count: jobs.Count, Jobs: jobs);
+    }
+
+    private static IQueryable<JobPosting> ApplySearchFilters(IQueryable<JobPosting> query, SearchJobsPageRequest request)
+    {
+        // Always exclude catalog-hidden jobs on the public search page.
+        query = query.Where(job => !job.IsHidden);
+
+        if (!string.IsNullOrWhiteSpace(request.Keyword))
+        {
+            var keyword = request.Keyword.Trim();
+            query = query.Where(job => job.Title.Contains(keyword));
+        }
+
+        // request.Where is intentionally not applied here.
+        // It captures the free-text "town or area" input from the search UI
+        // but requires geospatial distance search (postcode lookup + radius query)
+        // to be implemented first. TODO: wire up once distance-based search is available.
+
+        if (request.SalaryMin.HasValue)
+        {
+            query = query.Where(job => job.SalaryMax >= request.SalaryMin.Value);
+        }
+
+        if (request.SalaryMax.HasValue)
+        {
+            query = query.Where(job => job.SalaryMin <= request.SalaryMax.Value);
+        }
+
+        var dateCutoff = GetDatePostedCutoff(request.DatePosted);
+        if (dateCutoff.HasValue)
+        {
+            query = query.Where(job => job.PostedAtUtc >= dateCutoff.Value);
+        }
+
+        return query;
+    }
+
+    private static IOrderedQueryable<JobPosting> ApplySearchOrdering(IQueryable<JobPosting> query, string? sortBy, bool isAsc)
+    {
+        if (sortBy?.ToLowerInvariant() == "salary")
+        {
+            return isAsc
+                ? query.OrderBy(job => job.SalaryMin ?? 0).ThenByDescending(job => job.PostedAtUtc)
+                : query.OrderByDescending(job => job.SalaryMin ?? 0).ThenByDescending(job => job.PostedAtUtc);
+        }
+
+        // Default: sort by date
+        return isAsc
+            ? query.OrderBy(job => job.PostedAtUtc).ThenBy(job => job.Id)
+            : query.OrderByDescending(job => job.PostedAtUtc).ThenByDescending(job => job.Id);
+    }
+
+    /// <summary>
+    /// Returns the UTC cutoff time for the given day window.
+    /// A value of N means "posted within the last N days" — cutoff is midnight UTC N days ago.
+    /// </summary>
+    private static DateTime? GetDatePostedCutoff(int? datePosted)
+    {
+        if (!datePosted.HasValue || datePosted.Value <= 0) return null;
+        return DateTime.UtcNow.Date.AddDays(-datePosted.Value);
     }
 
     private static IQueryable<JobPosting> ApplyFilters(IQueryable<JobPosting> query, GetJobsPageRequest request)

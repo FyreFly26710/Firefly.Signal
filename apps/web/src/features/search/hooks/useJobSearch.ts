@@ -1,47 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
-import { getJobsPage } from "@/api/jobs/jobs.api";
-import type { JobCardModel } from "@/features/jobs/types/job.types";
-import type { SearchCriteria, SearchSortBy, SearchStatus, SearchViewModel } from "@/features/search/types/search.types";
+import { searchJobsPage } from "@/api/jobs/jobs.api";
+import type { SearchCriteria, SearchStatus, SearchViewModel } from "@/features/search/types/search.types";
 import { mapSearchResponse } from "@/features/search/mappers/search.mappers";
 
-function sortJobs(jobs: JobCardModel[], sortBy: SearchSortBy): JobCardModel[] {
-  const sorted = [...jobs];
-
-  if (sortBy === "date-asc") {
-    return sorted.sort((a, b) => a.postedDate.localeCompare(b.postedDate));
-  }
-
-  if (sortBy === "salary-desc") {
-    return sorted.sort((a, b) => extractSalaryMax(b.salary) - extractSalaryMax(a.salary));
-  }
-
-  if (sortBy === "salary-asc") {
-    return sorted.sort((a, b) => extractSalaryMax(a.salary) - extractSalaryMax(b.salary));
-  }
-
-  // date-desc (default): newest first — preserve API order which is already newest first
-  return sorted;
-}
-
-function extractSalaryMax(salary: string | undefined): number {
-  if (!salary) return -1;
-  const numbers = salary.replace(/[^0-9]/g, " ").trim().split(/\s+/).map(Number).filter(Boolean);
-  return numbers.length > 0 ? Math.max(...numbers) : -1;
-}
-
-export function useJobSearch({ postcode, keyword, sortBy, pageIndex, pageSize }: SearchCriteria) {
+export function useJobSearch({ keyword, where, salaryMin, salaryMax, datePosted, sortBy, isAsc, pageIndex, pageSize }: SearchCriteria) {
   const { data, isPending, isError, error } = useQuery<SearchViewModel>({
-    queryKey: ["job-search", { postcode, keyword, sortBy, pageIndex, pageSize }],
+    queryKey: ["job-search", { keyword, where, salaryMin, salaryMax, datePosted, sortBy, isAsc, pageIndex, pageSize }],
     queryFn: async () => {
-      const response = await getJobsPage({
+      const response = await searchJobsPage({
         pageIndex,
         pageSize,
-        postcode: postcode || undefined,
         keyword: keyword || undefined,
-        isHidden: false
+        where: where || undefined,
+        salaryMin: salaryMin ?? undefined,
+        salaryMax: salaryMax ?? undefined,
+        datePosted: datePosted ?? undefined,
+        sortBy,
+        isAsc
       });
-      const viewModel = mapSearchResponse(response, { postcode, keyword });
-      return { ...viewModel, jobs: sortJobs(viewModel.jobs, sortBy) };
+      return mapSearchResponse(response, { keyword });
     },
     staleTime: 30_000
   });

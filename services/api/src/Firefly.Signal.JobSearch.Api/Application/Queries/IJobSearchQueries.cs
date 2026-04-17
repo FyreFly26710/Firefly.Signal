@@ -7,6 +7,6 @@ namespace Firefly.Signal.JobSearch.Application.Queries;
 public interface IJobSearchQueries
 {
     Task<JobDetailsResponse?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
-    Task<Paged<JobSearchResultResponse>> SearchPageAsync(GetJobsPageRequest request, long? userId, CancellationToken cancellationToken = default);
+    Task<Paged<JobSearchResultResponse>> SearchPageAsync(SearchJobsPageRequest request, long? userId, CancellationToken cancellationToken = default);
     Task<ExportJobsResponse> ExportAsync(ExportJobsRequest request, CancellationToken cancellationToken = default);
 }
