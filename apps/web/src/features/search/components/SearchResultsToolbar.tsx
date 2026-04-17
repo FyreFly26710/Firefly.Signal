@@ -30,6 +30,7 @@ type SearchResultsToolbarProps = {
   isAsc: boolean;
   viewMode: SearchViewMode;
   onSearch: (keyword: string, where: string, salaryMin: number | null, salaryMax: number | null) => void;
+  onClear: () => void;
   onDatePostedChange: (value: number | null) => void;
   onSortChange: (value: SearchSortBy) => void;
   onIsAscChange: (value: boolean) => void;
@@ -46,6 +47,7 @@ export function SearchResultsToolbar({
   isAsc,
   viewMode,
   onSearch,
+  onClear,
   onDatePostedChange,
   onSortChange,
   onIsAscChange,
@@ -56,6 +58,15 @@ export function SearchResultsToolbar({
   const [draftSalaryMin, setDraftSalaryMin] = useState(initialSalaryMin !== null ? String(initialSalaryMin) : "");
   const [draftSalaryMax, setDraftSalaryMax] = useState(initialSalaryMax !== null ? String(initialSalaryMax) : "");
 
+  const hasActiveFilters =
+    draftKeyword !== "" ||
+    draftWhere !== "" ||
+    draftSalaryMin !== "" ||
+    draftSalaryMax !== "" ||
+    datePosted !== null ||
+    sortBy !== "date" ||
+    isAsc !== false;
+
   function parseSalary(value: string): number | null {
     const n = parseInt(value.replace(/[^0-9]/g, ""), 10);
     return Number.isFinite(n) && n >= 0 ? n : null;
@@ -65,10 +76,18 @@ export function SearchResultsToolbar({
     onSearch(draftKeyword, draftWhere, parseSalary(draftSalaryMin), parseSalary(draftSalaryMax));
   }
 
+  function handleClear() {
+    setDraftKeyword("");
+    setDraftWhere("");
+    setDraftSalaryMin("");
+    setDraftSalaryMax("");
+    onClear();
+  }
+
   return (
     <div className="flex flex-col gap-3">
-      {/* Row 1: What / Where / Search / View toggle */}
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px_auto_auto]">
+      {/* Row 1: What / Where / Search / Clear / View toggle */}
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px_auto_auto_auto]">
         <SearchInput
           ariaLabel="Job title or keyword"
           placeholder="e.g. developer"
@@ -93,6 +112,15 @@ export function SearchResultsToolbar({
           }}
         >
           Search
+        </Button>
+        <Button
+          variant="outlined"
+          color="inherit"
+          disabled={!hasActiveFilters}
+          onClick={handleClear}
+          sx={{ minHeight: 48 }}
+        >
+          Clear
         </Button>
         <div className="flex items-center gap-1">
           <Tooltip title="Card view">
@@ -132,21 +160,23 @@ export function SearchResultsToolbar({
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_180px_auto_auto]">
         <TextField
           size="small"
+          type="number"
           label="Min salary"
           placeholder="e.g. 30000"
           value={draftSalaryMin}
           onChange={(e) => setDraftSalaryMin(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-          inputProps={{ inputMode: "numeric", "aria-label": "Minimum salary" }}
+          inputProps={{ min: 0, step: 1000, inputMode: "numeric", "aria-label": "Minimum salary" }}
         />
         <TextField
           size="small"
+          type="number"
           label="Max salary"
           placeholder="e.g. 80000"
           value={draftSalaryMax}
           onChange={(e) => setDraftSalaryMax(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-          inputProps={{ inputMode: "numeric", "aria-label": "Maximum salary" }}
+          inputProps={{ min: 0, step: 1000, inputMode: "numeric", "aria-label": "Maximum salary" }}
         />
         <TextField
           select

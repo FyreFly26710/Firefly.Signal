@@ -35,7 +35,7 @@ export function SearchResultsView() {
       <div className="sticky top-[73px] z-40 border-b border-divider bg-background">
         <div className="mx-auto max-w-7xl px-5 py-4 sm:px-8">
           <SearchResultsToolbar
-            key={`${criteria.keyword}|${criteria.where}|${criteria.salaryMin}|${criteria.salaryMax}`}
+            key={`${criteria.keyword}|${criteria.where}|${criteria.salaryMin}|${criteria.salaryMax}|${criteria.datePosted}|${criteria.sortBy}|${String(criteria.isAsc)}`}
             initialKeyword={criteria.keyword}
             initialWhere={criteria.where}
             initialSalaryMin={criteria.salaryMin}
@@ -46,6 +46,9 @@ export function SearchResultsView() {
             viewMode={viewMode}
             onSearch={(keyword, where, salaryMin, salaryMax) => {
               updateCriteria({ ...criteria, keyword, where, salaryMin, salaryMax, pageIndex: 0 });
+            }}
+            onClear={() => {
+              updateCriteria({ keyword: "", where: "", salaryMin: null, salaryMax: null, datePosted: null, sortBy: "date", isAsc: false, pageIndex: 0, pageSize: criteria.pageSize });
             }}
             onDatePostedChange={(datePosted) => {
               updateCriteria({ ...criteria, datePosted, pageIndex: 0 });

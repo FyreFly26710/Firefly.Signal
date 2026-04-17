@@ -118,18 +118,7 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
         }
         else
         {
-            query = ApplyFilters(
-                dbContext.Jobs.AsNoTracking(),
-                new GetJobsPageRequest(
-                    PageIndex: 0,
-                    PageSize: int.MaxValue,
-                    Keyword: request.Keyword,
-                    Company: request.Company,
-                    Postcode: request.Postcode,
-                    Location: request.Location,
-                    SourceName: request.SourceName,
-                    CategoryTag: request.CategoryTag,
-                    IsHidden: request.IsHidden));
+            throw new ArgumentException("At least one JobId must be provided for export.", nameof(request.JobIds));
         }
 
         var jobs = await query
@@ -157,12 +146,12 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
         // but requires geospatial distance search (postcode lookup + radius query)
         // to be implemented first. TODO: wire up once distance-based search is available.
 
-        if (request.SalaryMin.HasValue)
+        if (request.SalaryMin.HasValue  && request.SalaryMin.Value > 0)
         {
             query = query.Where(job => job.SalaryMax >= request.SalaryMin.Value);
         }
 
-        if (request.SalaryMax.HasValue)
+        if (request.SalaryMax.HasValue && request.SalaryMax.Value > 0)
         {
             query = query.Where(job => job.SalaryMin <= request.SalaryMax.Value);
         }
@@ -201,57 +190,4 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
         return DateTime.UtcNow.Date.AddDays(-datePosted.Value);
     }
 
-    private static IQueryable<JobPosting> ApplyFilters(IQueryable<JobPosting> query, GetJobsPageRequest request)
-    {
-        if (!string.IsNullOrWhiteSpace(request.Keyword))
-        {
-            var keyword = request.Keyword.Trim();
-            query = query.Where(job =>
-                job.Title.Contains(keyword) ||
-                job.Description.Contains(keyword) ||
-                job.Summary.Contains(keyword));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Company))
-        {
-            var company = request.Company.Trim();
-            query = query.Where(job =>
-                job.Company.Contains(company) ||
-                (job.CompanyDisplayName != null && job.CompanyDisplayName.Contains(company)) ||
-                (job.CompanyCanonicalName != null && job.CompanyCanonicalName.Contains(company)));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Postcode))
-        {
-            var postcode = request.Postcode.Trim().ToUpperInvariant();
-            query = query.Where(job => job.Postcode.Contains(postcode));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Location))
-        {
-            var location = request.Location.Trim();
-            query = query.Where(job =>
-                job.LocationName.Contains(location) ||
-                (job.LocationDisplayName != null && job.LocationDisplayName.Contains(location)));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.SourceName))
-        {
-            var sourceName = request.SourceName.Trim();
-            query = query.Where(job => job.SourceName.Contains(sourceName));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.CategoryTag))
-        {
-            var categoryTag = request.CategoryTag.Trim();
-            query = query.Where(job => job.CategoryTag != null && job.CategoryTag.Contains(categoryTag));
-        }
-
-        if (request.IsHidden.HasValue)
-        {
-            query = query.Where(job => job.IsHidden == request.IsHidden.Value);
-        }
-
-        return query;
-    }
 }

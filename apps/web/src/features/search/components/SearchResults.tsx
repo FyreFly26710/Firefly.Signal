@@ -189,13 +189,14 @@ function PaginationBar({
         </TextField>
         <TextField
           size="small"
+          type="number"
           label="Go to page"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") commitJump(); }}
           onBlur={commitJump}
           inputProps={{ inputMode: "numeric", pattern: "[0-9]*", "aria-label": "Go to page" }}
-          sx={{ width: 100 }}
+          sx={{ width: 130 }}
         />
         <Button
           variant="outlined"
