@@ -12,9 +12,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Firefly.Signal.JobSearch.Api.Apis;
 
-public static class JobSearchApi
+public static class JobApi
 {
-    public static IEndpointRouteBuilder MapJobSearchApi(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapJobApi(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/job-search/jobs").RequireAuthorization();
         var adminGroup = group.MapGroup(string.Empty)
@@ -82,7 +82,7 @@ public static class JobSearchApi
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var created = await mediator.Send(JobSearchApiMappers.ToCreateCommand(request), cancellationToken);
+        var created = await mediator.Send(JobApiMappers.ToCreateCommand(request), cancellationToken);
         return TypedResults.Created($"/api/job-search/jobs/{created.Id}", created);
     }
 
@@ -92,7 +92,7 @@ public static class JobSearchApi
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var updated = await mediator.Send(JobSearchApiMappers.ToUpdateCommand(id, request), cancellationToken);
+        var updated = await mediator.Send(JobApiMappers.ToUpdateCommand(id, request), cancellationToken);
         return updated is null ? TypedResults.NotFound() : TypedResults.Ok(updated);
     }
 
@@ -101,7 +101,7 @@ public static class JobSearchApi
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(JobSearchApiMappers.ToDeleteCommand([id]), cancellationToken);
+        var result = await mediator.Send(JobApiMappers.ToDeleteCommand([id]), cancellationToken);
         if (result.MissingIds.Count == 1)
         {
             return TypedResults.NotFound();
@@ -124,7 +124,7 @@ public static class JobSearchApi
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(JobSearchApiMappers.ToDeleteCommand(request.Ids), cancellationToken);
+        var result = await mediator.Send(JobApiMappers.ToDeleteCommand(request.Ids), cancellationToken);
         if (result.NotHiddenIds.Count > 0)
         {
             return TypedResults.Conflict(new ProblemDetails
@@ -141,19 +141,19 @@ public static class JobSearchApi
         long id,
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
-        => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToHideCommand([id]), cancellationToken));
+        => TypedResults.Ok(await mediator.Send(JobApiMappers.ToHideCommand([id]), cancellationToken));
 
     private static async Task<Ok<HideJobsResponse>> HideManyAsync(
         [FromBody] IdBatchRequest<long> request,
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
-        => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToHideCommand(request.Ids), cancellationToken));
+        => TypedResults.Ok(await mediator.Send(JobApiMappers.ToHideCommand(request.Ids), cancellationToken));
 
     private static async Task<Ok<ImportJobsResponse>> ImportFromProviderAsync(
         [FromBody] ImportJobsFromProviderRequest request,
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
-        => TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToImportFromProviderCommand(request), cancellationToken));
+        => TypedResults.Ok(await mediator.Send(JobApiMappers.ToImportFromProviderCommand(request), cancellationToken));
 
     private static async Task<Ok<IReadOnlyList<JobImportRunResponse>>> GetRecentImportRunsAsync(
         [FromQuery] int limit,
@@ -185,7 +185,7 @@ public static class JobSearchApi
         }
 
         await using var stream = file.OpenReadStream();
-        return TypedResults.Ok(await mediator.Send(JobSearchApiMappers.ToImportFromJsonCommand(stream, file.FileName), cancellationToken));
+        return TypedResults.Ok(await mediator.Send(JobApiMappers.ToImportFromJsonCommand(stream, file.FileName), cancellationToken));
     }
 
     private static async Task<FileContentHttpResult> ExportAsync(
