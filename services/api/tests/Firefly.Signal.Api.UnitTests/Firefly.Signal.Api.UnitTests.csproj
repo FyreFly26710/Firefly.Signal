@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Firefly.Signal.Ai.Api\Firefly.Signal.Ai.Api.csproj" />
+    <ProjectReference Include="..\..\src\Firefly.Signal.Gateway.Api\Firefly.Signal.Gateway.Api.csproj" />
+    <ProjectReference Include="..\..\src\Firefly.Signal.Identity.Api\Firefly.Signal.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\src\Firefly.Signal.JobSearch.Api\Firefly.Signal.JobSearch.Api.csproj" />
+    <ProjectReference Include="..\..\src\Firefly.Signal.ServiceDefaults\Firefly.Signal.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\src\Firefly.Signal.SharedKernel\Firefly.Signal.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>
