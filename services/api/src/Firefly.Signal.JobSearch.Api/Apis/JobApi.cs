@@ -30,7 +30,7 @@ public static class JobApi
         adminGroup.MapPost("/catalog-hide", HideManyAsync);
         adminGroup.MapPost("/import/provider", ImportFromProviderAsync);
         adminGroup.MapPost("/import/json", ImportFromJsonAsync).DisableAntiforgery();
-        adminGroup.MapGet("/import-runs/recent", GetRecentImportRunsAsync);
+        adminGroup.MapGet("/import-runs", GetRecentImportRunsAsync);
         adminGroup.MapPost("/export", ExportAsync);
 
         return endpoints;
@@ -155,11 +155,11 @@ public static class JobApi
         CancellationToken cancellationToken)
         => TypedResults.Ok(await mediator.Send(JobApiMappers.ToImportFromProviderCommand(request), cancellationToken));
 
-    private static async Task<Ok<IReadOnlyList<JobImportRunResponse>>> GetRecentImportRunsAsync(
-        [FromQuery] int limit,
+    private static async Task<Ok<Paged<JobImportRunResponse>>> GetRecentImportRunsAsync(
+        [AsParameters] PagedRequest request,
         [FromServices] IJobSearchQueries queries,
         CancellationToken cancellationToken)
-        => TypedResults.Ok(await queries.GetRecentImportRunsAsync(limit <= 0 ? 10 : limit, cancellationToken));
+        => TypedResults.Ok(await queries.GetRecentImportRunsAsync(request, cancellationToken));
 
     private static async Task<Results<Ok<ImportJobsResponse>, BadRequest<ProblemDetails>>> ImportFromJsonAsync(
         [FromForm] IFormFile? file,

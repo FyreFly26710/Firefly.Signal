@@ -108,15 +108,19 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
             Items: items);
     }
 
-    public async Task<IReadOnlyList<JobImportRunResponse>> GetRecentImportRunsAsync(int limit, CancellationToken cancellationToken = default)
+    public async Task<Paged<JobImportRunResponse>> GetRecentImportRunsAsync(PagedRequest request, CancellationToken cancellationToken = default)
     {
-        var normalizedLimit = Math.Clamp(limit, 1, 50);
-
-        return await dbContext.JobRefreshRuns
+        var pageIndex = Math.Max(request.PageIndex, 0);
+        var pageSize = request.PageSize <= 0 ? 20 : Math.Min(request.PageSize, 50);
+        var query = dbContext.JobRefreshRuns
             .AsNoTracking()
             .OrderByDescending(run => run.StartedAtUtc)
-            .ThenByDescending(run => run.Id)
-            .Take(normalizedLimit)
+            .ThenByDescending(run => run.Id);
+
+        var totalCount = await query.LongCountAsync(cancellationToken);
+        var items = await query
+            .Skip(pageIndex * pageSize)
+            .Take(pageSize)
             .Select(run => new JobImportRunResponse(
                 Id: run.Id,
                 ProviderName: run.ProviderName,
@@ -131,6 +135,12 @@ public sealed class JobSearchQueries(JobSearchDbContext dbContext) : IJobSearchQ
                 CompletedAtUtc: run.CompletedAtUtc,
                 FailureSummary: string.IsNullOrWhiteSpace(run.FailureMessage) ? null : run.FailureMessage))
             .ToListAsync(cancellationToken);
+
+        return new Paged<JobImportRunResponse>(
+            PageIndex: pageIndex,
+            PageSize: pageSize,
+            TotalCount: totalCount,
+            Items: items);
     }
 
     public async Task<ExportJobsResponse> ExportAsync(ExportJobsRequest request, CancellationToken cancellationToken = default)
