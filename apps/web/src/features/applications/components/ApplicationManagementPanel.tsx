@@ -17,7 +17,6 @@ import { useAsyncTask } from "@/lib/async/useAsyncTask";
 type ApplicationManagementPanelProps = {
   application: AppliedJobDetailModel;
   title?: string;
-  subtitle?: string;
   onAdvanceStatus: (status: ApplicationStatus) => Promise<void>;
   onSaveNote: (note: string) => Promise<void>;
   footer?: ReactNode;
@@ -26,7 +25,6 @@ type ApplicationManagementPanelProps = {
 export function ApplicationManagementPanel({
   application,
   title = "Application status",
-  subtitle = "Keep the application timeline current and store the next important context.",
   onAdvanceStatus,
   onSaveNote,
   footer
@@ -50,7 +48,6 @@ export function ApplicationManagementPanel({
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-metadata">Application workflow</p>
           <h2 className="mt-3 font-serif text-2xl font-semibold text-foreground">{title}</h2>
-          <p className="mt-2 text-sm leading-7 text-foreground-secondary">{subtitle}</p>
         </div>
         <ApplicationStatusBadge
           status={application.currentStatus}
@@ -99,10 +96,7 @@ export function ApplicationManagementPanel({
           value={noteDraft}
           onChange={(event) => setNoteDraft(event.target.value)}
         />
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="text-xs text-foreground-tertiary">
-            Save context like recruiter notes, next steps, or interview preparation details.
-          </p>
+        <div className="mt-3 flex items-center justify-end gap-3">
           <Button
             variant="outlined"
             startIcon={<SaveRoundedIcon />}

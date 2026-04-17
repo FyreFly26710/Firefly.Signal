@@ -121,49 +121,7 @@ export function JobDetailView({ jobId }: JobDetailViewProps) {
             </>
           ) : null}
         </main>
-
-        {job ? (
-          <aside className="space-y-6">
-            {isApplied && application ? (
-              <ApplicationManagementPanel
-                key={`${application.applicationId}-${application.latestStatusAt}-${application.note}`}
-                application={{ ...application, title: job.title, company: job.employer }}
-                onAdvanceStatus={async (status: ApplicationStatus) => {
-                  await advanceApplicationStatus(application.jobPostingId, { status });
-                  await Promise.all([
-                    queryClient.invalidateQueries({ queryKey: applicationQueryKeys.detail(application.applicationId) }),
-                    queryClient.invalidateQueries({ queryKey: applicationQueryKeys.all })
-                  ]);
-                }}
-                onSaveNote={async (note: string) => {
-                  await updateApplicationNote(application.jobPostingId, { note });
-                  await Promise.all([
-                    queryClient.invalidateQueries({ queryKey: applicationQueryKeys.detail(application.applicationId) }),
-                    queryClient.invalidateQueries({ queryKey: applicationQueryKeys.all })
-                  ]);
-                }}
-                footer={
-                  <a
-                    className="inline-flex items-center gap-2 text-sm font-medium text-foreground-secondary transition-colors hover:text-accent-primary"
-                    href={job.url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Continue on {job.source}
-                    <LaunchRoundedIcon sx={{ fontSize: 16 }} />
-                  </a>
-                }
-              />
-            ) : isApplied && isApplicationPending ? (
-              <JobInsightCard
-                title="Loading application"
-                description="Fetching your latest application history and note."
-              />
-            ) : (
-              <JobInsightCard />
-            )}
-          </aside>
-        ) : null}
+       
       </div>
     </div>
   );

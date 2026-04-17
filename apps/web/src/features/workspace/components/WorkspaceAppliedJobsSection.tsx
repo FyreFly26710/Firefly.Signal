@@ -33,14 +33,6 @@ export function WorkspaceAppliedJobsSection() {
         <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="font-serif text-3xl font-semibold text-foreground">Applied jobs</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-foreground-secondary">
-              Review every active application in one place, expand for notes and timeline updates,
-              and keep future workspace sections free to focus on other parts of the search.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-muted px-4 py-3 text-right">
-            <p className="text-xs uppercase tracking-[0.16em] text-metadata">Tracked applications</p>
-            <p className="mt-2 font-mono text-2xl font-semibold text-foreground">{jobs?.length ?? 0}</p>
           </div>
         </div>
       </div>
@@ -138,7 +130,6 @@ function AppliedJobAccordionItem({ summary }: AppliedJobAccordionItemProps) {
             key={`${application.applicationId}-${application.latestStatusAt}-${application.note}`}
             application={application}
             title={application.title}
-            subtitle={`${application.company} · Expand, edit, and keep every status change in one shared workspace section.`}
             onAdvanceStatus={async (status: ApplicationStatus) => {
               await advanceApplicationStatus(application.jobPostingId, { status });
               await Promise.all([
