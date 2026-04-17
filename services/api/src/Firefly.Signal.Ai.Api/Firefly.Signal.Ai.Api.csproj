@@ -6,6 +6,16 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
   </ItemGroup>
 
   <ItemGroup>
@@ -13,6 +23,10 @@
     <ProjectReference Include="..\Firefly.Signal.EventBusRabbitMQ\Firefly.Signal.EventBusRabbitMQ.csproj" />
     <ProjectReference Include="..\Firefly.Signal.SharedKernel\Firefly.Signal.SharedKernel.csproj" />
     <ProjectReference Include="..\Firefly.Signal.ServiceDefaults\Firefly.Signal.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Firefly.Signal.Ai.FunctionalTests" />
   </ItemGroup>
 
 </Project>

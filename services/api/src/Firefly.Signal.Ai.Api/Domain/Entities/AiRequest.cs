@@ -87,8 +87,8 @@ public sealed class AiRequest : AuditableEntity
             Source = AiRequestSource.Http,
             Status = AiRequestStatus.Queued,
             Model = Normalize(model),
-            SystemPromptMessage = new AiMessage(AiMessageType.SystemPrompt, systemPromptMessage ?? string.Empty),
-            UserPromptMessage = new AiMessage(AiMessageType.UserPrompt, userPromptMessage ?? string.Empty),
+            SystemPromptMessage = string.IsNullOrWhiteSpace(systemPromptMessage) ? null : new AiMessage(AiMessageType.SystemPrompt, systemPromptMessage),
+            UserPromptMessage = string.IsNullOrWhiteSpace(userPromptMessage) ? null : new AiMessage(AiMessageType.UserPrompt, userPromptMessage),
             QueuedAtUtc = DateTime.UtcNow
         };
     }
