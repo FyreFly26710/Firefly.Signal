@@ -1,15 +1,23 @@
 using Firefly.Signal.JobSearch.Infrastructure.Persistence;
+using Firefly.Signal.EventBus;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Firefly.Signal.JobSearch.FunctionalTests.Testing;
 
 internal sealed class JobSearchApiFactory : WebApplicationFactory<Firefly.Signal.JobSearch.Api.Program>
 {
     private readonly string databaseName = $"job-search-api-tests-{Guid.NewGuid():N}";
+    private readonly IEventBus? eventBus;
+
+    public JobSearchApiFactory(IEventBus? eventBus = null)
+    {
+        this.eventBus = eventBus;
+    }
 
     public HttpClient CreateAuthenticatedClient(long userId = 42, string? role = null)
     {
@@ -54,6 +62,12 @@ internal sealed class JobSearchApiFactory : WebApplicationFactory<Firefly.Signal
         });
         builder.ConfigureServices(services =>
         {
+            if (eventBus is not null)
+            {
+                services.RemoveAll<IEventBus>();
+                services.AddSingleton(eventBus);
+            }
+
             services.AddAuthentication(options =>
                 {
                     options.DefaultAuthenticateScheme = TestAuthenticationHandler.SchemeName;

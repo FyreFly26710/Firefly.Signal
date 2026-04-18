@@ -1,0 +1,341 @@
+using Firefly.Signal.Ai.Api.Application.Commands;
+using Firefly.Signal.Ai.Domain;
+using Firefly.Signal.Ai.Infrastructure.AiProviders;
+using Firefly.Signal.Ai.Infrastructure.Concurrency;
+using Firefly.Signal.Ai.UnitTests.Testing;
+using Firefly.Signal.EventBus;
+using Firefly.Signal.EventBus.Events.Ai;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NSubstitute;
+
+namespace Firefly.Signal.Ai.UnitTests.Application;
+
+[TestClass]
+public sealed class MqAiChatEventCommandHandlerTests
+{
+    private static AiProviderResolver BuildResolver(IAiChatProvider chatGpt, IAiChatProvider deepSeek)
+    {
+        var sp = new ServiceCollection()
+            .AddKeyedSingleton(AiProvider.ChatGpt, chatGpt)
+            .AddKeyedSingleton(AiProvider.DeepSeek, deepSeek)
+            .BuildServiceProvider();
+        return new AiProviderResolver(sp);
+    }
+
+    private static MqAiChatEventCommand BuildCommand(long? systemPromptMessageId, string userPrompt = "Analyse these jobs") =>
+        new()
+        {
+            CorrelationId = "corr-123",
+            CallerService = "job-search-api",
+            ReplyEventType = "JobAiAnalysisCompletedIntegrationEvent",
+            Provider = AiProvider.ChatGpt,
+            Model = "gpt-4o",
+            SystemPromptMessageId = systemPromptMessageId,
+            UserPrompt = userPrompt
+        };
+
+    [TestMethod]
+    public async Task Handle_WhenProviderSucceeds_PublishesCompletedEventWithCorrelationId()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var systemMsg = AiTestData.SystemPrompt("You are a job analyst.");
+        db.AiMessages.Add(systemMsg);
+        await db.SaveChangesAsync();
+
+        var provider = Substitute.For<IAiChatProvider>();
+        provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new AiProviderResponse("Job analysis result", 15, 7)));
+
+        var eventBus = Substitute.For<IEventBus>();
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, eventBus);
+
+        await handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
+
+        await eventBus.Received(1).PublishAsync(
+            Arg.Is<AiChatCompletedIntegrationEvent>(e =>
+                e.CorrelationId == "corr-123" &&
+                e.ResponseContent == "Job analysis result"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task Handle_WhenProviderSucceeds_PublishedEventContainsPersistentResponseId()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var systemMsg = AiTestData.SystemPrompt("You are a job analyst.");
+        db.AiMessages.Add(systemMsg);
+        await db.SaveChangesAsync();
+
+        var provider = Substitute.For<IAiChatProvider>();
+        provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new AiProviderResponse("Result", 5, 2)));
+
+        AiChatCompletedIntegrationEvent? published = null;
+        var eventBus = Substitute.For<IEventBus>();
+        eventBus.PublishAsync(Arg.Do<AiChatCompletedIntegrationEvent>(e => published = e), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, eventBus);
+        await handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
+
+        Assert.IsNotNull(published);
+        Assert.AreNotEqual(0L, published.ResponseId);
+        var persistedResponse = db.AiResponses.SingleOrDefault(r => r.Id == published.ResponseId);
+        Assert.IsNotNull(persistedResponse);
+    }
+
+    [TestMethod]
+    public async Task Handle_WhenProviderSucceeds_PersistsMqRequestWithCorrectFields()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var systemMsg = AiTestData.SystemPrompt("System context here.");
+        db.AiMessages.Add(systemMsg);
+        await db.SaveChangesAsync();
+
+        var provider = Substitute.For<IAiChatProvider>();
+        provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new AiProviderResponse("Reply", null, null)));
+
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(
+            db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, Substitute.For<IEventBus>());
+
+        await handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
+
+        var request = db.AiRequests.Single();
+        Assert.AreEqual(AiRequestStatus.Completed, request.Status);
+        Assert.AreEqual(AiRequestSource.MqEvent, request.Source);
+        Assert.AreEqual("corr-123", request.CorrelationId);
+        Assert.AreEqual("job-search-api", request.CallerService);
+    }
+
+    [TestMethod]
+    public async Task Handle_WhenProviderThrows_SetsRequestToFailedAndDoesNotPublish()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var systemMsg = AiTestData.SystemPrompt("Context.");
+        db.AiMessages.Add(systemMsg);
+        await db.SaveChangesAsync();
+
+        var provider = Substitute.For<IAiChatProvider>();
+        provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<AiProviderResponse>(new HttpRequestException("Provider unavailable")));
+
+        var eventBus = Substitute.For<IEventBus>();
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(
+            db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, eventBus);
+
+        await Assert.ThrowsExactlyAsync<HttpRequestException>(() =>
+            handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None));
+
+        var request = db.AiRequests.Single();
+        Assert.AreEqual(AiRequestStatus.Failed, request.Status);
+        await eventBus.DidNotReceive()
+            .PublishAsync(Arg.Any<AiChatCompletedIntegrationEvent>(), Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task Handle_WhenTokenCountsAvailable_IncludesThemInPublishedEvent()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var systemMsg = AiTestData.SystemPrompt("Be concise.");
+        db.AiMessages.Add(systemMsg);
+        await db.SaveChangesAsync();
+
+        var provider = Substitute.For<IAiChatProvider>();
+        provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new AiProviderResponse("Short reply", 100, 25)));
+
+        AiChatCompletedIntegrationEvent? published = null;
+        var eventBus = Substitute.For<IEventBus>();
+        eventBus.PublishAsync(Arg.Do<AiChatCompletedIntegrationEvent>(e => published = e), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(
+            db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, eventBus);
+        await handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
+
+        Assert.IsNotNull(published);
+        Assert.AreEqual(100, published.PromptTokens);
+        Assert.AreEqual(25, published.CompletionTokens);
+    }
+
+    [TestMethod]
+    public async Task Handle_WhenThrottleSlotUnavailable_PersistsQueuedRequestBeforeWaiting()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var systemMsg = AiTestData.SystemPrompt("Queued first.");
+        db.AiMessages.Add(systemMsg);
+        await db.SaveChangesAsync();
+
+        using var throttle = new AiMqThrottle();
+        var heldLeases = new List<IDisposable>();
+        for (var i = 0; i < 5; i++)
+            heldLeases.Add(await throttle.AcquireAsync(CancellationToken.None));
+
+        var provider = Substitute.For<IAiChatProvider>();
+        provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new AiProviderResponse("Reply", 2, 1)));
+
+        var handler = new MqAiChatEventCommandHandler(
+            db,
+            BuildResolver(provider, Substitute.For<IAiChatProvider>()),
+            throttle,
+            Substitute.For<IEventBus>());
+
+        var handleTask = handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
+
+        await Task.Delay(50);
+
+        var queuedRequest = db.AiRequests.Single();
+        Assert.AreEqual(AiRequestStatus.Queued, queuedRequest.Status);
+        await provider.DidNotReceive().CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>());
+
+        foreach (var lease in heldLeases)
+            lease.Dispose();
+        await handleTask;
+    }
+
+    [TestMethod]
+    public async Task Handle_WhenRequestAlreadyCompleted_ReplaysCompletionEventWithoutCallingProvider()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var request = AiRequest.QueueFromEventById(
+            model: "gpt-4o",
+            systemPromptMessageId: null,
+            userPromptMessage: "Replay this completion",
+            correlationId: "corr-123",
+            callerService: "job-search-api",
+            replyEventType: "JobAiAnalysisCompletedIntegrationEvent");
+        db.AiRequests.Add(request);
+        await db.SaveChangesAsync();
+        request.StartProcessing(AiProvider.ChatGpt);
+        var aiResponse = AiResponse.Create(request.Id, "Already completed", 7, 3);
+        db.AiResponses.Add(aiResponse);
+        request.Complete(aiResponse);
+        await db.SaveChangesAsync();
+
+        var provider = Substitute.For<IAiChatProvider>();
+        var eventBus = Substitute.For<IEventBus>();
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(
+            db,
+            BuildResolver(provider, Substitute.For<IAiChatProvider>()),
+            throttle,
+            eventBus);
+
+        await handler.Handle(BuildCommand(systemPromptMessageId: null, userPrompt: "Ignored"), CancellationToken.None);
+
+        await provider.DidNotReceive().CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>());
+        await eventBus.Received(1).PublishAsync(
+            Arg.Is<AiChatCompletedIntegrationEvent>(e =>
+                e.CorrelationId == "corr-123" &&
+                e.ResponseContent == "Already completed" &&
+                e.ResponseId == aiResponse.Id),
+            Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task Handle_WhenExistingRequestFailed_RequeuesAndRetriesSameRequest()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var request = AiRequest.QueueFromEventById(
+            model: "gpt-4o",
+            systemPromptMessageId: null,
+            userPromptMessage: "Retry me",
+            correlationId: "corr-123",
+            callerService: "job-search-api",
+            replyEventType: "JobAiAnalysisCompletedIntegrationEvent");
+        db.AiRequests.Add(request);
+        await db.SaveChangesAsync();
+        request.StartProcessing(AiProvider.ChatGpt);
+        request.Fail("First attempt failed");
+        await db.SaveChangesAsync();
+
+        var provider = Substitute.For<IAiChatProvider>();
+        provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new AiProviderResponse("Recovered", 6, 2)));
+
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(
+            db,
+            BuildResolver(provider, Substitute.For<IAiChatProvider>()),
+            throttle,
+            Substitute.For<IEventBus>());
+
+        await handler.Handle(BuildCommand(systemPromptMessageId: null, userPrompt: "Ignored"), CancellationToken.None);
+
+        var persistedRequest = db.AiRequests.Single();
+        Assert.AreEqual(request.Id, persistedRequest.Id);
+        Assert.AreEqual(AiRequestStatus.Completed, persistedRequest.Status);
+        Assert.IsNull(persistedRequest.FailureSummary);
+        await provider.Received(1).CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task Handle_WhenExistingProcessingRequestIsStale_RecoversAndCompletesSameRequest()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var request = AiRequest.QueueFromEventById(
+            model: "gpt-4o",
+            systemPromptMessageId: null,
+            userPromptMessage: "Recover stale processing",
+            correlationId: "corr-123",
+            callerService: "job-search-api",
+            replyEventType: "JobAiAnalysisCompletedIntegrationEvent");
+        db.AiRequests.Add(request);
+        await db.SaveChangesAsync();
+        request.StartProcessing(AiProvider.ChatGpt);
+        await db.SaveChangesAsync();
+
+        var staleStartedAtUtc = DateTime.UtcNow.Subtract(AiRequest.MqProcessingRecoveryWindow).AddMinutes(-1);
+        await db.Database.ExecuteSqlInterpolatedAsync(
+            $@"UPDATE ai_requests
+               SET ""ProcessingStartedAtUtc"" = {staleStartedAtUtc}
+               WHERE ""Id"" = {request.Id}");
+        db.ChangeTracker.Clear();
+
+        var provider = Substitute.For<IAiChatProvider>();
+        provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new AiProviderResponse("Recovered stale", 8, 4)));
+
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(
+            db,
+            BuildResolver(provider, Substitute.For<IAiChatProvider>()),
+            throttle,
+            Substitute.For<IEventBus>());
+
+        await handler.Handle(BuildCommand(systemPromptMessageId: null, userPrompt: "Ignored"), CancellationToken.None);
+
+        var persistedRequest = db.AiRequests.Single();
+        Assert.AreEqual(request.Id, persistedRequest.Id);
+        Assert.AreEqual(AiRequestStatus.Completed, persistedRequest.Status);
+        Assert.IsTrue(persistedRequest.ProcessingStartedAtUtc > staleStartedAtUtc);
+        await provider.Received(1).CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>());
+    }
+}

@@ -1,3 +1,17 @@
+using System.Text.Json.Serialization;
+using Firefly.Signal.Ai.Api.Application.IntegrationEventHandlers;
+using Firefly.Signal.Ai.Api.Options;
+using Firefly.Signal.Ai.Domain;
+using Firefly.Signal.Ai.Infrastructure.AiProviders;
+using Firefly.Signal.Ai.Infrastructure.Concurrency;
+using Firefly.Signal.Ai.Infrastructure.Persistence;
+using Firefly.Signal.EventBus;
+using Firefly.Signal.EventBus.Events.Ai;
+using Firefly.Signal.EventBusRabbitMQ;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Firefly.Signal.SharedKernel.Extensions;
+
 namespace Firefly.Signal.Ai.Api.Extensions;
 
 internal static class ApplicationServiceExtensions
@@ -6,5 +20,42 @@ internal static class ApplicationServiceExtensions
     {
         var services = builder.Services;
 
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
+
+        services.AddFireflyMediator(typeof(Program).Assembly);
+
+        services.Configure<AiProvidersOptions>(builder.Configuration.GetSection(AiProvidersOptions.SectionName));
+        services.AddKeyedSingleton<IAiChatProvider, ChatGptProvider>(AiProvider.ChatGpt);
+        services.AddKeyedSingleton<IAiChatProvider, DeepSeekProvider>(AiProvider.DeepSeek);
+        services.AddSingleton<AiProviderResolver>();
+        services.AddSingleton<AiMqThrottle>();
+
+        services.AddDbContext<AiDbContext>(options =>
+        {
+            if (builder.Environment.IsEnvironment("Testing"))
+            {
+                options.UseInMemoryDatabase(builder.Configuration["Testing:DatabaseName"] ?? "firefly-signal-ai-testing");
+                return;
+            }
+
+            options.UseNpgsql(
+                builder.Configuration.GetConnectionString("FireflySignalDb"),
+                npgsql => npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, AiDbContext.SchemaName));
+        });
+
+        if (builder.Environment.IsEnvironment("Testing"))
+        {
+            services.AddSingleton<IEventBus, NoOpEventBus>();
+        }
+        else
+        {
+            builder.AddRabbitMqEventBus("ai-api")
+                .AddSubscription<AiChatRequestedIntegrationEvent, AiChatRequestedIntegrationEventHandler>();
+
+            services.AddMigration<AiDbContext>();
+        }
     }
 }

@@ -1,7 +1,9 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Firefly.Signal.EventBus;
+using Firefly.Signal.EventBus.Events.Ai;
 using Firefly.Signal.EventBusRabbitMQ;
+using Firefly.Signal.JobSearch.Application.IntegrationEventHandlers;
 using Firefly.Signal.JobSearch.Application.Commands;
 using Firefly.Signal.JobSearch.Application.Queries;
 using Firefly.Signal.JobSearch.Api.Options;
@@ -30,6 +32,7 @@ internal static class ApplicationServiceExtensions
 
         services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
         services.Configure<AdzunaOptions>(builder.Configuration.GetSection(AdzunaOptions.SectionName));
+        services.Configure<DemoAiChatOptions>(builder.Configuration.GetSection(DemoAiChatOptions.SectionName));
         services.AddHttpContextAccessor();
         services.AddFireflyMediator(typeof(Program).Assembly);
         services.AddScoped<IIdentityService, HttpContextIdentityService>();
@@ -84,7 +87,8 @@ internal static class ApplicationServiceExtensions
         }
         else
         {
-            builder.AddRabbitMqEventBus("job-search-api");
+            builder.AddRabbitMqEventBus("job-search-api")
+                .AddSubscription<AiChatCompletedIntegrationEvent, AiChatCompletedIntegrationEventHandler>();
             services.AddMigration<JobSearchDbContext, JobSearchDbContextSeed>();
         }
     }

@@ -463,6 +463,76 @@ namespace Firefly.Signal.JobSearch.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("postcode_lookups", "jobsearch");
                 });
 
+            modelBuilder.Entity("Firefly.Signal.JobSearch.Domain.UserJobAiChatDemoRun", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AiResponseContent")
+                        .HasMaxLength(12000)
+                        .HasColumnType("character varying(12000)");
+
+                    b.Property<long?>("AiResponseId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("JobPostingId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Prompt")
+                        .IsRequired()
+                        .HasMaxLength(12000)
+                        .HasColumnType("character varying(12000)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("RequestedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("UserAccountId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CorrelationId")
+                        .IsUnique();
+
+                    b.HasIndex("JobPostingId");
+
+                    b.HasIndex("UserAccountId", "JobPostingId", "RequestedAtUtc");
+
+                    b.ToTable("user_job_ai_chat_demo_runs", "jobsearch");
+                });
+
             modelBuilder.Entity("Firefly.Signal.JobSearch.Domain.UserJobAiInsight", b =>
                 {
                     b.Property<long>("Id")
@@ -603,6 +673,15 @@ namespace Firefly.Signal.JobSearch.Api.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("JobRefreshRunId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Firefly.Signal.JobSearch.Domain.UserJobAiChatDemoRun", b =>
+                {
+                    b.HasOne("Firefly.Signal.JobSearch.Domain.JobPosting", null)
+                        .WithMany()
+                        .HasForeignKey("JobPostingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Firefly.Signal.JobSearch.Domain.UserJobAiInsight", b =>

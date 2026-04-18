@@ -15,7 +15,7 @@ var app = builder.Build();
 
 app.UseFireflyExceptionHandling();
 app.MapDefaultEndpoints();
-app.MapAiApi();
+app.MapAiChatApi();
 
 app.UseDefaultOpenApi();
 app.Run();

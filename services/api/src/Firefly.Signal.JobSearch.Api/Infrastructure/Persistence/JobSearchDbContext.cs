@@ -17,6 +17,7 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
     public DbSet<ApplicationDocumentLink> ApplicationDocumentLinks => Set<ApplicationDocumentLink>();
     public DbSet<UserJobAiInsight> UserJobAiInsights => Set<UserJobAiInsight>();
     public DbSet<AiAnalysisRun> AiAnalysisRuns => Set<AiAnalysisRun>();
+    public DbSet<UserJobAiChatDemoRun> UserJobAiChatDemoRuns => Set<UserJobAiChatDemoRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -218,6 +219,31 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
                 .WithMany()
                 .HasForeignKey(x => x.AiAnalysisRunId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<UserJobAiChatDemoRun>(entity =>
+        {
+            entity.ToTable("user_job_ai_chat_demo_runs");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).ValueGeneratedNever();
+            entity.Property(x => x.UserAccountId).IsRequired();
+            entity.Property(x => x.JobPostingId).IsRequired();
+            entity.Property(x => x.CorrelationId).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Provider).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.Model).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Prompt).HasMaxLength(12000).IsRequired();
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
+            entity.Property(x => x.AiResponseContent).HasMaxLength(12000);
+            entity.Property(x => x.RequestedAtUtc).IsRequired();
+            entity.Property(x => x.CompletedAtUtc);
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+            entity.HasIndex(x => x.CorrelationId).IsUnique();
+            entity.HasIndex(x => new { x.UserAccountId, x.JobPostingId, x.RequestedAtUtc });
+            entity.HasOne<JobPosting>()
+                .WithMany()
+                .HasForeignKey(x => x.JobPostingId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.ApplySoftDeleteQueryFilters();

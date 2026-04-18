@@ -6,6 +6,14 @@ public sealed record UserJobStateResponse(
     bool IsHidden,
     bool IsApplied);
 
+public sealed record UserJobAiChatDemoResponse(
+    long Id,
+    long JobPostingId,
+    string CorrelationId,
+    string Status,
+    long? AiResponseId,
+    string? AiResponseContent);
+
 public sealed record JobApplicationStatusEntryResponse(
     string Status,
     int? RoundNumber,
