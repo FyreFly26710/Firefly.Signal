@@ -51,3 +51,35 @@ Before opening the PR, confirm:
 - body includes the closing link
 - validation summary is truthful
 - assumptions and risks are not hidden
+
+## Final Round Checklist — Ship
+Run all of these in one chat session after the developer approves the branch.
+
+1. Read this skill (`git-pr`).
+2. Rebase onto the latest `main`:
+   ```
+   git -C ../firefly-worktrees/<branch> fetch origin
+   git -C ../firefly-worktrees/<branch> rebase origin/main
+   ```
+3. Create the PR from the worktree:
+   ```
+   gh pr create --title "<type>(<scope>): <description> (#<issue-number>)" \
+     --body "Closes #<issue-number>\n\n..."
+   ```
+4. Merge with squash and auto-delete the remote branch:
+   ```
+   gh pr merge --squash --delete-branch
+   ```
+5. In the **main repo** (not the worktree), switch to `main` and fetch:
+   ```
+   git checkout main
+   git fetch --prune
+   ```
+6. Remove the worktree:
+   ```
+   git worktree remove ../firefly-worktrees/<branch>
+   ```
+7. Delete the local branch if it still exists:
+   ```
+   git branch -D issue-<number>-<title>
+   ```
