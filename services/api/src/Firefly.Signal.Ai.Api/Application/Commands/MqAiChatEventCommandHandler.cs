@@ -1,5 +1,6 @@
 using Firefly.Signal.Ai.Domain;
 using Firefly.Signal.Ai.Infrastructure.AiProviders;
+using Firefly.Signal.Ai.Infrastructure.Concurrency;
 using Firefly.Signal.Ai.Infrastructure.Persistence;
 using Firefly.Signal.EventBus;
 using Firefly.Signal.EventBus.Events.Ai;
@@ -10,17 +11,11 @@ namespace Firefly.Signal.Ai.Api.Application.Commands;
 public sealed class MqAiChatEventCommandHandler(
     AiDbContext db,
     AiProviderResolver resolver,
+    AiMqThrottle throttle,
     IEventBus eventBus) : IRequestHandler<MqAiChatEventCommand>
 {
     public async Task Handle(MqAiChatEventCommand command, CancellationToken ct)
     {
-        var messages = await AiChatMessageBuilder.BuildAsync(
-            db,
-            command.SystemPromptMessageId,
-            [],
-            command.UserPrompt,
-            ct);
-
         var aiRequest = AiRequest.QueueFromEventById(
             command.Model,
             command.SystemPromptMessageId,
@@ -31,6 +26,15 @@ public sealed class MqAiChatEventCommandHandler(
 
         db.AiRequests.Add(aiRequest);
         await db.SaveChangesAsync(ct);
+
+        using var lease = await throttle.AcquireAsync(ct);
+
+        var messages = await AiChatMessageBuilder.BuildAsync(
+            db,
+            command.SystemPromptMessageId,
+            [],
+            command.UserPrompt,
+            ct);
 
         var provider = resolver.Resolve(command.Provider);
         aiRequest.StartProcessing(command.Provider);

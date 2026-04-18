@@ -1,6 +1,7 @@
 using Firefly.Signal.Ai.Api.Application.Commands;
 using Firefly.Signal.Ai.Domain;
 using Firefly.Signal.Ai.Infrastructure.AiProviders;
+using Firefly.Signal.Ai.Infrastructure.Concurrency;
 using Firefly.Signal.Ai.UnitTests.Testing;
 using Firefly.Signal.EventBus;
 using Firefly.Signal.EventBus.Events.Ai;
@@ -49,7 +50,8 @@ public sealed class MqAiChatEventCommandHandlerTests
             .Returns(Task.FromResult(new AiProviderResponse("Job analysis result", 15, 7)));
 
         var eventBus = Substitute.For<IEventBus>();
-        var handler = new MqAiChatEventCommandHandler(db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), eventBus);
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, eventBus);
 
         await handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
 
@@ -79,7 +81,8 @@ public sealed class MqAiChatEventCommandHandlerTests
         eventBus.PublishAsync(Arg.Do<AiChatCompletedIntegrationEvent>(e => published = e), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var handler = new MqAiChatEventCommandHandler(db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), eventBus);
+        using var throttle = new AiMqThrottle();
+        var handler = new MqAiChatEventCommandHandler(db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, eventBus);
         await handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
 
         Assert.IsNotNull(published);
@@ -102,8 +105,9 @@ public sealed class MqAiChatEventCommandHandlerTests
         provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new AiProviderResponse("Reply", null, null)));
 
+        using var throttle = new AiMqThrottle();
         var handler = new MqAiChatEventCommandHandler(
-            db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), Substitute.For<IEventBus>());
+            db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, Substitute.For<IEventBus>());
 
         await handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
 
@@ -129,8 +133,9 @@ public sealed class MqAiChatEventCommandHandlerTests
             .Returns(Task.FromException<AiProviderResponse>(new HttpRequestException("Provider unavailable")));
 
         var eventBus = Substitute.For<IEventBus>();
+        using var throttle = new AiMqThrottle();
         var handler = new MqAiChatEventCommandHandler(
-            db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), eventBus);
+            db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, eventBus);
 
         await Assert.ThrowsExactlyAsync<HttpRequestException>(() =>
             handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None));
@@ -160,12 +165,51 @@ public sealed class MqAiChatEventCommandHandlerTests
         eventBus.PublishAsync(Arg.Do<AiChatCompletedIntegrationEvent>(e => published = e), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
+        using var throttle = new AiMqThrottle();
         var handler = new MqAiChatEventCommandHandler(
-            db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), eventBus);
+            db, BuildResolver(provider, Substitute.For<IAiChatProvider>()), throttle, eventBus);
         await handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
 
         Assert.IsNotNull(published);
         Assert.AreEqual(100, published.PromptTokens);
         Assert.AreEqual(25, published.CompletionTokens);
+    }
+
+    [TestMethod]
+    public async Task Handle_WhenThrottleSlotUnavailable_PersistsQueuedRequestBeforeWaiting()
+    {
+        await using var database = new AiSqliteTestDatabase();
+        await using var db = database.CreateDbContext();
+
+        var systemMsg = AiTestData.SystemPrompt("Queued first.");
+        db.AiMessages.Add(systemMsg);
+        await db.SaveChangesAsync();
+
+        using var throttle = new AiMqThrottle();
+        var heldLeases = new List<IDisposable>();
+        for (var i = 0; i < 5; i++)
+            heldLeases.Add(await throttle.AcquireAsync(CancellationToken.None));
+
+        var provider = Substitute.For<IAiChatProvider>();
+        provider.CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new AiProviderResponse("Reply", 2, 1)));
+
+        var handler = new MqAiChatEventCommandHandler(
+            db,
+            BuildResolver(provider, Substitute.For<IAiChatProvider>()),
+            throttle,
+            Substitute.For<IEventBus>());
+
+        var handleTask = handler.Handle(BuildCommand(systemMsg.Id), CancellationToken.None);
+
+        await Task.Delay(50);
+
+        var queuedRequest = db.AiRequests.Single();
+        Assert.AreEqual(AiRequestStatus.Queued, queuedRequest.Status);
+        await provider.DidNotReceive().CompleteAsync(Arg.Any<AiProviderRequest>(), Arg.Any<CancellationToken>());
+
+        foreach (var lease in heldLeases)
+            lease.Dispose();
+        await handleTask;
     }
 }
