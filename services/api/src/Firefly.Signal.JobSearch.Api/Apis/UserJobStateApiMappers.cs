@@ -15,4 +15,7 @@ internal static class UserJobStateApiMappers
 
     public static UnhideJobForUserCommand ToUnhideCommand(long jobId, long userId)
         => new(JobId: jobId, UserAccountId: userId);
+
+    public static StartUserJobAiChatDemoCommand ToStartDemoAiChatCommand(long jobId, long userId)
+        => new(JobId: jobId, UserAccountId: userId);
 }

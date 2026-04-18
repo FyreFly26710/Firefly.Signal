@@ -7,6 +7,6 @@ public sealed record AiChatRequestedIntegrationEvent : IntegrationEvent
     public required string ReplyEventType { get; init; }
     public required string Provider { get; init; }
     public required string Model { get; init; }
-    public required long SystemPromptMessageId { get; init; }
+    public long? SystemPromptMessageId { get; init; }
     public string? UserPrompt { get; init; }
 }

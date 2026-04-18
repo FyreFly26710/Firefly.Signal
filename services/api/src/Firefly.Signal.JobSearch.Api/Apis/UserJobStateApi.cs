@@ -17,6 +17,7 @@ public static class UserJobStateApi
         group.MapDelete("/{id:long}/save", UnsaveAsync);
         group.MapPost("/{id:long}/hide", HideAsync);
         group.MapDelete("/{id:long}/hide", UnhideAsync);
+        group.MapPost("/{id:long}/demo-ai-chat", StartDemoAiChatAsync);
 
         return endpoints;
     }
@@ -82,6 +83,22 @@ public static class UserJobStateApi
         }
 
         var result = await mediator.Send(UserJobStateApiMappers.ToUnhideCommand(id, userId.Value), cancellationToken);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
+    }
+
+    private static async Task<Results<Ok<UserJobAiChatDemoResponse>, NotFound, UnauthorizedHttpResult>> StartDemoAiChatAsync(
+        long id,
+        [FromServices] IIdentityService identityService,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var userId = identityService.GetUserId();
+        if (!userId.HasValue)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        var result = await mediator.Send(UserJobStateApiMappers.ToStartDemoAiChatCommand(id, userId.Value), cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 }

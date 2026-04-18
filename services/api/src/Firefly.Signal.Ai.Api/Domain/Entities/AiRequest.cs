@@ -152,7 +152,7 @@ public sealed class AiRequest : AuditableEntity
     /// </summary>
     public static AiRequest QueueFromEventById(
         string model,
-        long systemPromptMessageId,
+        long? systemPromptMessageId,
         string? userPromptMessage,
         string correlationId,
         string callerService,

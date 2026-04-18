@@ -22,7 +22,7 @@ public sealed class MqAiChatEventCommandHandlerTests
         return new AiProviderResolver(sp);
     }
 
-    private static MqAiChatEventCommand BuildCommand(long systemPromptMessageId, string userPrompt = "Analyse these jobs") =>
+    private static MqAiChatEventCommand BuildCommand(long? systemPromptMessageId, string userPrompt = "Analyse these jobs") =>
         new()
         {
             CorrelationId = "corr-123",
