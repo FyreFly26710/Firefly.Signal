@@ -38,6 +38,7 @@ internal static class ApplicationServiceExtensions
         services.AddScoped<IIdentityService, HttpContextIdentityService>();
         services.AddScoped<IJobSearchQueries, JobSearchQueries>();
         services.AddScoped<IJobApplicationQueries, JobApplicationQueries>();
+        services.AddScoped<IUserProfileQueries, UserProfileQueries>();
         services.AddSingleton<AdzunaJobSearchRequestMapper>();
         services.AddSingleton<AdzunaJobSearchResponseMapper>();
         services.AddSingleton<MockAdzunaJobSearchProvider>();
