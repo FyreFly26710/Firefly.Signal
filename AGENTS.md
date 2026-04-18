@@ -105,11 +105,11 @@ Issue and branch conventions for backend work:
 
 All issue-driven work follows a three-round pattern. Use the `git-issue` and `git-pr` skills for step-by-step checklists.
 
-- **Round 1 (Kickoff):** Fetch issue → label `in-progress` → create branch → create git worktree at `../firefly-worktrees/<branch>` → enrich issue body → post branch + plan comments.
+- **Round 1 (Kickoff):** Fetch issue → label `in-progress` → create branch → create git worktree at `worktrees/<branch>` → enrich issue body → post branch + plan comments.
 - **Further rounds (Implementation):** Work inside the worktree. Commit and push before ending every chat.
 - **Final round (Ship):** Create PR → squash-merge → switch main repo to `main` → remove worktree → delete local branch.
 
-Git worktrees allow multiple agents to work on the same server and repo concurrently without collision. Each branch gets its own worktree at `../firefly-worktrees/<branch-name>`.
+Git worktrees allow multiple agents to work on the same server and repo concurrently without collision. Each branch gets its own worktree at `worktrees/<branch-name>`.
 
 ## Apps
 
