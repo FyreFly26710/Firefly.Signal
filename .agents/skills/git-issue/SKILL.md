@@ -55,3 +55,35 @@ Branches created from issues should use:
 `issue-<number>-<descriptive-title>`
 
 Use lowercase kebab-case after the number.
+
+## Round 1 Checklist — Issue Kickoff
+Run all of these in one chat session before handing back to the developer.
+
+1. Read this skill (`git-issue`).
+2. Fetch the issue: `gh issue view <number>`.
+3. Add the `in-progress` label: `gh issue edit <number> --add-label "in-progress"`.
+4. Derive branch name (`issue-<number>-<title>`). Create and push if it does not exist:
+   ```
+   git checkout -b issue-<number>-<title>
+   git push -u origin issue-<number>-<title>
+   ```
+   If the branch already exists, check it out and push any pending commits.
+5. Create a git worktree so parallel agents can work on the same server without collision:
+   ```
+   git worktree add ../firefly-worktrees/issue-<number>-<title> issue-<number>-<title>
+   ```
+   Worktrees live at `../firefly-worktrees/<branch-name>` (sibling to the main repo).
+6. Read `AGENTS.md` and relevant source files to understand existing patterns.
+7. Enrich the issue body — **append below any existing description, never overwrite it**. Fill in `Goal`, `Scope`, `Acceptance Criteria`, and `Constraints` based on what you learned from the repo.
+8. Post a comment with the branch name and worktree path:
+   ```
+   gh issue comment <number> --body "Branch: issue-<number>-<title>\nWorktree: ../firefly-worktrees/issue-<number>-<title>"
+   ```
+9. Post a second comment with a numbered implementation plan:
+   ```
+   gh issue comment <number> --body "Implementation plan:\n1. ...\n2. ..."
+   ```
+
+## Further Rounds — Implementation
+- Work inside the worktree: `../firefly-worktrees/<branch-name>`.
+- Commit and push before ending every chat session so the developer can review progress.
