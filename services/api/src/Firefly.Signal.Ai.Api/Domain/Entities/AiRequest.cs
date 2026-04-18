@@ -127,6 +127,62 @@ public sealed class AiRequest : AuditableEntity
         };
     }
 
+    /// <summary>
+    /// Creates an HTTP-sourced request that references an existing system prompt message by ID.
+    /// The user prompt (if provided) is stored as a new message.
+    /// </summary>
+    public static AiRequest QueueHttpById(string model, long? systemPromptMessageId, string? userPromptMessage)
+    {
+        return new AiRequest
+        {
+            Source = AiRequestSource.Http,
+            Status = AiRequestStatus.Queued,
+            Model = Normalize(model),
+            SystemPromptMessageId = systemPromptMessageId,
+            UserPromptMessage = string.IsNullOrWhiteSpace(userPromptMessage)
+                ? null
+                : new AiMessage(AiMessageType.UserPrompt, userPromptMessage),
+            QueuedAtUtc = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Creates an MQ-sourced request that references an existing system prompt message by ID.
+    /// The user prompt (if provided) is stored as a new message.
+    /// </summary>
+    public static AiRequest QueueFromEventById(
+        string model,
+        long systemPromptMessageId,
+        string? userPromptMessage,
+        string correlationId,
+        string callerService,
+        string replyEventType)
+    {
+        if (string.IsNullOrWhiteSpace(correlationId))
+            throw new ArgumentException("Correlation ID is required for MQ-sourced requests.", nameof(correlationId));
+
+        if (string.IsNullOrWhiteSpace(callerService))
+            throw new ArgumentException("Caller service is required for MQ-sourced requests.", nameof(callerService));
+
+        if (string.IsNullOrWhiteSpace(replyEventType))
+            throw new ArgumentException("Reply event type is required for MQ-sourced requests.", nameof(replyEventType));
+
+        return new AiRequest
+        {
+            Source = AiRequestSource.MqEvent,
+            Status = AiRequestStatus.Queued,
+            Model = Normalize(model),
+            SystemPromptMessageId = systemPromptMessageId,
+            UserPromptMessage = string.IsNullOrWhiteSpace(userPromptMessage)
+                ? null
+                : new AiMessage(AiMessageType.UserPrompt, userPromptMessage),
+            CorrelationId = correlationId.Trim(),
+            CallerService = callerService.Trim(),
+            ReplyEventType = replyEventType.Trim(),
+            QueuedAtUtc = DateTime.UtcNow
+        };
+    }
+
     // ── State transitions ──────────────────────────────────────────────────────
 
     public void StartProcessing(AiProvider provider)

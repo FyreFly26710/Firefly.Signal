@@ -11,7 +11,9 @@
     <Project Path="src/Firefly.Signal.ServiceDefaults/Firefly.Signal.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Firefly.Signal.Ai.FunctionalTests/Firefly.Signal.Ai.FunctionalTests.csproj" />
     <Project Path="tests/Firefly.Signal.Api.UnitTests/Firefly.Signal.Api.UnitTests.csproj" />
+    <Project Path="tests/Firefly.Signal.Ai.UnitTests/Firefly.Signal.Ai.UnitTests.csproj" />
     <Project Path="tests/Firefly.Signal.Identity.FunctionalTests/Firefly.Signal.Identity.FunctionalTests.csproj" />
     <Project Path="tests/Firefly.Signal.Identity.UnitTests/Firefly.Signal.Identity.UnitTests.csproj" />
     <Project Path="tests/Firefly.Signal.JobSearch.FunctionalTests/Firefly.Signal.JobSearch.FunctionalTests.csproj" />

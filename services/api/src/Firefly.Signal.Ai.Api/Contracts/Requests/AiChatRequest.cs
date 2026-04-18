@@ -1,26 +1,28 @@
+using Firefly.Signal.Ai.Domain;
+
 namespace Firefly.Signal.Ai.Api.Contracts.Requests;
 
-/// <summary>
-/// HTTP request body for direct AI chat completion.
-/// </summary>
 public sealed record AiChatRequest
 {
+    public required AiProvider Provider { get; init; }
+
     /// <summary>
     /// Model identifier, e.g. "gpt-4o" or "deepseek-chat".
-    /// The provider is inferred from this value.
     /// </summary>
     public required string Model { get; init; }
 
     /// <summary>
-    /// Optional system-level instructions for the model.
+    /// ID of an existing <c>AiMessage</c> (type SystemPrompt) to use as context.
     /// </summary>
-    public string? SystemPrompt { get; init; }
+    public long? SystemPromptMessageId { get; init; }
 
     /// <summary>
-    /// The user's message to the model.
+    /// Previous conversation turns to build chat history, in chronological order.
+    /// </summary>
+    public IReadOnlyList<AiChatHistoryItem> History { get; init; } = [];
+
+    /// <summary>
+    /// The current user message.
     /// </summary>
     public string? UserPrompt { get; init; }
-
-    public int? MaxTokens { get; init; }
-    public float? Temperature { get; init; }
 }

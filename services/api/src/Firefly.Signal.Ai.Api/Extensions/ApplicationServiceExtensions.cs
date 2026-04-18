@@ -1,9 +1,12 @@
 using System.Text.Json.Serialization;
+using Firefly.Signal.Ai.Api.Application.IntegrationEventHandlers;
 using Firefly.Signal.Ai.Api.Options;
 using Firefly.Signal.Ai.Domain;
 using Firefly.Signal.Ai.Infrastructure.AiProviders;
+using Firefly.Signal.Ai.Infrastructure.Concurrency;
 using Firefly.Signal.Ai.Infrastructure.Persistence;
 using Firefly.Signal.EventBus;
+using Firefly.Signal.EventBus.Events.Ai;
 using Firefly.Signal.EventBusRabbitMQ;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -28,6 +31,7 @@ internal static class ApplicationServiceExtensions
         services.AddKeyedSingleton<IAiChatProvider, ChatGptProvider>(AiProvider.ChatGpt);
         services.AddKeyedSingleton<IAiChatProvider, DeepSeekProvider>(AiProvider.DeepSeek);
         services.AddSingleton<AiProviderResolver>();
+        services.AddSingleton<AiMqThrottle>();
 
         services.AddDbContext<AiDbContext>(options =>
         {
@@ -48,7 +52,9 @@ internal static class ApplicationServiceExtensions
         }
         else
         {
-            builder.AddRabbitMqEventBus("ai-api");
+            builder.AddRabbitMqEventBus("ai-api")
+                .AddSubscription<AiChatRequestedIntegrationEvent, AiChatRequestedIntegrationEventHandler>();
+
             services.AddMigration<AiDbContext>();
         }
     }

@@ -1,6 +1,5 @@
 using System.ClientModel;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using Firefly.Signal.Ai.Api.Options;
 using Microsoft.Extensions.Options;
 using OpenAI;
@@ -23,15 +22,9 @@ public sealed class DeepSeekProvider : IAiChatProvider
     public async Task<AiProviderResponse> CompleteAsync(AiProviderRequest request, CancellationToken ct = default)
     {
         var chatClient = _client.GetChatClient(request.Model);
-        var messages = BuildMessages(request.Messages);
-        var options = BuildOptions(request);
-
-        var completion = await chatClient.CompleteChatAsync(messages, options, ct);
-
-        var rawJson = JsonSerializer.Serialize(completion.Value);
+        var completion = await chatClient.CompleteChatAsync(ToSdkMessages(request.Messages), cancellationToken: ct);
         return new AiProviderResponse(
             completion.Value.Content[0].Text,
-            rawJson,
             completion.Value.Usage?.InputTokenCount,
             completion.Value.Usage?.OutputTokenCount);
     }
@@ -41,10 +34,7 @@ public sealed class DeepSeekProvider : IAiChatProvider
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         var chatClient = _client.GetChatClient(request.Model);
-        var messages = BuildMessages(request.Messages);
-        var options = BuildOptions(request);
-
-        await foreach (var update in chatClient.CompleteChatStreamingAsync(messages, options, ct))
+        await foreach (var update in chatClient.CompleteChatStreamingAsync(ToSdkMessages(request.Messages), cancellationToken: ct))
         {
             foreach (var part in update.ContentUpdate)
             {
@@ -54,24 +44,11 @@ public sealed class DeepSeekProvider : IAiChatProvider
         }
     }
 
-    private static List<ChatMessage> BuildMessages(IReadOnlyList<AiProviderMessage> messages)
-    {
-        return messages.Select<AiProviderMessage, ChatMessage>(m => m.Role switch
+    private static List<ChatMessage> ToSdkMessages(IReadOnlyList<AiProviderMessage> messages) =>
+        messages.Select<AiProviderMessage, ChatMessage>(m => m.Role switch
         {
             "system" => ChatMessage.CreateSystemMessage(m.Content),
-            "user" => ChatMessage.CreateUserMessage(m.Content),
+            "assistant" => ChatMessage.CreateAssistantMessage(m.Content),
             _ => ChatMessage.CreateUserMessage(m.Content)
         }).ToList();
-    }
-
-    private static ChatCompletionOptions? BuildOptions(AiProviderRequest request)
-    {
-        if (request.MaxTokens is null && request.Temperature is null)
-            return null;
-
-        var opts = new ChatCompletionOptions();
-        if (request.MaxTokens.HasValue) opts.MaxOutputTokenCount = request.MaxTokens.Value;
-        if (request.Temperature.HasValue) opts.Temperature = request.Temperature.Value;
-        return opts;
-    }
 }

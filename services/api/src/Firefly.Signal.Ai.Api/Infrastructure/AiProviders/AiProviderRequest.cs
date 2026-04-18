@@ -2,6 +2,4 @@ namespace Firefly.Signal.Ai.Infrastructure.AiProviders;
 
 public sealed record AiProviderRequest(
     string Model,
-    IReadOnlyList<AiProviderMessage> Messages,
-    int? MaxTokens = null,
-    float? Temperature = null);
+    IReadOnlyList<AiProviderMessage> Messages);
