@@ -9,6 +9,8 @@ namespace Firefly.Signal.Ai.Domain;
 /// </summary>
 public sealed class AiRequest : AuditableEntity
 {
+    public static readonly TimeSpan MqProcessingRecoveryWindow = TimeSpan.FromMinutes(5);
+
     public long? SystemPromptMessageId { get; private set; }
     public long? UserPromptMessageId { get; private set; }
 
@@ -195,6 +197,14 @@ public sealed class AiRequest : AuditableEntity
         Touch();
     }
 
+    public void RecoverStaleProcessing()
+    {
+        EnsureProcessing();
+
+        ProcessingStartedAtUtc = DateTime.UtcNow;
+        Touch();
+    }
+
     public void Complete(AiResponse response)
     {
         EnsureProcessing();
@@ -203,6 +213,26 @@ public sealed class AiRequest : AuditableEntity
         Status = AiRequestStatus.Completed;
         CompletedAtUtc = DateTime.UtcNow;
         Touch();
+    }
+
+    public void RequeueForRetry()
+    {
+        if (Status != AiRequestStatus.Failed)
+            throw new InvalidOperationException($"Expected Failed status but was {Status}.");
+
+        Status = AiRequestStatus.Queued;
+        FailureSummary = null;
+        CompletedAtUtc = null;
+        ProcessingStartedAtUtc = null;
+        Touch();
+    }
+
+    public bool IsProcessingStale(DateTime utcNow, TimeSpan recoveryWindow)
+    {
+        if (Status != AiRequestStatus.Processing || !ProcessingStartedAtUtc.HasValue)
+            return false;
+
+        return ProcessingStartedAtUtc.Value <= utcNow.Subtract(recoveryWindow);
     }
 
     public void Fail(string failureSummary)

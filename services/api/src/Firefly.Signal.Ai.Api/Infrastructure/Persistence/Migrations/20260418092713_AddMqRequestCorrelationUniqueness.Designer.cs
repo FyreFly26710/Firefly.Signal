@@ -3,6 +3,7 @@ using System;
 using Firefly.Signal.Ai.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Firefly.Signal.Ai.Api.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AiDbContext))]
-    partial class AiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260418092713_AddMqRequestCorrelationUniqueness")]
+    partial class AddMqRequestCorrelationUniqueness
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

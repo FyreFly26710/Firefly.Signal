@@ -47,7 +47,7 @@ public sealed class AiDbContext(DbContextOptions<AiDbContext> options) : DbConte
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
             entity.HasIndex(x => x.Status);
             entity.HasIndex(x => x.Source);
-            entity.HasIndex(x => x.CorrelationId);
+            entity.HasIndex(x => x.CorrelationId).IsUnique();
             entity.HasOne(x => x.SystemPromptMessage)
                 .WithMany()
                 .HasForeignKey(x => x.SystemPromptMessageId)
