@@ -3,21 +3,23 @@ using Firefly.Signal.Ai.Api.Application.Commands;
 using Firefly.Signal.Ai.Api.Contracts.Requests;
 using Firefly.Signal.Ai.Api.Contracts.Responses;
 using MediatR;
+using Microsoft.AspNetCore.Http.Json;
+using Microsoft.Extensions.Options;
 
 namespace Firefly.Signal.Ai.Api.Apis;
 
-public static class AiApi
+public static class AiChatApi
 {
-    public static RouteGroupBuilder MapAiApi(this IEndpointRouteBuilder endpoints)
+    public static RouteGroupBuilder MapAiChatApi(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/ai");
+        var group = endpoints.MapGroup("/api/ai/chats");
 
-        group.MapPost("/chat", HandleChatAsync)
+        group.MapPost("/", HandleChatAsync)
             .Produces<AiChatResponse>()
             .ProducesProblem(400)
             .WithName("AiChat");
 
-        group.MapPost("/chat/stream", HandleChatStreamAsync)
+        group.MapPost("/stream", HandleChatStreamAsync)
             .Produces(200, contentType: "text/event-stream")
             .ProducesProblem(400)
             .WithName("AiChatStream");
@@ -39,6 +41,7 @@ public static class AiApi
         AiChatRequest request,
         IMediator mediator,
         HttpContext httpContext,
+        IOptions<JsonOptions> jsonOptions,
         CancellationToken ct)
     {
         httpContext.Response.ContentType = "text/event-stream";
@@ -57,18 +60,28 @@ public static class AiApi
                         await WriteSseEventAsync(
                             httpContext.Response,
                             "chunk",
-                            JsonSerializer.Serialize(new AiChatStreamChunkResponse { Content = chunk.Content }),
+                            JsonSerializer.Serialize(
+                                new AiChatStreamChunkResponse { Content = chunk.Content },
+                                jsonOptions.Value.SerializerOptions),
                             ct);
                         break;
                     case AiChatStreamDoneEvent done:
-                        await WriteSseEventAsync(httpContext.Response, "done", JsonSerializer.Serialize(done.Response), ct);
+                        await WriteSseEventAsync(
+                            httpContext.Response,
+                            "done",
+                            JsonSerializer.Serialize(done.Response, jsonOptions.Value.SerializerOptions),
+                            ct);
                         break;
                 }
             }
         }
         catch (Exception ex)
         {
-            await WriteSseEventAsync(httpContext.Response, "error", JsonSerializer.Serialize(ex.Message), ct);
+            await WriteSseEventAsync(
+                httpContext.Response,
+                "error",
+                JsonSerializer.Serialize(ex.Message, jsonOptions.Value.SerializerOptions),
+                ct);
         }
     }
 

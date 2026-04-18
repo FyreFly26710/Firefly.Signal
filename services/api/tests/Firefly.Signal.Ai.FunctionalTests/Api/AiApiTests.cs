@@ -34,7 +34,7 @@ public sealed class AiApiTests
             UserPrompt = "Say hello"
         };
 
-        var response = await client.PostAsJsonAsync("/api/ai/chat", request);
+        var response = await client.PostAsJsonAsync("/api/ai/chats", request);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<AiChatResponse>();
@@ -70,15 +70,15 @@ public sealed class AiApiTests
             UserPrompt = "Stream please"
         };
 
-        var response = await client.PostAsJsonAsync("/api/ai/chat/stream", request);
+        var response = await client.PostAsJsonAsync("/api/ai/chats/stream", request);
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         StringAssert.Contains(body, "event: chunk");
-        StringAssert.Contains(body, "\"Content\":\"Hello \"");
-        StringAssert.Contains(body, "\"Content\":\"world\"");
+        StringAssert.Contains(body, "\"content\":\"Hello \"");
+        StringAssert.Contains(body, "\"content\":\"world\"");
         StringAssert.Contains(body, "event: done");
-        StringAssert.Contains(body, "\"Content\":\"Hello world\"");
+        StringAssert.Contains(body, "\"content\":\"Hello world\"");
 
         var persistedMessage = await factory.ExecuteDbContextAsync(async db =>
             (await db.AiResponses
