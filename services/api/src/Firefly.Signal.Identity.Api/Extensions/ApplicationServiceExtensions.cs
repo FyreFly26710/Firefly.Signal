@@ -1,11 +1,9 @@
 using System.Text;
-using Firefly.Signal.Identity.Application.Commands;
 using Firefly.Signal.Identity.Application.Queries;
 using Firefly.Signal.Identity.Api.Options;
 using Firefly.Signal.Identity.Domain;
 using Firefly.Signal.Identity.Infrastructure.Persistence;
 using Firefly.Signal.Identity.Infrastructure.Services;
-using Firefly.Signal.Identity.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -23,15 +21,12 @@ internal static class ApplicationServiceExtensions
         var services = builder.Services;
 
         services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
-        services.AddUserDocumentStorage(builder.Configuration, builder.Environment);
         services.AddHttpContextAccessor();
         services.AddFireflyMediator(typeof(Program).Assembly);
         services.AddScoped<IIdentityService, HttpContextIdentityService>();
         services.AddScoped<IPasswordHasher<UserAccount>, PasswordHasher<UserAccount>>();
         services.AddScoped<IAuthQueries, AuthQueries>();
         services.AddScoped<IUserQueries, UserQueries>();
-        services.AddScoped<IUserProfileQueries, UserProfileQueries>();
-        services.AddScoped<IUserDocumentQueries, UserDocumentQueries>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         services.AddDbContext<IdentityDbContext>(options =>
