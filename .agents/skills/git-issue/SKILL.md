@@ -70,14 +70,15 @@ Run all of these in one chat session before handing back to the developer.
    If the branch already exists, check it out and push any pending commits.
 5. Create a git worktree so parallel agents can work on the same server without collision:
    ```
-   git worktree add ../firefly-worktrees/issue-<number>-<title> issue-<number>-<title>
+   mkdir -p worktrees
+   git worktree add worktrees/issue-<number>-<title> issue-<number>-<title>
    ```
-   Worktrees live at `../firefly-worktrees/<branch-name>` (sibling to the main repo).
+   Worktrees live at `worktrees/<branch-name>` inside the repo.
 6. Read `AGENTS.md` and relevant source files to understand existing patterns.
 7. Enrich the issue body — **append below any existing description, never overwrite it**. Fill in `Goal`, `Scope`, `Acceptance Criteria`, and `Constraints` based on what you learned from the repo.
 8. Post a comment with the branch name and worktree path:
    ```
-   gh issue comment <number> --body "Branch: issue-<number>-<title>\nWorktree: ../firefly-worktrees/issue-<number>-<title>"
+   gh issue comment <number> --body "Branch: issue-<number>-<title>\nWorktree: worktrees/issue-<number>-<title>"
    ```
 9. Post a second comment with a numbered implementation plan:
    ```
@@ -85,5 +86,5 @@ Run all of these in one chat session before handing back to the developer.
    ```
 
 ## Further Rounds — Implementation
-- Work inside the worktree: `../firefly-worktrees/<branch-name>`.
+- Work inside the worktree: `worktrees/<branch-name>`.
 - Commit and push before ending every chat session so the developer can review progress.

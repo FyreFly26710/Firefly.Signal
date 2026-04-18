@@ -58,8 +58,8 @@ Run all of these in one chat session after the developer approves the branch.
 1. Read this skill (`git-pr`).
 2. Rebase onto the latest `main`:
    ```
-   git -C ../firefly-worktrees/<branch> fetch origin
-   git -C ../firefly-worktrees/<branch> rebase origin/main
+   git -C worktrees/<branch> fetch origin
+   git -C worktrees/<branch> rebase origin/main
    ```
 3. Create the PR from the worktree:
    ```
@@ -77,7 +77,7 @@ Run all of these in one chat session after the developer approves the branch.
    ```
 6. Remove the worktree:
    ```
-   git worktree remove ../firefly-worktrees/<branch>
+   git worktree remove worktrees/<branch>
    ```
 7. Delete the local branch if it still exists:
    ```

@@ -1,0 +1,80 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Web App (Local Env)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/apps/web"
+    },
+    {
+      "name": "Web App (Prod Env)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "VITE_API_BASE_URL=https://api-signal.firefly-ai.co.uk npm run dev -- --mode production",
+      "cwd": "${workspaceFolder}/apps/web"
+    },
+    {
+      "name": "Gateway API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/api/src/Firefly.Signal.Gateway.Api/bin/Debug/net10.0/Firefly.Signal.Gateway.Api.dll",
+      "cwd": "${workspaceFolder}/services/api/src/Firefly.Signal.Gateway.Api",
+      "launchSettingsFilePath": "${workspaceFolder}/services/api/src/Firefly.Signal.Gateway.Api/Properties/launchSettings.json",
+      "launchSettingsProfile": "http"
+    },
+    {
+      "name": "Identity API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/api/src/Firefly.Signal.Identity.Api/bin/Debug/net10.0/Firefly.Signal.Identity.Api.dll",
+      "cwd": "${workspaceFolder}/services/api/src/Firefly.Signal.Identity.Api",
+      "launchSettingsFilePath": "${workspaceFolder}/services/api/src/Firefly.Signal.Identity.Api/Properties/launchSettings.json",
+      "launchSettingsProfile": "http"
+    },
+    {
+      "name": "Job Search API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/api/src/Firefly.Signal.JobSearch.Api/bin/Debug/net10.0/Firefly.Signal.JobSearch.Api.dll",
+      "cwd": "${workspaceFolder}/services/api/src/Firefly.Signal.JobSearch.Api",
+      "launchSettingsFilePath": "${workspaceFolder}/services/api/src/Firefly.Signal.JobSearch.Api/Properties/launchSettings.json",
+      "launchSettingsProfile": "http"
+    },
+    {
+      "name": "AI API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/api/src/Firefly.Signal.Ai.Api/bin/Debug/net10.0/Firefly.Signal.Ai.Api.dll",
+      "cwd": "${workspaceFolder}/services/api/src/Firefly.Signal.Ai.Api",
+      "launchSettingsFilePath": "${workspaceFolder}/services/api/src/Firefly.Signal.Ai.Api/Properties/launchSettings.json",
+      "launchSettingsProfile": "http"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run Web + APIs (Local Env)",
+      "preLaunchTask": "build-api-solution",
+      "stopAll": true,
+      "configurations": [
+        "Web App (Local Env)",
+        "Gateway API",
+        "Identity API",
+        "Job Search API",
+        "AI API"
+      ]
+    },
+    {
+      "name": "Run ALL APIs",
+      "preLaunchTask": "build-api-solution",
+      "stopAll": true,
+      "configurations": [
+        "Gateway API",
+        "Identity API",
+        "Job Search API",
+        "AI API"
+      ]
+    }
+  ]
+}
