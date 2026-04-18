@@ -9,6 +9,29 @@ Firefly Signal is a monorepo with both backend services and frontend apps.
 - Shared implementation guidance lives in `.agents/skills/`.
 - `AGENTS.md` is the shared repository operating contract for both Codex and Claude.
 
+## GitHub Agent Bots
+
+When an agent updates GitHub issues or pull requests from the local repo, it should use the matching GitHub App bot instead of a personal GitHub identity.
+
+- Codex should use `codex-coder`.
+- Claude should use `claudecode-coder`.
+- A future reviewer agent should use `reviewer` when that app is created.
+
+Use the local helper wrapper:
+
+```bash
+./scripts/with-github-app.sh <agent-slug> -- gh <...>
+```
+
+Examples:
+
+```bash
+./scripts/with-github-app.sh codex-coder -- gh issue comment 116 --body "..."
+./scripts/with-github-app.sh claudecode-coder -- gh pr comment 123 --body "..."
+```
+
+Local app files live under `sources/github-apps/<agent-slug>/` and stay local because `sources/` is gitignored.
+
 ## Services
 
 ### Architecture Boundaries
