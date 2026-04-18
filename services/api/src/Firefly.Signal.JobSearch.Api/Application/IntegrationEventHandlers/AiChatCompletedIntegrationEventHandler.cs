@@ -10,6 +10,8 @@ public sealed class AiChatCompletedIntegrationEventHandler(
 {
     public async Task HandleAsync(AiChatCompletedIntegrationEvent @event, CancellationToken ct = default)
     {
+        // TODO(real-ai-flow): Swap this demo-run lookup/update for the final JobSearch AI result
+        // persistence path when the production request tracking model is in place.
         var demoRun = await dbContext.UserJobAiChatDemoRuns
             .SingleOrDefaultAsync(run => run.CorrelationId == @event.CorrelationId, ct);
 

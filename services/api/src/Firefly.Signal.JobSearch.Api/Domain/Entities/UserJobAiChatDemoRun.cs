@@ -2,6 +2,8 @@ using Firefly.Signal.SharedKernel.Domain;
 
 namespace Firefly.Signal.JobSearch.Domain;
 
+// TODO(real-ai-flow): Remove this temporary demo entity once the real JobSearch AI request/result
+// persistence model is implemented.
 public sealed class UserJobAiChatDemoRun : AuditableEntity
 {
     private UserJobAiChatDemoRun()

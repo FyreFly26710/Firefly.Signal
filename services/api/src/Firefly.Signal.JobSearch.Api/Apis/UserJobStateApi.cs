@@ -17,6 +17,8 @@ public static class UserJobStateApi
         group.MapDelete("/{id:long}/save", UnsaveAsync);
         group.MapPost("/{id:long}/hide", HideAsync);
         group.MapDelete("/{id:long}/hide", UnhideAsync);
+        // TODO(real-ai-flow): Remove this demo route when the actual JobSearch -> AI request flow
+        // is implemented on the final endpoint contract.
         group.MapPost("/{id:long}/demo-ai-chat", StartDemoAiChatAsync);
 
         return endpoints;

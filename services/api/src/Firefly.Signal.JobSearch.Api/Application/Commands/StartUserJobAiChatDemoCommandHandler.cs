@@ -25,9 +25,14 @@ public sealed class StartUserJobAiChatDemoCommandHandler(
             return null;
 
         var settings = options.Value;
+        // TODO(real-ai-flow): Replace this mock prompt builder with the real prompt composition,
+        // including fetched job context, the real system prompt lookup/create path, and any
+        // additional user/profile/doc inputs required by the production analysis flow.
         var prompt = BuildPrompt(job);
         var correlationId = $"job-demo-{Guid.NewGuid():N}";
 
+        // TODO(real-ai-flow): Replace this demo-run record with the final persistence model for
+        // JobSearch-owned AI requests/responses once the real workflow shape is settled.
         var demoRun = UserJobAiChatDemoRun.Start(
             userAccountId: request.UserAccountId,
             jobPostingId: job.Id,
@@ -39,6 +44,8 @@ public sealed class StartUserJobAiChatDemoCommandHandler(
         dbContext.UserJobAiChatDemoRuns.Add(demoRun);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        // TODO(real-ai-flow): Keep publishing the shared AI request event, but update this payload
+        // once the real endpoint contract needs a required system prompt id and any richer metadata.
         await eventBus.PublishAsync(new AiChatRequestedIntegrationEvent
         {
             CorrelationId = correlationId,
@@ -53,6 +60,7 @@ public sealed class StartUserJobAiChatDemoCommandHandler(
         return UserJobAiChatDemoResponseMappers.ToResponse(demoRun);
     }
 
+    // TODO(real-ai-flow): Delete this mock builder after replacing it with the real prompt service.
     private static string BuildPrompt(JobPosting job) =>
         $"""
         Demo job analysis request.
