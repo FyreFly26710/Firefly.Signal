@@ -3,12 +3,12 @@ export type UserProfileRequestDto = {
   preferredTitle: string | null;
   primaryLocationPostcode: string | null;
   linkedInUrl: string | null;
-  githubUrl: string | null;
+  gitHubUrl: string | null;
   portfolioUrl: string | null;
   summary: string | null;
   skillsText: string | null;
   experienceText: string | null;
-  preferencesJson: string | null;
+  preferencesText: string | null;
 };
 
 export type UserProfileResponseDto = {
@@ -18,12 +18,12 @@ export type UserProfileResponseDto = {
   preferredTitle: string | null;
   primaryLocationPostcode: string | null;
   linkedInUrl: string | null;
-  githubUrl: string | null;
+  gitHubUrl: string | null;
   portfolioUrl: string | null;
   summary: string | null;
   skillsText: string | null;
   experienceText: string | null;
-  preferencesJson: string;
+  preferencesText: string | null;
   createdAtUtc: string;
   updatedAtUtc: string;
 };
