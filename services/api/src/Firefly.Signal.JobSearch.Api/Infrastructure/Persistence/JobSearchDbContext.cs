@@ -18,6 +18,7 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
     public DbSet<UserJobAiInsight> UserJobAiInsights => Set<UserJobAiInsight>();
     public DbSet<AiAnalysisRun> AiAnalysisRuns => Set<AiAnalysisRun>();
     public DbSet<UserJobAiChatDemoRun> UserJobAiChatDemoRuns => Set<UserJobAiChatDemoRun>();
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -244,6 +245,27 @@ public sealed class JobSearchDbContext(DbContextOptions<JobSearchDbContext> opti
                 .WithMany()
                 .HasForeignKey(x => x.JobPostingId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserProfile>(entity =>
+        {
+            entity.ToTable("user_profiles");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).ValueGeneratedNever();
+            entity.Property(x => x.UserAccountId).IsRequired();
+            entity.Property(x => x.FullName).HasMaxLength(200);
+            entity.Property(x => x.PreferredTitle).HasMaxLength(160);
+            entity.Property(x => x.PrimaryLocationPostcode).HasMaxLength(16);
+            entity.Property(x => x.LinkedInUrl).HasMaxLength(512);
+            entity.Property(x => x.GitHubUrl).HasMaxLength(512);
+            entity.Property(x => x.PortfolioUrl).HasMaxLength(512);
+            entity.Property(x => x.Summary).HasMaxLength(4000);
+            entity.Property(x => x.SkillsText).HasMaxLength(8000);
+            entity.Property(x => x.ExperienceText).HasMaxLength(8000);
+            entity.Property(x => x.PreferencesText).HasMaxLength(4000);
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+            entity.HasIndex(x => x.UserAccountId).IsUnique();
         });
 
         modelBuilder.ApplySoftDeleteQueryFilters();

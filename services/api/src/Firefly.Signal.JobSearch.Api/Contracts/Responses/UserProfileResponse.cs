@@ -1,4 +1,4 @@
-namespace Firefly.Signal.Identity.Contracts.Responses;
+namespace Firefly.Signal.JobSearch.Contracts.Responses;
 
 public sealed record UserProfileResponse(
     long Id,
@@ -7,11 +7,11 @@ public sealed record UserProfileResponse(
     string? PreferredTitle,
     string? PrimaryLocationPostcode,
     string? LinkedInUrl,
-    string? GithubUrl,
+    string? GitHubUrl,
     string? PortfolioUrl,
     string? Summary,
     string? SkillsText,
     string? ExperienceText,
-    string PreferencesJson,
+    string? PreferencesText,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc);

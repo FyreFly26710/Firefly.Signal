@@ -20,6 +20,7 @@ app.UseAuthorization();
 app.MapJobApi();
 app.MapUserJobStateApi();
 app.MapJobApplicationApi();
+app.MapUserProfileApi();
 
 app.UseDefaultOpenApi();
 app.Run();

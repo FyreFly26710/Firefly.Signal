@@ -35,9 +35,7 @@ internal sealed class IdentityApiFactory : WebApplicationFactory<Firefly.Signal.
         {
             configurationBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Testing:DatabaseName"] = databaseName,
-                ["UserDocumentStorage:AllowedContentTypes:0"] = "application/pdf",
-                ["UserDocumentStorage:AllowedFileExtensions:0"] = ".pdf"
+                ["Testing:DatabaseName"] = databaseName
             });
         });
 

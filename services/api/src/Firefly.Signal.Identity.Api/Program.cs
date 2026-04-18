@@ -18,9 +18,7 @@ app.MapDefaultEndpoints();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapAuthApi();
-app.MapUserProfileApi();
 app.MapUserApi();
-app.MapUserDocumentApi();
 
 app.UseDefaultOpenApi();
 app.Run();

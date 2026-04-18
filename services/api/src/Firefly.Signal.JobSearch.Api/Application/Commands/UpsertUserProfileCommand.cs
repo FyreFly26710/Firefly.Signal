@@ -1,16 +1,17 @@
+using Firefly.Signal.JobSearch.Contracts.Responses;
 using MediatR;
 
-namespace Firefly.Signal.Identity.Application.Commands;
+namespace Firefly.Signal.JobSearch.Application.Commands;
 
 public sealed record UpsertUserProfileCommand(
-    long UserId,
+    long UserAccountId,
     string? FullName,
     string? PreferredTitle,
     string? PrimaryLocationPostcode,
     string? LinkedInUrl,
-    string? GithubUrl,
+    string? GitHubUrl,
     string? PortfolioUrl,
     string? Summary,
     string? SkillsText,
     string? ExperienceText,
-    string? PreferencesJson) : IRequest<UserProfileUpsertResult?>;
+    string? PreferencesText) : IRequest<UserProfileResponse>;

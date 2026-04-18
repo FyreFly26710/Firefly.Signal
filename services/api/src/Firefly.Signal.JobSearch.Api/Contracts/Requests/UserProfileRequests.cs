@@ -1,13 +1,13 @@
-namespace Firefly.Signal.Identity.Contracts.Requests;
+namespace Firefly.Signal.JobSearch.Contracts.Requests;
 
-public sealed record UserProfileRequest(
+public sealed record UpsertUserProfileRequest(
     string? FullName,
     string? PreferredTitle,
     string? PrimaryLocationPostcode,
     string? LinkedInUrl,
-    string? GithubUrl,
+    string? GitHubUrl,
     string? PortfolioUrl,
     string? Summary,
     string? SkillsText,
     string? ExperienceText,
-    string? PreferencesJson);
+    string? PreferencesText);
