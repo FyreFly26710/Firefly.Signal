@@ -43,6 +43,9 @@ Preferred types:
 - Rebase onto the latest target branch before opening the PR.
 - Keep the PR in draft until the implementation and validation are ready for review.
 - Hand back a concise summary that lets the reviewer understand the change quickly.
+- Use the matching GitHub App bot for PR comments and PR creation:
+  - Codex uses `./scripts/with-github-app.sh codex-coder -- gh ...`
+  - Claude uses `./scripts/with-github-app.sh claudecode-coder -- gh ...`
 
 ## Review Gate
 Before opening the PR, confirm:
@@ -62,14 +65,25 @@ Run all of these in one chat session after the developer approves the branch.
    git -C worktrees/<branch> rebase origin/main
    ```
 3. Create the PR from the worktree:
-   ```
-   gh pr create --title "<type>(<scope>): <description> (#<issue-number>)" \
-     --body "Closes #<issue-number>\n\n..."
-   ```
+   - Codex:
+     ```
+     ./scripts/with-github-app.sh codex-coder -- gh pr create --title "<type>(<scope>): <description> (#<issue-number>)" \
+       --body "Closes #<issue-number>\n\n..."
+     ```
+   - Claude:
+     ```
+     ./scripts/with-github-app.sh claudecode-coder -- gh pr create --title "<type>(<scope>): <description> (#<issue-number>)" \
+       --body "Closes #<issue-number>\n\n..."
+     ```
 4. Merge with squash and auto-delete the remote branch:
-   ```
-   gh pr merge --squash --delete-branch
-   ```
+   - Codex:
+     ```
+     ./scripts/with-github-app.sh codex-coder -- gh pr merge --squash --delete-branch
+     ```
+   - Claude:
+     ```
+     ./scripts/with-github-app.sh claudecode-coder -- gh pr merge --squash --delete-branch
+     ```
 5. In the **main repo** (not the worktree), switch to `main` and fetch:
    ```
    git checkout main

@@ -40,6 +40,11 @@ Not every field has to be long, but the issue should be concrete enough to imple
 ## Status Handling
 Use visible issue comments and aligned labels during issue-driven work.
 
+Use the matching GitHub App bot for all issue updates:
+
+- Codex uses `./scripts/with-github-app.sh codex-coder -- gh ...`
+- Claude uses `./scripts/with-github-app.sh claudecode-coder -- gh ...`
+
 - `in progress`
   Active implementation has started.
 - `blocked`
@@ -60,8 +65,12 @@ Use lowercase kebab-case after the number.
 Run all of these in one chat session before handing back to the developer.
 
 1. Read this skill (`git-issue`).
-2. Fetch the issue: `gh issue view <number>`.
-3. Add the `in-progress` label: `gh issue edit <number> --add-label "in-progress"`.
+2. Fetch the issue with the matching bot:
+   - Codex: `./scripts/with-github-app.sh codex-coder -- gh issue view <number>`
+   - Claude: `./scripts/with-github-app.sh claudecode-coder -- gh issue view <number>`
+3. Add the `in-progress` label with the matching bot:
+   - Codex: `./scripts/with-github-app.sh codex-coder -- gh issue edit <number> --add-label "in-progress"`
+   - Claude: `./scripts/with-github-app.sh claudecode-coder -- gh issue edit <number> --add-label "in-progress"`
 4. Derive branch name (`issue-<number>-<title>`). Create and push if it does not exist:
    ```
    git checkout -b issue-<number>-<title>
@@ -77,13 +86,23 @@ Run all of these in one chat session before handing back to the developer.
 6. Read `AGENTS.md` and relevant source files to understand existing patterns.
 7. Enrich the issue body — **append below any existing description, never overwrite it**. Fill in `Goal`, `Scope`, `Acceptance Criteria`, and `Constraints` based on what you learned from the repo.
 8. Post a comment with the branch name and worktree path:
-   ```
-   gh issue comment <number> --body "Branch: issue-<number>-<title>\nWorktree: worktrees/issue-<number>-<title>"
-   ```
+   - Codex:
+     ```
+     ./scripts/with-github-app.sh codex-coder -- gh issue comment <number> --body "Branch: issue-<number>-<title>\nWorktree: worktrees/issue-<number>-<title>"
+     ```
+   - Claude:
+     ```
+     ./scripts/with-github-app.sh claudecode-coder -- gh issue comment <number> --body "Branch: issue-<number>-<title>\nWorktree: worktrees/issue-<number>-<title>"
+     ```
 9. Post a second comment with a numbered implementation plan:
-   ```
-   gh issue comment <number> --body "Implementation plan:\n1. ...\n2. ..."
-   ```
+   - Codex:
+     ```
+     ./scripts/with-github-app.sh codex-coder -- gh issue comment <number> --body "Implementation plan:\n1. ...\n2. ..."
+     ```
+   - Claude:
+     ```
+     ./scripts/with-github-app.sh claudecode-coder -- gh issue comment <number> --body "Implementation plan:\n1. ...\n2. ..."
+     ```
 
 ## Further Rounds — Implementation
 - Work inside the worktree: `worktrees/<branch-name>`.
